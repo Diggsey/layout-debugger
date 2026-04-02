@@ -138,6 +138,9 @@ function calcToSegments(
     case "property":
       return [{ text: `${expr.value}px (${expr.name})` }];
 
+    case "measured":
+      return [{ text: `${expr.value}px (${expr.label})` }];
+
     case "add": {
       const segs: CalcSegment[] = [];
       for (let i = 0; i < expr.args.length; i++) {

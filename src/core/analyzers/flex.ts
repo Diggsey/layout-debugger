@@ -12,7 +12,7 @@
  */
 import type { Axis, LayoutNode, SizeFns, CalcExpr } from "../dag";
 import type { DagBuilder } from "../dag";
-import { ref, constant, prop, add, sub, mul, div, cmax } from "../dag";
+import { ref, constant, prop, measured, add, sub, mul, div, cmax } from "../dag";
 import type { LayoutContext } from "../types";
 import { getExplicitSize, getSpecifiedValue } from "../sizing";
 import { px, round, measureMinContentSize } from "../utils";
@@ -66,8 +66,7 @@ export function flexItemMain(
   minContent = Math.max(minContent, pb);
   let minContentCalc: CalcExpr;
   if (minVal === "auto") {
-    // min-content: measured from the element's content (not a CSS property)
-    minContentCalc = isScroll ? constant(0) : ({ op: "property", name: `min-content-${axis}`, value: minContent });
+    minContentCalc = isScroll ? constant(0) : measured("min-content", minContent);
   } else {
     minContentCalc = prop(el, minPropName);
   }
@@ -90,19 +89,27 @@ export function flexItemMain(
   const totalBases = allItems.reduce((sum, item) => sum + item.hypothetical + item.margin, 0);
   const freeSpace = containerContent.result - totalBases - totalGap;
 
-  // Build free-space CalcExpr: containerContent - Σ(sibling hypotheticals) - gaps
+  // Build visible LayoutNodes for each sibling's hypothetical outer size
   const gapPropName = axis === "width" ? "column-gap" : "row-gap";
-  const siblingTerms: CalcExpr[] = allItems.map(item =>
-    ({ op: "property", name: axis, value: item.hypothetical + item.margin }) as CalcExpr);
+  const siblingHypoNodes = allItems.map(item =>
+    fns.make("flex-base-size", item.element, axis,
+      `Hypothetical outer size of this flex item`,
+      measured("hypothetical", item.hypothetical + item.margin),
+      {}, {}));
+
+  // Free-space CalcExpr: containerContent - Σ(sibling hypotheticals) - gaps
+  const siblingTerms: CalcExpr[] = siblingHypoNodes.map(n => ref(n));
   if (totalGap > 0) {
     for (let gi = 0; gi < allItems.length - 1; gi++) {
       siblingTerms.push(prop(container, gapPropName));
     }
   }
+  const freeSpaceInputs: LayoutNode["inputs"] = { containerContent };
+  siblingHypoNodes.forEach((n, i) => { freeSpaceInputs[`item${i}`] = n; });
   const freeSpaceNode = fns.make("flex-free-space", container, axis,
     `Space remaining after all items are placed at their base size`,
     sub(ref(containerContent), add(...siblingTerms)),
-    { containerContent }, {});
+    freeSpaceInputs, {});
 
   // §9.7: Resolve flexible lengths
   const resolved = resolveFlexLengths(allItems, containerContent.result, totalGap);
@@ -112,20 +119,26 @@ export function flexItemMain(
   const grow = parseFloat(s.flexGrow) || 0;
   const shrink = parseFloat(s.flexShrink);
 
-  // Build grow/shrink share nodes with sibling aggregation in CalcExpr
+  // Build grow/shrink share nodes with sibling aggregation via child nodes
   let shareNode: LayoutNode;
   let shareCalc: CalcExpr;
   if (freeSpace > 0 && grow > 0) {
-    // Grow share = (my flex-grow / Σ siblings' flex-grow) × free-space
-    const siblingGrows = allItems.filter(i => i.grow > 0).map(i =>
-      ({ op: "property", name: "flex-grow", value: i.grow }) as CalcExpr);
-    shareCalc = mul(div(prop(el, "flex-grow"), add(...siblingGrows)), ref(freeSpaceNode));
+    // Visible nodes for each sibling's flex-grow factor
+    const siblingGrowNodes = allItems.filter(i => i.grow > 0).map(item =>
+      fns.make("flex-basis", item.element, axis,
+        `flex-grow factor for this item`,
+        prop(item.element, "flex-grow"),
+        {}, {}));
+    const shareInputs: LayoutNode["inputs"] = { freeSpace: freeSpaceNode };
+    siblingGrowNodes.forEach((n, i) => { shareInputs[`grow${i}`] = n; });
+
+    shareCalc = mul(div(prop(el, "flex-grow"), add(...siblingGrowNodes.map(ref))), ref(freeSpaceNode));
     shareNode = fns.make("flex-grow-share", el, axis,
       `Portion of free space allocated to this item by flex-grow`,
-      shareCalc, { freeSpace: freeSpaceNode });
+      shareCalc, shareInputs);
   } else if (freeSpace < 0 && shrink > 0) {
-    // Shrink share is complex (weighted by inner basis) — express as property read
-    shareCalc = prop(el, "flex-shrink");
+    // Shrink share is complex (weighted by inner basis × shrink factor)
+    shareCalc = measured("shrink share", round(distributedSize - baseSizeNode.result));
     shareNode = fns.make("flex-shrink-share", el, axis,
       `Amount this item shrinks to fit in the container`,
       shareCalc, { freeSpace: freeSpaceNode });

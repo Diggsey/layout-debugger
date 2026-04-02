@@ -280,6 +280,7 @@ function serializeCalcExpr(expr: CalcExpr, ids: Map<LayoutNode, string>): any {
     case "ref": return { op: "ref", nodeId: ids.get(expr.node) ?? "?" };
     case "constant": return { op: "constant", value: expr.value };
     case "property": return { op: "property", name: expr.name, value: expr.value };
+    case "measured": return { op: "measured", label: expr.label, value: expr.value };
     case "add": return { op: "add", args: expr.args.map(a => serializeCalcExpr(a, ids)) };
     case "sub": return { op: "sub", left: serializeCalcExpr(expr.left, ids), right: serializeCalcExpr(expr.right, ids) };
     case "mul": return { op: "mul", left: serializeCalcExpr(expr.left, ids), right: serializeCalcExpr(expr.right, ids) };
@@ -294,6 +295,7 @@ function calcToText(expr: CalcExpr): string {
     case "ref": return `${expr.node.result}px`;
     case "constant": return `${expr.value}`;
     case "property": return `${expr.value}px (${expr.name})`;
+    case "measured": return `${expr.value}px (${expr.label})`;
     case "add": return expr.args.map(calcToText).join(" + ");
     case "sub": return `${calcToText(expr.left)} \u2212 ${calcToText(expr.right)}`;
     case "mul": return `${calcToText(expr.left)} \u00d7 ${calcToText(expr.right)}`;

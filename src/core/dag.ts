@@ -66,6 +66,7 @@ export type CalcExpr =
   | { op: "ref"; node: LayoutNode }                // another node's result
   | { op: "constant"; value: number }              // spec-defined literal (0, 1, ...)
   | { op: "property"; name: string; value: number } // CSS property on the node's element
+  | { op: "measured"; label: string; value: number } // browser layout measurement (not a CSS property)
   | { op: "add"; args: CalcExpr[] }                // a + b + ...
   | { op: "sub"; left: CalcExpr; right: CalcExpr } // a - b
   | { op: "mul"; left: CalcExpr; right: CalcExpr } // a × b
@@ -79,6 +80,7 @@ export function evaluate(expr: CalcExpr): number {
     case "ref": return expr.node.result;
     case "constant": return expr.value;
     case "property": return expr.value;
+    case "measured": return expr.value;
     case "add": return expr.args.reduce((s, a) => s + evaluate(a), 0);
     case "sub": return evaluate(expr.left) - evaluate(expr.right);
     case "mul": return evaluate(expr.left) * evaluate(expr.right);
@@ -97,6 +99,7 @@ export function collectProperties(expr: CalcExpr): Record<string, string> {
   function walk(e: CalcExpr): void {
     switch (e.op) {
       case "property": props[e.name] = `${e.value}px`; break;
+      case "measured": break; // no CSS property to collect
       case "ref": break; // don't cross into other nodes
       case "constant": break;
       case "add": case "max": case "min": e.args.forEach(walk); break;
@@ -114,9 +117,19 @@ export const ref = (node: LayoutNode): CalcExpr => ({ op: "ref", node });
 export function constant<T extends number>(n: LiteralNumber<T>): CalcExpr { return { op: "constant", value: n }; }
 export function prop(el: Element, name: string): CalcExpr {
   const raw = getComputedStyle(el).getPropertyValue(name);
-  const value = raw.endsWith("px") ? parseFloat(raw) : parseFloat(raw) || 0;
+  let value: number;
+  if (raw.endsWith("px")) {
+    value = parseFloat(raw);
+  } else if (raw.includes("/")) {
+    // Ratio value like "16 / 9" → parse as num/den
+    const parts = raw.split("/").map(s => parseFloat(s.trim()));
+    value = parts.length === 2 && parts[1] !== 0 ? parts[0] / parts[1] : parseFloat(raw) || 0;
+  } else {
+    value = parseFloat(raw) || 0;
+  }
   return { op: "property", name, value };
 }
+export const measured = (label: string, value: number): CalcExpr => ({ op: "measured", label, value });
 export const add = (...args: CalcExpr[]): CalcExpr => ({ op: "add", args });
 export const sub = (left: CalcExpr, right: CalcExpr): CalcExpr => ({ op: "sub", left, right });
 export const mul = (left: CalcExpr, right: CalcExpr): CalcExpr => ({ op: "mul", left, right });

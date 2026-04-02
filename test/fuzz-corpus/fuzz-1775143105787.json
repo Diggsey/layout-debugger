@@ -1,0 +1,374 @@
+{
+  "seed": 1775143105787,
+  "spec": {
+    "style": {
+      "width": "397px",
+      "overflow": "hidden",
+      "padding": "14px"
+    },
+    "children": [
+      {
+        "style": {
+          "overflow": "hidden",
+          "display": "inline-block",
+          "height": "98px"
+        },
+        "children": [
+          {
+            "style": {
+              "display": "flex",
+              "flex-direction": "column",
+              "height": "651px",
+              "overflow": "hidden",
+              "border": "1px solid black"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "104px",
+                  "height": "66px",
+                  "min-height": "68px"
+                }
+              },
+              {
+                "style": {
+                  "width": "109px",
+                  "height": "26px",
+                  "padding": "6px",
+                  "border": "4px solid black"
+                }
+              }
+            ]
+          }
+        ],
+        "target": true
+      },
+      {
+        "style": {
+          "width": "180px",
+          "height": "98px",
+          "border": "1px solid black",
+          "display": "inline-block"
+        }
+      },
+      {
+        "style": {
+          "display": "inline-block",
+          "flex-direction": "column",
+          "height": "51px",
+          "overflow": "hidden",
+          "padding": "14px",
+          "border": "4px solid black",
+          "gap": "7px",
+          "width": "193px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "295px",
+              "height": "299px",
+              "overflow": "hidden",
+              "flex-grow": "0",
+              "flex-shrink": "1"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "127px",
+                  "height": "85%",
+                  "border": "3px solid black"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "40px",
+          "height": "38px",
+          "padding": "6px",
+          "display": "inline-block"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w3",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "width",
+      "dagResult": 131,
+      "actual": 131,
+      "delta": 0,
+      "message": "Measured size (content depends on this element’s own size)"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h4",
+    "nodes": {
+      "w3": {
+        "id": "w3",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 131,
+        "inputs": {},
+        "description": "Measured size (content depends on this element’s own size)",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "width",
+              "value": 131
+            },
+            {
+              "op": "property",
+              "name": "padding-left",
+              "value": 0
+            },
+            {
+              "op": "property",
+              "name": "padding-right",
+              "value": 0
+            },
+            {
+              "op": "property",
+              "name": "border-left-width",
+              "value": 0
+            },
+            {
+              "op": "property",
+              "name": "border-right-width",
+              "value": 0
+            }
+          ]
+        },
+        "expr": "131px (width) + 0px (padding-left) + 0px (padding-right) + 0px (border-left-width) + 0px (border-right-width)",
+        "cssProperties": {
+          "width": "131px",
+          "padding-left": "0px",
+          "padding-right": "0px",
+          "border-left-width": "0px",
+          "border-right-width": "0px"
+        }
+      },
+      "w2": {
+        "id": "w2",
+        "kind": "content-area",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 131,
+        "inputs": {
+          "borderBox": "w3"
+        },
+        "description": "Usable space inside element after subtracting padding and border",
+        "calc": {
+          "op": "sub",
+          "left": {
+            "op": "ref",
+            "nodeId": "w3"
+          },
+          "right": {
+            "op": "add",
+            "args": [
+              {
+                "op": "property",
+                "name": "padding-left",
+                "value": 0
+              },
+              {
+                "op": "property",
+                "name": "padding-right",
+                "value": 0
+              },
+              {
+                "op": "property",
+                "name": "border-left-width",
+                "value": 0
+              },
+              {
+                "op": "property",
+                "name": "border-right-width",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "expr": "131px − 0px (padding-left) + 0px (padding-right) + 0px (border-left-width) + 0px (border-right-width)",
+        "cssProperties": {}
+      },
+      "w1": {
+        "id": "w1",
+        "kind": "block-fill",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 131,
+        "inputs": {
+          "containingBlockContent": "w2"
+        },
+        "description": "Block element — width fills the available space in its parent",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "add",
+              "args": [
+                {
+                  "op": "property",
+                  "name": "padding-left",
+                  "value": 0
+                },
+                {
+                  "op": "property",
+                  "name": "padding-right",
+                  "value": 0
+                },
+                {
+                  "op": "property",
+                  "name": "border-left-width",
+                  "value": 1
+                },
+                {
+                  "op": "property",
+                  "name": "border-right-width",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "op": "sub",
+              "left": {
+                "op": "ref",
+                "nodeId": "w2"
+              },
+              "right": {
+                "op": "add",
+                "args": [
+                  {
+                    "op": "property",
+                    "name": "margin-left",
+                    "value": 0
+                  },
+                  {
+                    "op": "property",
+                    "name": "margin-right",
+                    "value": 0
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "expr": "max(0px (padding-left) + 0px (padding-right) + 1px (border-left-width) + 1px (border-right-width), 131px − 0px (margin-left) + 0px (margin-right))",
+        "cssProperties": {
+          "width": "auto",
+          "padding-left": "0px",
+          "padding-right": "0px",
+          "border-left-width": "1px",
+          "border-right-width": "1px",
+          "margin-left": "0px",
+          "margin-right": "0px"
+        }
+      },
+      "w0": {
+        "id": "w0",
+        "kind": "content-sum",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 131,
+        "inputs": {
+          "child0": "w1"
+        },
+        "description": "width is determined by stacking its children",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "ref",
+              "nodeId": "w1"
+            }
+          ]
+        },
+        "expr": "131px",
+        "cssProperties": {
+          "width": "auto",
+          "overflow": "hidden"
+        }
+      },
+      "h4": {
+        "id": "h4",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 98,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "height",
+              "value": 98
+            },
+            {
+              "op": "property",
+              "name": "padding-top",
+              "value": 0
+            },
+            {
+              "op": "property",
+              "name": "padding-bottom",
+              "value": 0
+            },
+            {
+              "op": "property",
+              "name": "border-top-width",
+              "value": 0
+            },
+            {
+              "op": "property",
+              "name": "border-bottom-width",
+              "value": 0
+            }
+          ]
+        },
+        "expr": "98px (height) + 0px (padding-top) + 0px (padding-bottom) + 0px (border-top-width) + 0px (border-bottom-width)",
+        "cssProperties": {
+          "height": "98px",
+          "padding-top": "0px",
+          "padding-bottom": "0px",
+          "border-top-width": "0px",
+          "border-bottom-width": "0px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 131,
+      "height": 98
+    },
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 131,
+      "height": 653
+    }
+  }
+}

@@ -7,8 +7,7 @@
  */
 import type { Axis, LayoutNode, SizeFns } from "../dag";
 import type { DagBuilder } from "../dag";
-import type { CalcExpr } from "../dag";
-import { ref, mul, div } from "../dag";
+import { ref, prop, mul, div } from "../dag";
 import type { LayoutContext } from "../types";
 import { getExplicitSize } from "../sizing";
 
@@ -27,9 +26,6 @@ export function aspectRatio(
   const match = ar.match(/^([\d.]+)\s*(?:\/\s*([\d.]+))?$/);
   if (!match) return null;
 
-  const num = parseFloat(match[1]);
-  const den = match[2] ? parseFloat(match[2]) : 1;
-
   const otherAxis: Axis = axis === "width" ? "height" : "width";
   const thisExplicit = getExplicitSize(el, axis);
   const otherExplicit = getExplicitSize(el, otherAxis);
@@ -37,13 +33,12 @@ export function aspectRatio(
 
   const otherNode = fns.computeSize(el, otherAxis, depth);
 
-  // Express the ratio as a division of the parsed components from the aspect-ratio property.
-  // For width: result = height × (num / den). For height: result = width × (den / num).
-  const ratioCalc: CalcExpr = axis === "width"
-    ? div({ op: "property", name: "aspect-ratio", value: num }, { op: "property", name: "aspect-ratio", value: den })
-    : div({ op: "property", name: "aspect-ratio", value: den }, { op: "property", name: "aspect-ratio", value: num });
-
-  const calc = mul(ref(otherNode), ratioCalc);
+  // prop(el, "aspect-ratio") parses "16 / 9" → 1.777 (the width/height ratio).
+  // For width: result = height × ratio. For height: result = width / ratio.
+  const ratioProp = prop(el, "aspect-ratio");
+  const calc = axis === "width"
+    ? mul(ref(otherNode), ratioProp)
+    : div(ref(otherNode), ratioProp);
 
   return fns.make("aspect-ratio", el, axis,
     `${axis} derived from the other axis via aspect-ratio`,
