@@ -5,7 +5,7 @@
  * appears immediately below its parent — like git log --first-parent.
  */
 import type { DagResult, LayoutNode, CalcExpr } from "./dag";
-import { calcUnit } from "./dag";
+import { formatUnits } from "./units";
 import { describeElement } from "./utils";
 
 /** A segment of a calculation string: either plain text or a value linked to a node. */
@@ -132,7 +132,7 @@ function precedence(op: string): number {
 
 /** Format a number with its unit suffix. */
 function fmtValue(value: number, unit: string): string {
-  return unit ? `${value}${unit}` : `${value}`;
+  return unit ? `${value}${unit}` : String(value);
 }
 
 /**
@@ -153,18 +153,18 @@ function calcToSegments(
   let segs: CalcSegment[];
   switch (expr.op) {
     case "ref": {
-      const unit = calcUnit(expr);
-      return [{ text: fmtValue(expr.node.result, unit), refId: nodeIds.get(expr.node) }];
+      const u = formatUnits(expr.unit);
+      return [{ text: fmtValue(expr.node.result, u), refId: nodeIds.get(expr.node) }];
     }
 
     case "constant":
-      return [{ text: fmtValue(expr.value, expr.unit) }];
+      return [{ text: fmtValue(expr.value, formatUnits(expr.unit)) }];
 
     case "property":
-      return [{ text: `${fmtValue(expr.value, expr.unit)} (${expr.name})` }];
+      return [{ text: `${fmtValue(expr.value, formatUnits(expr.unit))} (${expr.name})` }];
 
     case "measured":
-      return [{ text: `${fmtValue(expr.value, expr.unit)} (${expr.label})` }];
+      return [{ text: `${fmtValue(expr.value, formatUnits(expr.unit))} (${expr.label})` }];
 
     case "add":
       segs = [];

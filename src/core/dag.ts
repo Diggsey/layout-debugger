@@ -6,6 +6,8 @@
  * and the UI presentation, so they can never get out of sync.
  */
 
+import { type Units, UNITLESS, PX, unitsMul, unitsDiv, unitsAssertEqual, formatUnits } from "./units";
+
 // ---------------------------------------------------------------------------
 // Node kinds — exhaustive union
 // ---------------------------------------------------------------------------
@@ -17,26 +19,26 @@ export type NodeKind =
   | "display-none"
   | "display-contents"
   | "terminal"
-  | "intrinsic" // intrinsic sizing keyword (min-content, max-content, fit-content)
+  | "intrinsic"
   // Block
-  | "content-area" // container border-box minus padding/border
-  | "block-fill" // auto-width block fills containing block content area
+  | "content-area"
+  | "block-fill"
   // Content-driven
-  | "content-sum" // size from stacked children
-  | "content-max" // size from tallest/widest child
-  | "intrinsic-content" // element's content-based size (ignoring stretch/fill/percentage)
+  | "content-sum"
+  | "content-max"
+  | "intrinsic-content"
   // Flex
   | "flex-basis"
   | "min-content"
-  | "flex-base-size" // max(basis, min-content)
-  | "flex-free-space" // container - items - gaps
+  | "flex-base-size"
+  | "flex-free-space"
   | "flex-grow-share"
-  | "flex-grow-factor"    // a sibling's flex-grow value
+  | "flex-grow-factor"
   | "flex-shrink-share"
-  | "flex-scaled-shrink"  // flex-shrink × inner basis (shrink weighting)
+  | "flex-scaled-shrink"
   | "flex-no-change"
-  | "flex-outer-hypo"     // sibling's outer hypothetical size (hypo + margin)
-  | "flex-item-main" // base + share
+  | "flex-outer-hypo"
+  | "flex-item-main"
   | "flex-cross-stretch"
   | "flex-cross-content"
   // Grid
@@ -59,26 +61,23 @@ export type Axis = "width" | "height";
 // CalcExpr — the computation tree
 // ---------------------------------------------------------------------------
 
-/**
- * Enforces that a number is a literal type (0, 1, 2, etc.) at compile time.
- * Rejects `number` but accepts `0 as const`, `1 as const`, etc.
- */
 type LiteralNumber<T extends number> = number extends T ? never : T;
 
-/** Unit of a CalcExpr value: "px" for dimensions, "" for unitless quantities. */
-export type CalcUnit = "px" | "";
-
+/**
+ * Every CalcExpr variant carries a `unit: Units` computed at construction.
+ * CalcExprs are immutable — the unit is fixed when the node is built.
+ */
 export type CalcExpr =
-  | { op: "ref"; node: LayoutNode }                          // another node's result
-  | { op: "constant"; value: number; unit: CalcUnit }        // spec-defined literal
-  | { op: "property"; name: string; value: number; unit: CalcUnit } // CSS property
-  | { op: "measured"; label: string; value: number; unit: CalcUnit } // browser measurement
-  | { op: "add"; args: CalcExpr[] }                          // a + b + ...
-  | { op: "sub"; left: CalcExpr; right: CalcExpr }           // a - b
-  | { op: "mul"; left: CalcExpr; right: CalcExpr }           // a × b
-  | { op: "div"; left: CalcExpr; right: CalcExpr }           // a ÷ b
-  | { op: "max"; args: CalcExpr[] }                          // max(a, b, ...)
-  | { op: "min"; args: CalcExpr[] };                         // min(a, b, ...)
+  | { op: "ref"; node: LayoutNode; unit: Units }
+  | { op: "constant"; value: number; unit: Units }
+  | { op: "property"; name: string; value: number; unit: Units }
+  | { op: "measured"; label: string; value: number; unit: Units }
+  | { op: "add"; args: CalcExpr[]; unit: Units }
+  | { op: "sub"; left: CalcExpr; right: CalcExpr; unit: Units }
+  | { op: "mul"; left: CalcExpr; right: CalcExpr; unit: Units }
+  | { op: "div"; left: CalcExpr; right: CalcExpr; unit: Units }
+  | { op: "max"; args: CalcExpr[]; unit: Units }
+  | { op: "min"; args: CalcExpr[]; unit: Units };
 
 /** Evaluate a CalcExpr tree to produce a number. */
 export function evaluate(expr: CalcExpr): number {
@@ -99,39 +98,9 @@ export function evaluate(expr: CalcExpr): number {
   }
 }
 
-/** Derive the unit of a CalcExpr from its structure. Throws on unit mismatches. */
-export function calcUnit(expr: CalcExpr): CalcUnit {
-  switch (expr.op) {
-    case "ref": return calcUnit(expr.node.calc);
-    case "constant": return expr.unit;
-    case "property": return expr.unit;
-    case "measured": return expr.unit;
-    case "add": case "max": case "min": {
-      const args = expr.op === "add" ? expr.args : expr.args;
-      if (args.length === 0) return "";
-      const first = calcUnit(args[0]);
-      for (let i = 1; i < args.length; i++) {
-        const u = calcUnit(args[i]);
-        if (u !== first) throw new Error(`Unit mismatch in ${expr.op}: "${first}" vs "${u}"`);
-      }
-      return first;
-    }
-    case "sub": {
-      const lu = calcUnit(expr.left), ru = calcUnit(expr.right);
-      if (lu !== ru) throw new Error(`Unit mismatch in sub: "${lu}" vs "${ru}"`);
-      return lu;
-    }
-    case "mul": {
-      const lu = calcUnit(expr.left), ru = calcUnit(expr.right);
-      if (lu === "px" && ru === "px") throw new Error("Cannot multiply px × px");
-      return (lu === "px" || ru === "px") ? "px" : "";
-    }
-    case "div": {
-      const lu = calcUnit(expr.left), ru = calcUnit(expr.right);
-      if (lu === "" && ru === "px") throw new Error("Cannot divide unitless by px");
-      return (lu === "px" && ru === "px") ? "" : lu;
-    }
-  }
+/** Get the unit of a CalcExpr (already computed at construction). */
+export function calcUnit(expr: CalcExpr): Units {
+  return expr.unit;
 }
 
 /** Collect all CSS property names referenced in a CalcExpr tree. */
@@ -139,7 +108,11 @@ export function collectProperties(expr: CalcExpr): Record<string, string> {
   const props: Record<string, string> = {};
   function walk(e: CalcExpr): void {
     switch (e.op) {
-      case "property": props[e.name] = e.unit ? `${e.value}${e.unit}` : String(e.value); break;
+      case "property": {
+        const suffix = formatUnits(e.unit);
+        props[e.name] = suffix ? `${e.value}${suffix}` : String(e.value);
+        break;
+      }
       case "measured": break;
       case "ref": break;
       case "constant": break;
@@ -156,12 +129,21 @@ export function collectProperties(expr: CalcExpr): Record<string, string> {
 // Unitless CSS properties (everything else is assumed px)
 const UNITLESS_PROPS = new Set(["flex-grow", "flex-shrink", "aspect-ratio"]);
 
-// Builder helpers
-export const ref = (node: LayoutNode): CalcExpr => ({ op: "ref", node });
-export function constant<T extends number>(n: LiteralNumber<T>, unit: CalcUnit = ""): CalcExpr { return { op: "constant", value: n, unit }; }
+// ---------------------------------------------------------------------------
+// Builder helpers — each computes and stores the unit at construction time
+// ---------------------------------------------------------------------------
+
+export function ref(node: LayoutNode): CalcExpr {
+  return { op: "ref", node, unit: calcUnit(node.calc) };
+}
+
+export function constant<T extends number>(n: LiteralNumber<T>, unit: Units = UNITLESS): CalcExpr {
+  return { op: "constant", value: n, unit };
+}
+
 export function prop(el: Element, name: string): CalcExpr {
   const raw = getComputedStyle(el).getPropertyValue(name);
-  const unit: CalcUnit = UNITLESS_PROPS.has(name) ? "" : "px";
+  const unit: Units = UNITLESS_PROPS.has(name) ? UNITLESS : PX;
   let value: number;
   if (raw.endsWith("px")) {
     value = parseFloat(raw);
@@ -173,14 +155,50 @@ export function prop(el: Element, name: string): CalcExpr {
   }
   return { op: "property", name, value, unit };
 }
-export const measured = (label: string, value: number, unit: CalcUnit = "px"): CalcExpr =>
-  ({ op: "measured", label, value, unit });
-export const add = (...args: CalcExpr[]): CalcExpr => ({ op: "add", args });
-export const sub = (left: CalcExpr, right: CalcExpr): CalcExpr => ({ op: "sub", left, right });
-export const mul = (left: CalcExpr, right: CalcExpr): CalcExpr => ({ op: "mul", left, right });
-export const div = (left: CalcExpr, right: CalcExpr): CalcExpr => ({ op: "div", left, right });
-export const cmax = (...args: CalcExpr[]): CalcExpr => ({ op: "max", args });
-export const cmin = (...args: CalcExpr[]): CalcExpr => ({ op: "min", args });
+
+export function measured(label: string, value: number, unit: Units = PX): CalcExpr {
+  return { op: "measured", label, value, unit };
+}
+
+export function add(...args: CalcExpr[]): CalcExpr {
+  if (args.length === 0) return { op: "add", args, unit: UNITLESS };
+  const unit = args[0].unit;
+  for (let i = 1; i < args.length; i++) {
+    unitsAssertEqual(unit, args[i].unit, "add");
+  }
+  return { op: "add", args, unit };
+}
+
+export function sub(left: CalcExpr, right: CalcExpr): CalcExpr {
+  unitsAssertEqual(left.unit, right.unit, "sub");
+  return { op: "sub", left, right, unit: left.unit };
+}
+
+export function mul(left: CalcExpr, right: CalcExpr): CalcExpr {
+  return { op: "mul", left, right, unit: unitsMul(left.unit, right.unit) };
+}
+
+export function div(left: CalcExpr, right: CalcExpr): CalcExpr {
+  return { op: "div", left, right, unit: unitsDiv(left.unit, right.unit) };
+}
+
+export function cmax(...args: CalcExpr[]): CalcExpr {
+  if (args.length === 0) return { op: "max", args, unit: UNITLESS };
+  const unit = args[0].unit;
+  for (let i = 1; i < args.length; i++) {
+    unitsAssertEqual(unit, args[i].unit, "max");
+  }
+  return { op: "max", args, unit };
+}
+
+export function cmin(...args: CalcExpr[]): CalcExpr {
+  if (args.length === 0) return { op: "min", args, unit: UNITLESS };
+  const unit = args[0].unit;
+  for (let i = 1; i < args.length; i++) {
+    unitsAssertEqual(unit, args[i].unit, "min");
+  }
+  return { op: "min", args, unit };
+}
 
 // ---------------------------------------------------------------------------
 // Node
@@ -190,15 +208,10 @@ export interface LayoutNode {
   kind: NodeKind;
   element: Element;
   axis: Axis;
-  /** Cached result from evaluate(calc), rounded to 2dp. */
   result: number;
-  /** One-line description of why this node type is relevant. */
   description: string;
-  /** The computation tree — the sole source of truth for the result. */
   calc: CalcExpr;
-  /** Named references to other nodes (the DAG edges for graph display). */
   inputs: Partial<Record<string, LayoutNode>>;
-  /** Relevant CSS properties (including absent-but-relevant defaults). */
   cssProperties: Partial<Record<string, string>>;
 }
 
@@ -212,16 +225,11 @@ export interface DagResult {
 // Callback interface for analyzer functions
 // ---------------------------------------------------------------------------
 
-/**
- * Functions passed to per-display-mode analyzer modules so they can recurse
- * into the DAG builder without importing build-dag.ts (avoids circular deps).
- */
 export interface SizeFns {
   computeSize(el: Element, axis: Axis, depth: number): LayoutNode;
   computeIntrinsicSize(el: Element, axis: Axis, depth: number): LayoutNode;
   contentSize(el: Element, axis: Axis, depth: number, intrinsic?: boolean): LayoutNode;
   containerContentArea(container: Element, axis: Axis, borderBoxNode: LayoutNode): LayoutNode;
-  /** CalcExpr for an element's border-box size (accounts for box-sizing). */
   borderBoxCalc(el: Element, axis: Axis): CalcExpr;
   make(
     kind: NodeKind, el: Element, axis: Axis,
@@ -244,22 +252,18 @@ export class DagBuilder {
   private elIds = new WeakMap<Element, number>();
   private nextElId = 0;
 
-  /** Get an existing node if already built. */
   get(kind: NodeKind, element: Element, axis: Axis): LayoutNode | undefined {
     return this.nodes.get(this.key(kind, element, axis));
   }
 
-  /** Check if a node is currently being built (recursion guard). */
   isBuilding(kind: NodeKind, element: Element, axis: Axis): boolean {
     return this.building.has(this.key(kind, element, axis));
   }
 
-  /** Mark a node as being built. Call `finish` when done. */
   begin(kind: NodeKind, element: Element, axis: Axis): void {
     this.building.add(this.key(kind, element, axis));
   }
 
-  /** Store a finished node. */
   finish(node: LayoutNode): LayoutNode {
     const key = this.key(node.kind, node.element, node.axis);
     this.building.delete(key);

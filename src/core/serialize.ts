@@ -5,7 +5,7 @@
  * All types are JSON-safe (no live DOM references).
  */
 import type { LayoutNode, DagResult, Axis, CalcExpr } from "./dag";
-import { calcUnit } from "./dag";
+import { formatUnits } from "./units";
 import { describeElement, round } from "./utils";
 
 // ---------------------------------------------------------------------------
@@ -279,9 +279,9 @@ export function verifyDag(dag: DagResult): VerifyResult {
 function serializeCalcExpr(expr: CalcExpr, ids: Map<LayoutNode, string>): any {
   switch (expr.op) {
     case "ref": return { op: "ref", nodeId: ids.get(expr.node) ?? "?" };
-    case "constant": return { op: "constant", value: expr.value, unit: expr.unit };
-    case "property": return { op: "property", name: expr.name, value: expr.value, unit: expr.unit };
-    case "measured": return { op: "measured", label: expr.label, value: expr.value, unit: expr.unit };
+    case "constant": return { op: "constant", value: expr.value, unit: formatUnits(expr.unit) };
+    case "property": return { op: "property", name: expr.name, value: expr.value, unit: formatUnits(expr.unit) };
+    case "measured": return { op: "measured", label: expr.label, value: expr.value, unit: formatUnits(expr.unit) };
     case "add": return { op: "add", args: expr.args.map(a => serializeCalcExpr(a, ids)) };
     case "sub": return { op: "sub", left: serializeCalcExpr(expr.left, ids), right: serializeCalcExpr(expr.right, ids) };
     case "mul": return { op: "mul", left: serializeCalcExpr(expr.left, ids), right: serializeCalcExpr(expr.right, ids) };
@@ -292,15 +292,16 @@ function serializeCalcExpr(expr: CalcExpr, ids: Map<LayoutNode, string>): any {
 }
 
 function fmtVal(value: number, unit: string): string {
-  return unit ? `${value}${unit}` : `${value}`;
+  return unit ? `${value}${unit}` : String(value);
 }
 
 function calcToText(expr: CalcExpr): string {
+  const u = formatUnits(expr.unit);
   switch (expr.op) {
-    case "ref": return `${fmtVal(expr.node.result, calcUnit(expr))}`;
-    case "constant": return fmtVal(expr.value, expr.unit);
-    case "property": return `${fmtVal(expr.value, expr.unit)} (${expr.name})`;
-    case "measured": return `${fmtVal(expr.value, expr.unit)} (${expr.label})`;
+    case "ref": return fmtVal(expr.node.result, u);
+    case "constant": return fmtVal(expr.value, u);
+    case "property": return `${fmtVal(expr.value, u)} (${expr.name})`;
+    case "measured": return `${fmtVal(expr.value, u)} (${expr.label})`;
     case "add": return expr.args.map(calcToText).join(" + ");
     case "sub": return `${calcToText(expr.left)} \u2212 ${calcToText(expr.right)}`;
     case "mul": return `${calcToText(expr.left)} \u00d7 ${calcToText(expr.right)}`;

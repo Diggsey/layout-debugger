@@ -16,6 +16,7 @@
  */
 import type { LayoutNode, DagResult, Axis, NodeKind, SizeFns, CalcExpr } from "./dag";
 import { DagBuilder, evaluate, collectProperties, ref, constant, prop, add, cmax, cmin } from "./dag";
+import { PX } from "./units";
 import { identifyContext } from "./context";
 import { getExplicitSize } from "./sizing";
 import { getSpecifiedIntrinsicKeyword } from "./analyzers/properties";
@@ -182,11 +183,11 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
     case "viewport": return measured(b, el, axis, "viewport");
     case "display-none":
       return make(b, "display-none", el, axis,
-        "Element is hidden (display: none)", constant(0, "px"),
+        "Element is hidden (display: none)", constant(0, PX),
         {}, { display: "none" });
     case "display-contents":
       return make(b, "display-contents", el, axis,
-        "Element has no box (display: contents)", constant(0, "px"),
+        "Element has no box (display: contents)", constant(0, PX),
         {}, { display: "contents" });
     case "aspect-ratio": {
       const node = aspectRatio(fns, b, el, axis, ctx(), depth);
