@@ -36,8 +36,8 @@ export function buildDag(el: Element): DagResult {
   const b = new DagBuilder();
   return {
     element: el,
-    width: computeSize(b, el, "width", 15),
-    height: computeSize(b, el, "height", 15),
+    width: computeSize(b, el, "width", 100),
+    height: computeSize(b, el, "height", 100),
   };
 }
 
