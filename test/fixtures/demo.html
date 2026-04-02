@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Layout Debugger — Test Fixture</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; padding: 20px; background: #f8fafc; }
+    h2 { margin: 20px 0 10px; color: #334155; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* Block layout */
+    .block-container { width: 600px; background: #e2e8f0; padding: 16px; }
+    .block-child { background: #bfdbfe; padding: 12px; }
+    .block-explicit { width: 300px; height: 100px; background: #93c5fd; padding: 8px; }
+
+    /* Flex layout */
+    .flex-container { display: flex; gap: 12px; background: #e2e8f0; padding: 16px; width: 600px; }
+    .flex-grow-1 { flex: 1; background: #bbf7d0; padding: 12px; }
+    .flex-grow-2 { flex: 2; background: #86efac; padding: 12px; }
+    .flex-fixed { flex: 0 0 120px; background: #4ade80; padding: 12px; }
+
+    /* Grid layout */
+    .grid-container { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 12px; background: #e2e8f0; padding: 16px; width: 600px; }
+    .grid-item { background: #fde68a; padding: 12px; }
+    .grid-span { grid-column: 1 / 3; background: #fbbf24; padding: 12px; }
+
+    /* Positioned */
+    .positioned-container { position: relative; width: 400px; height: 200px; background: #e2e8f0; }
+    .positioned-abs { position: absolute; top: 20px; left: 20px; right: 20px; background: #f9a8d4; padding: 12px; }
+    .positioned-fixed-size { position: absolute; bottom: 10px; right: 10px; width: 100px; height: 50px; background: #f472b6; }
+
+    /* Inline-block */
+    .inline-container { background: #e2e8f0; padding: 16px; width: 600px; }
+    .inline-block-item { display: inline-block; width: 150px; background: #c4b5fd; padding: 12px; vertical-align: top; }
+    .inline-item { background: #ddd6fe; }
+
+    /* Nested flex */
+    .outer-flex { display: flex; gap: 12px; width: 600px; background: #e2e8f0; padding: 16px; }
+    .inner-flex { display: flex; flex: 1; gap: 8px; background: #fecaca; padding: 8px; }
+    .inner-child { flex: 1; background: #fca5a5; padding: 8px; }
+
+    /* Min/max constraints */
+    .constrained-container { display: flex; width: 600px; background: #e2e8f0; padding: 16px; gap: 12px; }
+    .constrained-item { flex: 1; min-width: 200px; max-width: 250px; background: #a5b4fc; padding: 12px; }
+
+    /* Nested overflow — realistic app layout:
+       viewport (fixed size, column flex)
+         → header (fixed height block)
+         → body (flex:1, row flex)
+             → sidebar (fixed width block)
+             → main (flex:1, column flex)
+                 → toolbar (fixed height)
+                 → scroll-panel (flex:1, overflow:auto)
+                     → wide-content (bigger than everything) */
+    .viewport { width: 600px; height: 400px; overflow: auto; background: #e2e8f0; }
+    .app-header { height: 48px; background: #cbd5e1; padding: 12px; }
+    .app-body { display: flex; }
+    .sidebar { width: 150px; background: #c7d2fe; padding: 12px; flex-shrink: 0; }
+    .main { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
+    .toolbar { height: 36px; background: #bfdbfe; padding: 8px; flex-shrink: 0; }
+    .scroll-panel { flex: 1; overflow: auto; background: #fef9c3; padding: 12px; min-height: 0; }
+    .wide-content { width: 800px; height: 600px; background: #fde047; padding: 12px; font-size: 13px; line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <h1 style="margin-bottom: 20px; color: #1e293b;">Layout Debugger Test Page</h1>
+  <p style="margin-bottom: 20px; color: #64748b;">Open DevTools, select an element, run <code>whyThisSize($0)</code></p>
+
+  <h2>Block Layout</h2>
+  <div class="block-container">
+    <div class="block-child">Auto width block (fills container)</div>
+    <div class="block-explicit">Explicit 300×100px block</div>
+  </div>
+
+  <h2>Flex Layout</h2>
+  <div class="flex-container">
+    <div class="flex-grow-1">flex: 1</div>
+    <div class="flex-grow-2">flex: 2</div>
+    <div class="flex-fixed">flex: 0 0 120px</div>
+  </div>
+
+  <h2>Grid Layout</h2>
+  <div class="grid-container">
+    <div class="grid-item">1fr</div>
+    <div class="grid-item">2fr</div>
+    <div class="grid-item">1fr</div>
+    <div class="grid-span">spans columns 1–2</div>
+    <div class="grid-item">1fr (row 2)</div>
+  </div>
+
+  <h2>Positioned</h2>
+  <div class="positioned-container">
+    <div class="positioned-abs">Absolute: top/left/right set</div>
+    <div class="positioned-fixed-size">Abs: 100×50px</div>
+  </div>
+
+  <h2>Inline / Inline-block</h2>
+  <div class="inline-container">
+    <span class="inline-item">inline span</span>
+    <div class="inline-block-item">inline-block 150px</div>
+    <div class="inline-block-item">inline-block 150px</div>
+  </div>
+
+  <h2>Nested Flex</h2>
+  <div class="outer-flex">
+    <div class="inner-flex">
+      <div class="inner-child">A</div>
+      <div class="inner-child">B</div>
+    </div>
+    <div class="inner-flex">
+      <div class="inner-child">C</div>
+      <div class="inner-child">D</div>
+      <div class="inner-child">E</div>
+    </div>
+  </div>
+
+  <h2>Min/Max Constraints</h2>
+  <div class="constrained-container">
+    <div class="constrained-item">min: 200px, max: 250px</div>
+    <div class="constrained-item">min: 200px, max: 250px</div>
+    <div class="constrained-item">min: 200px, max: 250px</div>
+  </div>
+
+  <h2>Nested Overflow (App Layout)</h2>
+  <div class="viewport">
+    <div class="app-header">Header (48px fixed)</div>
+    <div class="app-body">
+      <div class="sidebar">Sidebar (150px)</div>
+      <div class="main">
+        <div class="toolbar">Toolbar (36px)</div>
+        <div class="scroll-panel">
+          <div class="wide-content">
+            This content is 800×600px — much larger than the scroll panel.
+            The chain is: viewport (600×400, column flex) → header (48px) +
+            body (flex:1, row flex) → sidebar (150px) + main (flex:1, column flex)
+            → toolbar (36px) + scroll-panel (flex:1, overflow:auto).
+            Try whyThisSize on the scroll-panel to trace the full chain!
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../dist/layout-debugger.js"></script>
+</body>
+</html>

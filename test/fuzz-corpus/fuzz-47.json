@@ -1,0 +1,62 @@
+{
+  "seed": 47,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "206px",
+      "overflow": "hidden",
+      "padding": "10px",
+      "border": "2px solid black"
+    },
+    "children": [
+      {
+        "style": {
+          "overflow": "hidden",
+          "padding": "11px",
+          "flex-grow": "0",
+          "flex-shrink": "0"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "85px",
+              "height": "73px",
+              "box-sizing": "border-box"
+            }
+          },
+          {
+            "style": {
+              "width": "36px",
+              "height": "26px",
+              "padding": "5px",
+              "box-sizing": "border-box"
+            }
+          }
+        ],
+        "target": true
+      },
+      {
+        "style": {
+          "width": "33px",
+          "height": "64px",
+          "flex-grow": "1",
+          "flex-basis": "0"
+        }
+      },
+      {
+        "style": {
+          "width": "22px",
+          "height": "85px",
+          "border": "1px solid black",
+          "box-sizing": "border-box",
+          "flex-grow": "3"
+        }
+      }
+    ]
+  },
+  "errors": [
+    "root.width: DAG=85 actual=107 delta=22",
+    "root.width: flex-item-main on [target] width: DAG=85 actual=107 delta=22"
+  ]
+}

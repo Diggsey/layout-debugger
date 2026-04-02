@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  .viewport { width: 600px; height: 400px; overflow: auto; }
+  .app-header { height: 48px; }
+  .app-body { display: flex; }
+  .sidebar { width: 150px; }
+  .main { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+  .toolbar { height: 36px; }
+  .scroll-panel { flex: 1; overflow: auto; }
+  .wide-content { width: 800px; height: 600px; }
+</style>
+</head>
+<body>
+  <div class="viewport" data-testid="viewport">
+    <div class="app-header" data-testid="header">Header</div>
+    <div class="app-body" data-testid="body">
+      <div class="sidebar" data-testid="sidebar">Sidebar</div>
+      <div class="main" data-testid="main">
+        <div class="toolbar" data-testid="toolbar">Toolbar</div>
+        <div class="scroll-panel" data-testid="scroll-panel">
+          <div class="wide-content" data-testid="content">Overflowing content</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="../../dist/layout-debugger.js"></script>
+</body>
+</html>

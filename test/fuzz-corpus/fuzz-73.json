@@ -1,0 +1,46 @@
+{
+  "seed": 73,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "707px",
+      "overflow": "hidden",
+      "box-sizing": "border-box"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "149px",
+          "height": "35px",
+          "border": "1px solid black",
+          "box-sizing": "border-box",
+          "flex-grow": "3"
+        }
+      },
+      {
+        "style": {
+          "width": "60px",
+          "height": "30px",
+          "box-sizing": "border-box",
+          "min-height": "49px"
+        }
+      },
+      {
+        "style": {
+          "width": "72px",
+          "height": "24px",
+          "padding": "2px",
+          "border": "4px solid black",
+          "box-sizing": "border-box",
+          "flex-grow": "1",
+          "max-height": "128px"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    "root.height: DAG=24 actual=128 delta=104"
+  ]
+}

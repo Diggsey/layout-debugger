@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* overflow: auto with overflowing content */
+  .overflow-container { width: 200px; height: 100px; overflow: auto; }
+  .overflow-tall-child { height: 300px; background: #ccc; }
+
+  /* overflow: hidden, no actual overflow */
+  .overflow-hidden-no-clip { width: 200px; height: 100px; overflow: hidden; }
+  .short-child { height: 50px; background: #ddd; }
+
+  /* contain: size */
+  .contain-size { contain: size; width: 300px; height: 150px; }
+  .contain-size-child { width: 999px; height: 999px; }
+
+  /* contain: inline-size */
+  .contain-inline { contain: inline-size; width: 250px; }
+  .contain-inline-child { height: 80px; }
+
+  /* contain: layout */
+  .contain-layout { contain: layout; width: 200px; }
+  .contain-layout-child { height: 60px; }
+
+  /* aspect-ratio: width set, height derived */
+  .aspect-width { width: 300px; aspect-ratio: 16 / 9; }
+
+  /* aspect-ratio: height set, width derived */
+  .aspect-height { height: 100px; aspect-ratio: 2 / 1; }
+
+  /* aspect-ratio: both set, ratio ignored */
+  .aspect-both { width: 300px; height: 100px; aspect-ratio: 1 / 1; }
+
+  /* writing-mode: vertical */
+  .vertical-rl { writing-mode: vertical-rl; width: 100px; height: 200px; }
+
+  /* intrinsic sizing: min-content */
+  .min-content-width { width: min-content; }
+
+  /* intrinsic sizing: max-content */
+  .max-content-width { width: max-content; }
+
+  /* intrinsic sizing: fit-content */
+  .fit-content-width { width: fit-content; }
+
+  /* overflow: auto, content doesn't overflow */
+  .scroll-no-overflow { width: 400px; height: 200px; overflow: auto; }
+</style>
+</head>
+<body>
+  <!-- Overflow: auto with overflowing content -->
+  <div class="overflow-container" data-testid="overflow-auto">
+    <div class="overflow-tall-child" data-testid="overflow-child">tall content</div>
+  </div>
+
+  <!-- Overflow: hidden, no actual overflow -->
+  <div class="overflow-hidden-no-clip" data-testid="overflow-hidden">
+    <div class="short-child" data-testid="short-child">short</div>
+  </div>
+
+  <!-- contain: size -->
+  <div class="contain-size" data-testid="contain-size">
+    <div class="contain-size-child" data-testid="contain-size-child">ignored for sizing</div>
+  </div>
+
+  <!-- contain: inline-size -->
+  <div class="contain-inline" data-testid="contain-inline">
+    <div class="contain-inline-child" data-testid="contain-inline-child">inline contained</div>
+  </div>
+
+  <!-- contain: layout -->
+  <div class="contain-layout" data-testid="contain-layout">
+    <div class="contain-layout-child" data-testid="contain-layout-child">layout contained</div>
+  </div>
+
+  <!-- aspect-ratio: width set, height derived -->
+  <div class="aspect-width" data-testid="aspect-width">16:9 from width</div>
+
+  <!-- aspect-ratio: height set, width derived -->
+  <div class="aspect-height" data-testid="aspect-height">2:1 from height</div>
+
+  <!-- aspect-ratio: both dimensions set -->
+  <div class="aspect-both" data-testid="aspect-both">ratio ignored</div>
+
+  <!-- writing-mode: vertical -->
+  <div class="vertical-rl" data-testid="vertical">vertical text</div>
+
+  <!-- intrinsic sizing: min-content -->
+  <div class="min-content-width" data-testid="min-content">
+    Some words here for testing min-content
+  </div>
+
+  <!-- intrinsic sizing: max-content -->
+  <div class="max-content-width" data-testid="max-content">
+    Some words here
+  </div>
+
+  <!-- intrinsic sizing: fit-content -->
+  <div class="fit-content-width" data-testid="fit-content">
+    Some words here for testing fit-content
+  </div>
+
+  <!-- overflow: auto, no overflow -->
+  <div class="scroll-no-overflow" data-testid="scroll-no-overflow">
+    <div style="height: 50px;">short content</div>
+  </div>
+
+  <script src="../../dist/layout-debugger.js"></script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+{
+  "seed": 1775131497980,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "600px",
+      "overflow": "hidden",
+      "box-sizing": "border-box"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "115px",
+          "height": "74px",
+          "padding": "7px",
+          "flex-grow": "2",
+          "max-height": "398px"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h1",
+      "kind": "clamped",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 398,
+      "actual": 412,
+      "delta": 14
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 129,
+        "inputs": {},
+        "literals": {},
+        "expr": "115px → 129px",
+        "cssProperties": {
+          "width": "115px",
+          "box-sizing": "content-box"
+        }
+      },
+      "h4": {
+        "id": "h4",
+        "kind": "flex-basis",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 88,
+        "inputs": {},
+        "literals": {},
+        "expr": "flex-basis: auto → 88px",
+        "cssProperties": {
+          "flex-basis": "auto",
+          "height": "398px"
+        }
+      },
+      "h5": {
+        "id": "h5",
+        "kind": "min-content",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 14,
+        "inputs": {},
+        "literals": {},
+        "expr": "min-content: 14px",
+        "cssProperties": {
+          "min-height": "auto",
+          "overflow": "visible"
+        }
+      },
+      "h3": {
+        "id": "h3",
+        "kind": "flex-base-size",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 88,
+        "inputs": {
+          "basis": "h4",
+          "minContent": "h5"
+        },
+        "literals": {},
+        "expr": "max(88px, 14px) = 88px",
+        "cssProperties": {}
+      },
+      "h9": {
+        "id": "h9",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 600,
+        "inputs": {},
+        "literals": {},
+        "expr": "600px → 600px",
+        "cssProperties": {
+          "height": "600px",
+          "box-sizing": "border-box"
+        }
+      },
+      "h8": {
+        "id": "h8",
+        "kind": "content-area",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 600,
+        "inputs": {
+          "borderBox": "h9"
+        },
+        "literals": {
+          "paddingBorder": 0
+        },
+        "expr": "600px − 0px padding+border = 600px",
+        "cssProperties": {}
+      },
+      "h7": {
+        "id": "h7",
+        "kind": "flex-free-space",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 512,
+        "inputs": {
+          "containerContent": "h8"
+        },
+        "literals": {
+          "totalItemBases": 88,
+          "totalGaps": 0
+        },
+        "expr": "600px − 88px items − 0px gaps = 512px",
+        "cssProperties": {}
+      },
+      "h6": {
+        "id": "h6",
+        "kind": "flex-grow-share",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 324,
+        "inputs": {
+          "freeSpace": "h7"
+        },
+        "literals": {
+          "growFactor": 2,
+          "totalGrowFactors": 2
+        },
+        "expr": "2/2 × 512px = 324px",
+        "cssProperties": {
+          "flex-grow": "2"
+        }
+      },
+      "h2": {
+        "id": "h2",
+        "kind": "flex-item-main",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 412,
+        "inputs": {
+          "baseSize": "h3",
+          "growShare": "h6"
+        },
+        "literals": {},
+        "expr": "88px + 324px = 412px",
+        "cssProperties": {
+          "flex-basis": "auto",
+          "flex-grow": "2",
+          "flex-shrink": "1",
+          "min-height": "auto",
+          "max-height": "398px"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "clamped",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 398,
+        "inputs": {
+          "input": "h2"
+        },
+        "literals": {
+          "min": 0,
+          "max": 398
+        },
+        "expr": "clamp(0, 412px, 398) = 398px",
+        "cssProperties": {
+          "min-height": "auto",
+          "max-height": "398px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 129,
+      "height": 412
+    },
+    "body:nth-child(2) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 1280,
+      "height": 600
+    }
+  }
+}

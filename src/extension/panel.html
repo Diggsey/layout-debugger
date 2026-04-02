@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="panel.css" />
+  </head>
+  <body>
+    <div id="toolbar">
+      <span id="title">Layout Debugger</span>
+      <button id="analyze-btn" title="Analyze selected element (or select one in Elements panel)">
+        Analyze $0
+      </button>
+    </div>
+    <div id="content">
+      <div id="empty-state">
+        Select an element in the Elements panel, then click "Analyze $0"
+        or it will analyze automatically when you select a new element.
+      </div>
+      <div id="result" style="display: none"></div>
+      <div id="error" style="display: none"></div>
+    </div>
+    <script src="panel.ts" type="module"></script>
+  </body>
+</html>

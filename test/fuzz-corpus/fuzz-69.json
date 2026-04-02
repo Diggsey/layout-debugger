@@ -1,0 +1,110 @@
+{
+  "seed": 69,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "727px",
+      "overflow": "hidden",
+      "padding": "13px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "123px",
+          "height": "87px",
+          "flex-grow": "2",
+          "flex-shrink": "2",
+          "flex-basis": "0",
+          "min-width": "94px",
+          "max-width": "175px"
+        }
+      },
+      {
+        "style": {
+          "display": "flex",
+          "flex-direction": "column",
+          "height": "735px",
+          "overflow": "hidden",
+          "padding": "13px",
+          "border": "2px solid black",
+          "flex-grow": "0",
+          "max-width": "239px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "149px",
+              "height": "56px",
+              "flex-grow": "1",
+              "flex-shrink": "1",
+              "max-height": "372px"
+            }
+          },
+          {
+            "style": {
+              "width": "41px",
+              "height": "41px",
+              "flex-shrink": "3",
+              "flex-basis": "0",
+              "min-height": "95px"
+            }
+          },
+          {
+            "style": {
+              "width": "135px",
+              "height": "86px",
+              "padding": "10px",
+              "border": "2px solid black",
+              "min-height": "45px"
+            },
+            "target": true
+          },
+          {
+            "style": {
+              "display": "flex",
+              "flex-direction": "row",
+              "width": "565px",
+              "overflow": "hidden",
+              "padding": "3px",
+              "border": "1px solid black",
+              "flex-grow": "3"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "122px",
+                  "height": "92px",
+                  "border": "1px solid black",
+                  "box-sizing": "border-box",
+                  "flex-grow": "2"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "33px",
+          "height": "64px",
+          "border": "3px solid black",
+          "box-sizing": "border-box",
+          "flex-basis": "0"
+        }
+      },
+      {
+        "style": {
+          "width": "146px",
+          "height": "64px",
+          "padding": "7px",
+          "flex-basis": "40px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    "root.width: DAG=135 actual=159 delta=24",
+    "root.height: DAG=86 actual=110 delta=24"
+  ]
+}

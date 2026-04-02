@@ -1,0 +1,228 @@
+{
+  "seed": 1775131498160,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "351px",
+      "overflow": "hidden",
+      "border": "3px solid black"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "23px",
+          "height": "96px",
+          "padding": "4px",
+          "border": "4px solid black",
+          "flex-grow": "1",
+          "max-height": "200px"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h1",
+      "kind": "clamped",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 200,
+      "actual": 216,
+      "delta": 16
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 39,
+        "inputs": {},
+        "literals": {},
+        "expr": "23px → 39px",
+        "cssProperties": {
+          "width": "23px",
+          "box-sizing": "content-box"
+        }
+      },
+      "h4": {
+        "id": "h4",
+        "kind": "flex-basis",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 112,
+        "inputs": {},
+        "literals": {},
+        "expr": "flex-basis: auto → 112px",
+        "cssProperties": {
+          "flex-basis": "auto",
+          "height": "200px"
+        }
+      },
+      "h5": {
+        "id": "h5",
+        "kind": "min-content",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 16,
+        "inputs": {},
+        "literals": {},
+        "expr": "min-content: 16px",
+        "cssProperties": {
+          "min-height": "auto",
+          "overflow": "visible"
+        }
+      },
+      "h3": {
+        "id": "h3",
+        "kind": "flex-base-size",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 112,
+        "inputs": {
+          "basis": "h4",
+          "minContent": "h5"
+        },
+        "literals": {},
+        "expr": "max(112px, 16px) = 112px",
+        "cssProperties": {}
+      },
+      "h9": {
+        "id": "h9",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 357,
+        "inputs": {},
+        "literals": {},
+        "expr": "351px → 357px",
+        "cssProperties": {
+          "height": "351px",
+          "box-sizing": "content-box"
+        }
+      },
+      "h8": {
+        "id": "h8",
+        "kind": "content-area",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 351,
+        "inputs": {
+          "borderBox": "h9"
+        },
+        "literals": {
+          "paddingBorder": 6
+        },
+        "expr": "357px − 6px padding+border = 351px",
+        "cssProperties": {}
+      },
+      "h7": {
+        "id": "h7",
+        "kind": "flex-free-space",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 239,
+        "inputs": {
+          "containerContent": "h8"
+        },
+        "literals": {
+          "totalItemBases": 112,
+          "totalGaps": 0
+        },
+        "expr": "351px − 112px items − 0px gaps = 239px",
+        "cssProperties": {}
+      },
+      "h6": {
+        "id": "h6",
+        "kind": "flex-grow-share",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 104,
+        "inputs": {
+          "freeSpace": "h7"
+        },
+        "literals": {
+          "growFactor": 1,
+          "totalGrowFactors": 1
+        },
+        "expr": "1/1 × 239px = 104px",
+        "cssProperties": {
+          "flex-grow": "1"
+        }
+      },
+      "h2": {
+        "id": "h2",
+        "kind": "flex-item-main",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 216,
+        "inputs": {
+          "baseSize": "h3",
+          "growShare": "h6"
+        },
+        "literals": {},
+        "expr": "112px + 104px = 216px",
+        "cssProperties": {
+          "flex-basis": "auto",
+          "flex-grow": "1",
+          "flex-shrink": "1",
+          "min-height": "auto",
+          "max-height": "200px"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "clamped",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 200,
+        "inputs": {
+          "input": "h2"
+        },
+        "literals": {
+          "min": 0,
+          "max": 200
+        },
+        "expr": "clamp(0, 216px, 200) = 200px",
+        "cssProperties": {
+          "min-height": "auto",
+          "max-height": "200px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 39,
+      "height": 216
+    },
+    "body:nth-child(2) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 1280,
+      "height": 357
+    }
+  }
+}

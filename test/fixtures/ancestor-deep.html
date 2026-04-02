@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* Percentage chain: outer(400px) → pct-parent(50%=200px) → pct-child(auto, fills 200px) */
+  .pct-outer { width: 400px; height: 300px; }
+  .pct-parent { width: 50%; height: 100%; }
+  .pct-child { padding: 5px; }
+
+  /* Flex stretch chain: flex-outer(600x400) → flex-stretch(stretch cross=400px) → block-in-stretch(auto, fills 400px) */
+  .flex-outer { display: flex; width: 600px; height: 400px; }
+  .flex-stretch { flex: 1; min-width: 0; }
+  .block-in-stretch { width: 100px; height: 100%; }
+
+  /* Positioned ancestor: pos-outer(500x300 relative) → pos-child(abs left+right → width from CB) → inner(auto) */
+  .pos-outer { position: relative; width: 500px; height: 300px; }
+  .pos-child { position: absolute; left: 50px; right: 50px; top: 20px; height: 100px; }
+  .pos-inner { padding: 5px; }
+
+  /* Grid ancestor: grid-outer(300px, 1fr 2fr) → grid-item(in 2fr track=200px) → grid-inner(auto, fills 200px) */
+  .grid-outer { display: grid; grid-template-columns: 1fr 2fr; width: 300px; }
+  .grid-item { min-width: 0; }
+  .grid-inner { padding: 5px; }
+</style>
+</head>
+<body>
+  <!-- Percentage chain -->
+  <div class="pct-outer" data-testid="pct-outer">
+    <div class="pct-parent" data-testid="pct-parent">
+      <div class="pct-child" data-testid="pct-child">in 50% parent</div>
+    </div>
+  </div>
+
+  <!-- Flex stretch chain -->
+  <div class="flex-outer" data-testid="flex-outer">
+    <div class="flex-stretch" data-testid="flex-stretch">
+      <div class="block-in-stretch" data-testid="block-in-stretch">in stretched flex item</div>
+    </div>
+  </div>
+
+  <!-- Positioned ancestor -->
+  <div class="pos-outer" data-testid="pos-outer">
+    <div class="pos-child" data-testid="pos-child">
+      <div class="pos-inner" data-testid="pos-inner">in abs positioned</div>
+    </div>
+  </div>
+
+  <!-- Grid ancestor -->
+  <div class="grid-outer" data-testid="grid-outer">
+    <div class="grid-item" data-testid="grid-item">
+      <div class="grid-inner" data-testid="grid-inner">in 2fr grid track</div>
+    </div>
+    <div class="grid-item">other</div>
+  </div>
+
+  <script src="../../dist/layout-debugger.js"></script>
+</body>
+</html>

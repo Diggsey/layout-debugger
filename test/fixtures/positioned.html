@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  .relative { position: relative; width: 400px; height: 300px; }
+  .abs-lr { position: absolute; top: 0; left: 20px; right: 20px; height: 50px; }
+  .abs-fixed-size { position: absolute; top: 100px; left: 50px; width: 150px; height: 75px; }
+  .abs-tb { position: absolute; left: 0; top: 10px; bottom: 10px; width: 60px; }
+</style>
+</head>
+<body>
+  <div class="relative" data-testid="relative">
+    <div class="abs-lr" data-testid="abs-lr">left+right</div>
+    <div class="abs-fixed-size" data-testid="abs-fixed">150×75</div>
+    <div class="abs-tb" data-testid="abs-tb">top+bottom</div>
+  </div>
+  <script src="../../dist/layout-debugger.js"></script>
+</body>
+</html>

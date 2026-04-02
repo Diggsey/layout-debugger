@@ -1,0 +1,45 @@
+{
+  "seed": 59,
+  "spec": {
+    "style": {
+      "display": "grid",
+      "grid-template-columns": "3fr 2fr",
+      "width": "669px",
+      "overflow": "hidden",
+      "box-sizing": "border-box",
+      "gap": "3px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "55px",
+          "height": "32px",
+          "padding": "10px",
+          "border": "2px solid black"
+        },
+        "target": true
+      },
+      {
+        "style": {
+          "overflow": "hidden",
+          "box-sizing": "border-box",
+          "width": "248px",
+          "height": "449px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "60px",
+              "height": "67px",
+              "border": "2px solid black"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [
+    "root.width: DAG=55 actual=79 delta=24",
+    "root.height: DAG=32 actual=56 delta=24"
+  ]
+}

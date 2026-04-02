@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  .hidden { display: none; width: 100px; height: 100px; }
+  .contents { display: contents; }
+  .contents-child { width: 80px; height: 40px; }
+</style>
+</head>
+<body>
+  <div class="hidden" data-testid="hidden">hidden</div>
+  <div class="contents" data-testid="contents">
+    <div class="contents-child" data-testid="contents-child">child</div>
+  </div>
+  <script src="../../dist/layout-debugger.js"></script>
+</body>
+</html>

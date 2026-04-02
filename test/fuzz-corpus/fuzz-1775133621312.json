@@ -1,0 +1,276 @@
+{
+  "seed": 1775133621312,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "631px",
+      "overflow": "hidden",
+      "box-sizing": "border-box"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "grid",
+          "grid-template-columns": "3fr 2fr",
+          "width": "207px",
+          "overflow": "hidden",
+          "padding": "5px",
+          "border": "4px solid black",
+          "box-sizing": "border-box",
+          "flex-grow": "3"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "89px",
+              "height": "77px",
+              "border": "1px solid black",
+              "box-sizing": "border-box"
+            }
+          },
+          {
+            "style": {
+              "display": "flex",
+              "flex-direction": "row",
+              "width": "523px",
+              "overflow": "hidden"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "52px",
+                  "height": "70px",
+                  "flex-shrink": "2"
+                }
+              },
+              {
+                "style": {
+                  "width": "22px",
+                  "height": "85px",
+                  "padding": "3px",
+                  "border": "4px solid black",
+                  "box-sizing": "border-box",
+                  "flex-shrink": "2"
+                }
+              },
+              {
+                "style": {
+                  "width": "107px",
+                  "height": "64px",
+                  "box-sizing": "border-box",
+                  "flex-basis": "0"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "24px",
+          "height": "34px",
+          "padding": "10px",
+          "flex-grow": "1",
+          "flex-basis": "0"
+        }
+      },
+      {
+        "style": {
+          "width": "23px",
+          "height": "69px",
+          "padding": "10px",
+          "border": "4px solid black",
+          "box-sizing": "border-box",
+          "flex-grow": "1",
+          "min-width": "35px",
+          "max-width": "125px"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "flex-item-main",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3)",
+      "axis": "width",
+      "dagResult": 99.2,
+      "actual": 103.2,
+      "delta": 4
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h8",
+    "nodes": {
+      "w2": {
+        "id": "w2",
+        "kind": "flex-basis",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 23,
+        "inputs": {},
+        "literals": {},
+        "expr": "flex-basis: auto → 23px",
+        "cssProperties": {
+          "flex-basis": "auto",
+          "width": "103.203px"
+        }
+      },
+      "w3": {
+        "id": "w3",
+        "kind": "min-content",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 35,
+        "inputs": {},
+        "literals": {},
+        "expr": "min-width: 35px → 35px",
+        "cssProperties": {
+          "min-width": "35px",
+          "overflow": "visible"
+        }
+      },
+      "w1": {
+        "id": "w1",
+        "kind": "flex-base-size",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 35,
+        "inputs": {
+          "basis": "w2",
+          "minContent": "w3"
+        },
+        "literals": {},
+        "expr": "max(23px, 35px) = 35px",
+        "cssProperties": {}
+      },
+      "w7": {
+        "id": "w7",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 631,
+        "inputs": {},
+        "literals": {},
+        "expr": "631px → 631px",
+        "cssProperties": {
+          "width": "631px",
+          "box-sizing": "border-box"
+        }
+      },
+      "w6": {
+        "id": "w6",
+        "kind": "content-area",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 631,
+        "inputs": {
+          "borderBox": "w7"
+        },
+        "literals": {
+          "paddingBorder": 0
+        },
+        "expr": "631px − 0px padding+border = 631px",
+        "cssProperties": {}
+      },
+      "w5": {
+        "id": "w5",
+        "kind": "flex-free-space",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 369,
+        "inputs": {
+          "containerContent": "w6"
+        },
+        "literals": {
+          "totalItemBases": 262,
+          "totalGaps": 0
+        },
+        "expr": "631px − 262px items − 0px gaps = 369px",
+        "cssProperties": {}
+      },
+      "w4": {
+        "id": "w4",
+        "kind": "flex-grow-share",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 64.2,
+        "inputs": {
+          "freeSpace": "w5"
+        },
+        "literals": {
+          "growFactor": 1,
+          "totalGrowFactors": 5
+        },
+        "expr": "1/5 × 369px = 64.2px",
+        "cssProperties": {
+          "flex-grow": "1"
+        }
+      },
+      "w0": {
+        "id": "w0",
+        "kind": "flex-item-main",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 99.2,
+        "inputs": {
+          "baseSize": "w1",
+          "growShare": "w4"
+        },
+        "literals": {},
+        "expr": "35px + 64.2px = 99.2px",
+        "cssProperties": {
+          "flex-basis": "auto",
+          "flex-grow": "1",
+          "flex-shrink": "1",
+          "min-width": "35px",
+          "max-width": "125px"
+        }
+      },
+      "h8": {
+        "id": "h8",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 69,
+        "inputs": {},
+        "literals": {},
+        "expr": "69px → 69px",
+        "cssProperties": {
+          "height": "69px",
+          "box-sizing": "border-box"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(3)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3)",
+      "desc": "<div>",
+      "width": 103.2,
+      "height": 69
+    },
+    "body:nth-child(2) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 631,
+      "height": 103
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "seed": 86,
+  "spec": {
+    "style": {
+      "overflow": "hidden",
+      "border": "1px solid black"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "121px",
+          "height": "86px",
+          "border": "2px solid black"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    "root.width: DAG=121 actual=125 delta=4",
+    "root.height: DAG=86 actual=90 delta=4"
+  ]
+}

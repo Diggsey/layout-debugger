@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Layout Debugger — Extension Test Page</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; padding: 20px; background: #f8fafc; max-width: 900px; }
+    h1 { margin-bottom: 8px; color: #1e293b; }
+    p.instructions { margin-bottom: 24px; color: #64748b; font-size: 14px; }
+    h2 { margin: 24px 0 8px; color: #334155; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .label { font-size: 12px; color: #64748b; margin-bottom: 4px; }
+
+    /* 1. Simple block */
+    .block-outer { width: 400px; padding: 16px; background: #e2e8f0; }
+    .block-inner { background: #bfdbfe; padding: 12px; }
+
+    /* 2. Flex row */
+    .flex-row { display: flex; gap: 12px; background: #e2e8f0; padding: 16px; width: 500px; }
+    .flex-item { flex: 1; background: #bbf7d0; padding: 12px; }
+    .flex-fixed { flex: 0 0 100px; background: #4ade80; padding: 12px; }
+
+    /* 3. Percentage height chain */
+    .pct-outer { width: 300px; height: 200px; background: #e2e8f0; }
+    .pct-inner { width: 100%; height: 50%; background: #fde68a; display: flex; align-items: center; justify-content: center; }
+
+    /* 4. Nested overflow (the common bug) */
+    .viewport { width: 500px; height: 200px; overflow: auto; background: #e2e8f0; }
+    .viewport-body { display: flex; }
+    .sidebar { width: 120px; background: #c7d2fe; padding: 8px; flex-shrink: 0; }
+    .main { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+    .toolbar { height: 32px; background: #bfdbfe; padding: 6px; flex-shrink: 0; }
+    .scroll-area { flex: 1; overflow: auto; background: #fef9c3; padding: 8px; }
+    .tall-content { height: 400px; width: 600px; background: #fde047; padding: 8px; font-size: 12px; }
+
+    /* 5. Aspect ratio */
+    .aspect-box { width: 200px; aspect-ratio: 16 / 9; background: #f9a8d4; display: flex; align-items: center; justify-content: center; }
+
+    /* 6. Grid */
+    .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; width: 400px; background: #e2e8f0; padding: 12px; }
+    .grid-cell { background: #c4b5fd; padding: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Layout Debugger — Extension Test Page</h1>
+  <p class="instructions">
+    Open DevTools → click the <strong>Layout</strong> tab → select any element in the Elements panel.
+    The Layout panel should automatically show why the element is its current size.
+  </p>
+
+  <h2>1. Block Layout (auto width fills parent)</h2>
+  <div class="label">Select the blue inner div — should show "fills containing block"</div>
+  <div class="block-outer">
+    <div class="block-inner">Auto width block (fills 400px container minus padding)</div>
+  </div>
+
+  <h2>2. Flex Row (grow distribution)</h2>
+  <div class="label">Select any flex item — should show flex-grow calculation</div>
+  <div class="flex-row">
+    <div class="flex-item">flex: 1</div>
+    <div class="flex-item">flex: 1</div>
+    <div class="flex-fixed">fixed 100px</div>
+  </div>
+
+  <h2>3. Percentage Height (traces to parent)</h2>
+  <div class="label">Select the yellow div — should show "50% → 100px" with substep explaining parent is 200px</div>
+  <div class="pct-outer">
+    <div class="pct-inner">height: 50% of 200px = 100px</div>
+  </div>
+
+  <h2>4. Nested Overflow (common layout bug)</h2>
+  <div class="label">Select the scroll-area — should trace the full height chain and show it's NOT constrained by the viewport</div>
+  <div class="viewport">
+    <div class="viewport-body">
+      <div class="sidebar">Sidebar</div>
+      <div class="main">
+        <div class="toolbar">Toolbar</div>
+        <div class="scroll-area">
+          <div class="tall-content">
+            This content is 400px tall and 600px wide — larger than the viewport.
+            The scroll area doesn't scroll because nothing constrains its height.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>5. Aspect Ratio</h2>
+  <div class="label">Select this box — should show "width 200px, height derived from 16/9 ratio"</div>
+  <div class="aspect-box">16:9 from width</div>
+
+  <h2>6. Grid</h2>
+  <div class="label">Select a cell — should show grid track sizing</div>
+  <div class="grid">
+    <div class="grid-cell">1fr column</div>
+    <div class="grid-cell">2fr column</div>
+  </div>
+</body>
+</html>

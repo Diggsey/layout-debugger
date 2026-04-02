@@ -1,0 +1,25 @@
+{
+  "seed": 74,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "684px",
+      "overflow": "hidden"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "150px",
+          "height": "60px",
+          "flex-grow": "1",
+          "flex-shrink": "1"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    "root.width: DAG=150 actual=684 delta=534"
+  ]
+}

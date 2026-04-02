@@ -1,0 +1,36 @@
+{
+  "seed": 54,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "747px",
+      "overflow": "hidden"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "62px",
+          "height": "59px",
+          "padding": "11px",
+          "flex-grow": "2",
+          "flex-basis": "0",
+          "max-width": "267px"
+        }
+      },
+      {
+        "style": {
+          "width": "76px",
+          "height": "28px",
+          "box-sizing": "border-box",
+          "flex-grow": "3",
+          "flex-basis": "0"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    "root.width: DAG=76 actual=458 delta=382"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "seed": 53,
+  "spec": {
+    "style": {
+      "width": "668px",
+      "overflow": "hidden"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "28px",
+          "height": "98px",
+          "padding": "9px",
+          "border": "4px solid black",
+          "display": "inline-block"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    "root.width: DAG=28 actual=54 delta=26",
+    "root.height: DAG=98 actual=124 delta=26"
+  ]
+}

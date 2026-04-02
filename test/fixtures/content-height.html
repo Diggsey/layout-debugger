@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* Block parent with auto height, child with 100% height */
+  .block-parent { width: 200px; }
+  .tall-child-a { height: 80px; }
+  .tall-child-b { height: 120px; }
+  .pct-height-child { height: 100%; }
+
+  /* Flex row: auto height = tallest item */
+  .flex-row-parent { display: flex; width: 300px; }
+  .flex-child-short { flex: 1; height: 50px; min-width: 0; }
+  .flex-child-tall { flex: 1; height: 100px; min-width: 0; }
+
+  /* Flex column: auto height = sum of items + gaps */
+  .flex-col-parent { display: flex; flex-direction: column; width: 200px; gap: 10px; }
+  .flex-col-item-a { height: 60px; }
+  .flex-col-item-b { height: 40px; }
+</style>
+</head>
+<body>
+  <!-- Block: auto height from stacked children -->
+  <div class="block-parent" data-testid="block-parent">
+    <div class="tall-child-a" data-testid="child-a">80px</div>
+    <div class="tall-child-b" data-testid="child-b">120px</div>
+  </div>
+
+  <!-- Flex row: auto height from tallest child -->
+  <div class="flex-row-parent" data-testid="flex-row-parent">
+    <div class="flex-child-short" data-testid="short-child">50px</div>
+    <div class="flex-child-tall" data-testid="tall-child">100px</div>
+  </div>
+
+  <!-- Flex column: auto height from sum of items + gaps -->
+  <div class="flex-col-parent" data-testid="flex-col-parent">
+    <div class="flex-col-item-a" data-testid="col-item-a">60px</div>
+    <div class="flex-col-item-b" data-testid="col-item-b">40px</div>
+  </div>
+
+  <script src="../../dist/layout-debugger.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  /* min-width: auto (the default) means min-content for flex items.
+     These items have wide content that forces a larger minimum. */
+  .container { display: flex; width: 200px; }
+  .wide-item { flex: 1; }
+  .narrow-item { flex: 1; min-width: 0; }
+</style>
+</head>
+<body>
+  <div class="container" data-testid="container">
+    <!-- "WWWWWWWWWW" is ~120px+ in most fonts, wider than 100px (half the container) -->
+    <div class="wide-item" data-testid="wide">WWWWWWWWWW</div>
+    <div class="narrow-item" data-testid="narrow">x</div>
+  </div>
+  <script src="../../dist/layout-debugger.js"></script>
+</body>
+</html>

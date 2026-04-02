@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Layout Debugger",
+  "version": "1.0.0",
+  "description": "Explains why any element has its current size by tracing the CSS layout algorithm",
+  "devtools_page": "devtools.html",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-script.ts"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["engine.ts"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "icons": {},
+  "permissions": []
+}

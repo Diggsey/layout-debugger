@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* 3-level chain: viewport → explicit-outer → auto-middle → auto-inner */
+  .explicit-outer { width: 500px; padding: 20px; }
+  .auto-middle { padding: 10px; }
+  .auto-inner { padding: 5px; }
+
+  /* flex → block chain: flex container → flex item (block child) → auto grandchild */
+  .flex-parent { display: flex; width: 600px; }
+  .flex-child { flex: 1; padding: 15px; min-width: 0; }
+  .block-grandchild { padding: 5px; }
+</style>
+</head>
+<body>
+  <div class="explicit-outer" data-testid="outer">
+    <div class="auto-middle" data-testid="middle">
+      <div class="auto-inner" data-testid="inner">deep nested</div>
+    </div>
+  </div>
+
+  <div class="flex-parent" data-testid="flex-parent">
+    <div class="flex-child" data-testid="flex-child">
+      <div class="block-grandchild" data-testid="grandchild">nested in flex</div>
+    </div>
+    <div class="flex-child" data-testid="flex-sibling">sibling</div>
+  </div>
+
+  <script src="../../dist/layout-debugger.js"></script>
+</body>
+</html>

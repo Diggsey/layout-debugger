@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  .container { width: 400px; padding: 20px; }
+  .auto-width { background: #ccc; padding: 10px; }
+  .explicit-width { width: 200px; height: 80px; background: #aaa; }
+  .max-constrained { max-width: 150px; background: #bbb; padding: 5px; }
+</style>
+</head>
+<body>
+  <div class="container" data-testid="container">
+    <div class="auto-width" data-testid="auto-width">auto</div>
+    <div class="explicit-width" data-testid="explicit-width">200×80</div>
+    <div class="max-constrained" data-testid="max-constrained">max 150</div>
+  </div>
+  <script src="../../dist/layout-debugger.js"></script>
+</body>
+</html>

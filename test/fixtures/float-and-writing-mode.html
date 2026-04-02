@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* Float: auto width should be shrink-to-fit, not fill containing block */
+  .float-container { width: 400px; overflow: hidden; /* BFC to contain float */ }
+  .float-child { float: left; padding: 10px; }
+  .float-inner { width: 80px; height: 30px; }
+
+  /* Vertical writing mode: axes swap */
+  .vertical-container { writing-mode: vertical-rl; height: 200px; }
+  .vertical-child { padding: 5px; }
+  .vertical-inner { width: 30px; height: 60px; }
+</style>
+</head>
+<body>
+  <!-- Float: width should be content-driven -->
+  <div class="float-container" data-testid="float-container">
+    <div class="float-child" data-testid="float-child">
+      <div class="float-inner" data-testid="float-inner">float</div>
+    </div>
+  </div>
+
+  <!-- Vertical writing mode: width is block axis (from content), height is inline axis (fills CB) -->
+  <div class="vertical-container" data-testid="vertical-container">
+    <div class="vertical-child" data-testid="vertical-child">
+      <div class="vertical-inner" data-testid="vertical-inner">vertical</div>
+    </div>
+  </div>
+
+  <script src="../../dist/layout-debugger.js"></script>
+</body>
+</html>

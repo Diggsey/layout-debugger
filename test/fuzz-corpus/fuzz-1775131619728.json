@@ -1,0 +1,385 @@
+{
+  "seed": 1775131619728,
+  "spec": {
+    "style": {
+      "overflow": "hidden"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "flex",
+          "flex-direction": "row",
+          "width": "471px",
+          "overflow": "hidden",
+          "border": "2px solid black",
+          "box-sizing": "border-box",
+          "gap": "13px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "49px",
+              "height": "94px",
+              "padding": "5px",
+              "box-sizing": "border-box",
+              "flex-basis": "192px"
+            }
+          },
+          {
+            "style": {
+              "display": "flex",
+              "flex-direction": "row",
+              "width": "507px",
+              "overflow": "hidden",
+              "border": "4px solid black",
+              "gap": "3px",
+              "flex-grow": "2",
+              "flex-basis": "0"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "67px",
+                  "height": "97px",
+                  "flex-grow": "2"
+                }
+              }
+            ],
+            "target": true
+          },
+          {
+            "style": {
+              "width": "55px",
+              "height": "100px",
+              "padding": "12px",
+              "border": "2px solid black",
+              "box-sizing": "border-box",
+              "flex-grow": "3"
+            }
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "79px",
+          "height": "66px",
+          "padding": "7px",
+          "border": "4px solid black"
+        }
+      },
+      {
+        "style": {
+          "width": "115px",
+          "height": "97px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "flex-item-main",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+      "axis": "width",
+      "dagResult": 77.6,
+      "actual": 82.41,
+      "delta": 4.81
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h8",
+    "nodes": {
+      "w2": {
+        "id": "w2",
+        "kind": "flex-basis",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 0,
+        "inputs": {},
+        "literals": {},
+        "expr": "flex-basis: 0px → 0px",
+        "cssProperties": {
+          "flex-basis": "0px",
+          "width": "74.4062px"
+        }
+      },
+      "w3": {
+        "id": "w3",
+        "kind": "min-content",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 0,
+        "inputs": {},
+        "literals": {},
+        "expr": "0 (scroll container)",
+        "cssProperties": {
+          "min-width": "auto",
+          "overflow": "hidden"
+        }
+      },
+      "w1": {
+        "id": "w1",
+        "kind": "flex-base-size",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 0,
+        "inputs": {
+          "basis": "w2",
+          "minContent": "w3"
+        },
+        "literals": {},
+        "expr": "max(0px, 0px) = 0px",
+        "cssProperties": {}
+      },
+      "w7": {
+        "id": "w7",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 471,
+        "inputs": {},
+        "literals": {},
+        "expr": "471px → 471px",
+        "cssProperties": {
+          "width": "471px",
+          "box-sizing": "border-box"
+        }
+      },
+      "w6": {
+        "id": "w6",
+        "kind": "content-area",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 467,
+        "inputs": {
+          "borderBox": "w7"
+        },
+        "literals": {
+          "paddingBorder": 4
+        },
+        "expr": "471px − 4px padding+border = 467px",
+        "cssProperties": {}
+      },
+      "w5": {
+        "id": "w5",
+        "kind": "flex-free-space",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 194,
+        "inputs": {
+          "containerContent": "w6"
+        },
+        "literals": {
+          "totalItemBases": 247,
+          "totalGaps": 26
+        },
+        "expr": "467px − 247px items − 26px gaps = 194px",
+        "cssProperties": {}
+      },
+      "w4": {
+        "id": "w4",
+        "kind": "flex-grow-share",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 77.6,
+        "inputs": {
+          "freeSpace": "w5"
+        },
+        "literals": {
+          "growFactor": 2,
+          "totalGrowFactors": 5
+        },
+        "expr": "2/5 × 194px = 77.6px",
+        "cssProperties": {
+          "flex-grow": "2"
+        }
+      },
+      "w0": {
+        "id": "w0",
+        "kind": "flex-item-main",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 77.6,
+        "inputs": {
+          "baseSize": "w1",
+          "growShare": "w4"
+        },
+        "literals": {},
+        "expr": "0px + 77.6px = 77.6px",
+        "cssProperties": {
+          "flex-basis": "0px",
+          "flex-grow": "2",
+          "flex-shrink": "1",
+          "min-width": "auto",
+          "max-width": "none"
+        }
+      },
+      "h10": {
+        "id": "h10",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 94,
+        "inputs": {},
+        "literals": {},
+        "expr": "94px → 94px",
+        "cssProperties": {
+          "height": "94px",
+          "box-sizing": "border-box"
+        }
+      },
+      "h13": {
+        "id": "h13",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 97,
+        "inputs": {},
+        "literals": {},
+        "expr": "97px → 97px",
+        "cssProperties": {
+          "height": "97px",
+          "box-sizing": "content-box"
+        }
+      },
+      "h12": {
+        "id": "h12",
+        "kind": "content-max",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 105,
+        "inputs": {
+          "child0": "h13"
+        },
+        "literals": {
+          "gap": 3,
+          "totalGap": 0
+        },
+        "expr": "max(97px) = 105px",
+        "cssProperties": {
+          "height": "auto",
+          "overflow": "hidden"
+        }
+      },
+      "h11": {
+        "id": "h11",
+        "kind": "intrinsic-content",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 105,
+        "inputs": {
+          "content": "h12"
+        },
+        "literals": {},
+        "expr": "intrinsic height: 105px (from content)",
+        "cssProperties": {
+          "display": "flex",
+          "height": "auto"
+        }
+      },
+      "h14": {
+        "id": "h14",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 100,
+        "inputs": {},
+        "literals": {},
+        "expr": "100px → 100px",
+        "cssProperties": {
+          "height": "100px",
+          "box-sizing": "border-box"
+        }
+      },
+      "h9": {
+        "id": "h9",
+        "kind": "content-max",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 109,
+        "inputs": {
+          "child0": "h10",
+          "child1": "h11",
+          "child2": "h14"
+        },
+        "literals": {
+          "gap": 13,
+          "totalGap": 26
+        },
+        "expr": "max(94px, 105px, 100px) + 26px gaps = 109px",
+        "cssProperties": {
+          "height": "auto",
+          "overflow": "hidden"
+        }
+      },
+      "h8": {
+        "id": "h8",
+        "kind": "flex-cross-stretch",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 105,
+        "inputs": {
+          "containerCross": "h9"
+        },
+        "literals": {},
+        "expr": "stretch → 109px → 105px",
+        "cssProperties": {
+          "align-self": "auto",
+          "align-items": "normal"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>",
+      "width": 82.41,
+      "height": 105
+    },
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 471,
+      "height": 109
+    },
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 192,
+      "height": 94
+    },
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 74.41,
+      "height": 97
+    },
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3)",
+      "desc": "<div>",
+      "width": 166.59,
+      "height": 100
+    }
+  }
+}

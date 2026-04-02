@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  .outer { width: 400px; height: 300px; }
+  .pct-both { width: 50%; height: 100%; }
+  .pct-width-only { width: 75%; }
+</style>
+</head>
+<body>
+  <div class="outer" data-testid="outer">
+    <div class="pct-both" data-testid="pct-both">50% × 100%</div>
+    <div class="pct-width-only" data-testid="pct-width">75% width</div>
+  </div>
+  <script src="../../dist/layout-debugger.js"></script>
+</body>
+</html>

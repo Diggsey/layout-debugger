@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  /* min-width: 0 overrides the default min-width: auto (min-content) so
+     the flex algorithm is fully deterministic regardless of text/font. */
+  .flex-row { display: flex; width: 600px; gap: 0px; }
+  .grow1 { flex: 1; height: 50px; min-width: 0; }
+  .grow2 { flex: 2; height: 50px; min-width: 0; }
+  .fixed { flex: 0 0 100px; height: 50px; min-width: 0; }
+
+  .flex-col { display: flex; flex-direction: column; width: 200px; height: 300px; }
+  .col-grow1 { flex: 1; min-height: 0; }
+  .col-grow2 { flex: 2; min-height: 0; }
+
+  .flex-shrink-container { display: flex; width: 300px; }
+  .shrink-item { flex: 0 1 200px; height: 40px; min-width: 0; }
+</style>
+</head>
+<body>
+  <div class="flex-row" data-testid="flex-row">
+    <div class="grow1" data-testid="grow1">1</div>
+    <div class="grow2" data-testid="grow2">2</div>
+    <div class="fixed" data-testid="fixed">fixed</div>
+  </div>
+
+  <div class="flex-col" data-testid="flex-col">
+    <div class="col-grow1" data-testid="col-grow1">1</div>
+    <div class="col-grow2" data-testid="col-grow2">2</div>
+  </div>
+
+  <div class="flex-shrink-container" data-testid="shrink-container">
+    <div class="shrink-item" data-testid="shrink-a">A</div>
+    <div class="shrink-item" data-testid="shrink-b">B</div>
+  </div>
+
+  <script src="../../dist/layout-debugger.js"></script>
+</body>
+</html>

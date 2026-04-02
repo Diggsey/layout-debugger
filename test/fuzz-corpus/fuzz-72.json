@@ -1,0 +1,56 @@
+{
+  "seed": 72,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "773px",
+      "overflow": "hidden"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "flex",
+          "flex-direction": "row",
+          "width": "316px",
+          "overflow": "hidden"
+        },
+        "children": [
+          {
+            "style": {
+              "overflow": "hidden",
+              "padding": "3px",
+              "box-sizing": "border-box",
+              "width": "342px",
+              "flex-grow": "2",
+              "flex-shrink": "1",
+              "flex-basis": "0",
+              "min-width": "78px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "63px",
+                  "height": "87px",
+                  "box-sizing": "border-box"
+                }
+              }
+            ],
+            "target": true
+          },
+          {
+            "style": {
+              "width": "76px",
+              "height": "34px",
+              "border": "3px solid black",
+              "box-sizing": "border-box"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [
+    "root.width: DAG=342 actual=240 delta=102"
+  ]
+}

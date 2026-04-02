@@ -1,0 +1,274 @@
+{
+  "seed": 1775131498029,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "314px",
+      "overflow": "hidden",
+      "padding": "4px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "141px",
+          "height": "40px",
+          "flex-grow": "2"
+        },
+        "target": true
+      },
+      {
+        "style": {
+          "display": "flex",
+          "flex-direction": "row",
+          "width": "691px",
+          "overflow": "hidden",
+          "box-sizing": "border-box",
+          "flex-grow": "3",
+          "flex-basis": "146px",
+          "max-height": "313px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "738px",
+              "overflow": "hidden",
+              "flex-grow": "2"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "134px",
+                  "height": "85px",
+                  "border": "3px solid black",
+                  "box-sizing": "border-box",
+                  "display": "inline-block"
+                }
+              }
+            ]
+          },
+          {
+            "style": {
+              "width": "61px",
+              "height": "89px",
+              "flex-shrink": "1"
+            }
+          },
+          {
+            "style": {
+              "width": "94px",
+              "height": "24px",
+              "flex-grow": "2",
+              "min-width": "93px"
+            }
+          },
+          {
+            "style": {
+              "width": "49px",
+              "height": "69px"
+            }
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "135px",
+          "height": "41px",
+          "padding": "4px",
+          "flex-grow": "2",
+          "flex-basis": "0"
+        }
+      },
+      {
+        "style": {
+          "width": "91px",
+          "height": "96px",
+          "border": "4px solid black"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h1",
+      "kind": "flex-item-main",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 46.4,
+      "actual": 44.56,
+      "delta": 1.84
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 141,
+        "inputs": {},
+        "literals": {},
+        "expr": "141px → 141px",
+        "cssProperties": {
+          "width": "141px",
+          "box-sizing": "content-box"
+        }
+      },
+      "h3": {
+        "id": "h3",
+        "kind": "flex-basis",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 40,
+        "inputs": {},
+        "literals": {},
+        "expr": "flex-basis: auto → 40px",
+        "cssProperties": {
+          "flex-basis": "auto",
+          "height": "44.5625px"
+        }
+      },
+      "h4": {
+        "id": "h4",
+        "kind": "min-content",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 0,
+        "inputs": {},
+        "literals": {},
+        "expr": "min-content: 0px",
+        "cssProperties": {
+          "min-height": "auto",
+          "overflow": "visible"
+        }
+      },
+      "h2": {
+        "id": "h2",
+        "kind": "flex-base-size",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 40,
+        "inputs": {
+          "basis": "h3",
+          "minContent": "h4"
+        },
+        "literals": {},
+        "expr": "max(40px, 0px) = 40px",
+        "cssProperties": {}
+      },
+      "h8": {
+        "id": "h8",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 322,
+        "inputs": {},
+        "literals": {},
+        "expr": "314px → 322px",
+        "cssProperties": {
+          "height": "314px",
+          "box-sizing": "content-box"
+        }
+      },
+      "h7": {
+        "id": "h7",
+        "kind": "content-area",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 314,
+        "inputs": {
+          "borderBox": "h8"
+        },
+        "literals": {
+          "paddingBorder": 8
+        },
+        "expr": "322px − 8px padding+border = 314px",
+        "cssProperties": {}
+      },
+      "h6": {
+        "id": "h6",
+        "kind": "flex-free-space",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 16,
+        "inputs": {
+          "containerContent": "h7"
+        },
+        "literals": {
+          "totalItemBases": 298,
+          "totalGaps": 0
+        },
+        "expr": "314px − 298px items − 0px gaps = 16px",
+        "cssProperties": {}
+      },
+      "h5": {
+        "id": "h5",
+        "kind": "flex-grow-share",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 6.4,
+        "inputs": {
+          "freeSpace": "h6"
+        },
+        "literals": {
+          "growFactor": 2,
+          "totalGrowFactors": 7
+        },
+        "expr": "2/7 × 16px = 6.4px",
+        "cssProperties": {
+          "flex-grow": "2"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "flex-item-main",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 46.4,
+        "inputs": {
+          "baseSize": "h2",
+          "growShare": "h5"
+        },
+        "literals": {},
+        "expr": "40px + 6.4px = 46.4px",
+        "cssProperties": {
+          "flex-basis": "auto",
+          "flex-grow": "2",
+          "flex-shrink": "1",
+          "min-height": "auto",
+          "max-height": "none"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 141,
+      "height": 44.56
+    },
+    "body:nth-child(2) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 1280,
+      "height": 322
+    }
+  }
+}

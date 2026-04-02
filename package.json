@@ -1,0 +1,35 @@
+{
+  "name": "layout-debugger",
+  "version": "1.0.0",
+  "description": "Browser tool that explains why an element is a given size",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "build:dev": "vite build --mode development",
+    "build:watch": "vite build --watch",
+    "build:ext": "vite build --config vite.config.extension.ts",
+    "build:ext:dev": "vite build --config vite.config.extension.ts --mode development",
+    "build:ext:watch": "vite build --config vite.config.extension.ts --watch",
+    "build:all": "npm run build && npm run build:ext",
+    "test": "npx playwright test --project default",
+    "test:headed": "npx playwright test --project default --headed",
+    "test:fuzz": "npx playwright test --project fuzz",
+    "test:fuzz:long": "FUZZ_N=1000 npx playwright test --project fuzz",
+    "lint": "oxlint src/",
+    "dev": "npx tsx scripts/dev.ts",
+    "dev:firefox": "npx tsx scripts/dev-firefox.ts",
+    "fmt": "oxfmt src/",
+    "fmt:check": "oxfmt --check src/"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/chrome": "^0.1.38",
+    "oxfmt": "^0.43.0",
+    "oxlint": "^1.58.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.0",
+    "vite": "^8.0.3",
+    "web-ext": "^10.1.0"
+  }
+}
