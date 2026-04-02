@@ -248,7 +248,7 @@ function collectFlexSiblings(
     let basisCalc: CalcExpr;
     if (fb === "0" || fb === "0px" || fb === "0%") {
       basis = pb;
-      basisCalc = prop(child, "flex-basis");
+      basisCalc = constant(0, PX);
     } else if (fb.endsWith("px") && fb !== "auto") {
       const raw = parseFloat(fb);
       basis = isBorderBox ? raw : raw + pb;

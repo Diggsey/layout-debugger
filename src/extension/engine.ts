@@ -11,6 +11,7 @@ function serializeNode(node: RenderNode) {
     kind: node.kind,
     axis: node.axis,
     result: node.result,
+    resultUnit: node.resultUnit,
     description: node.description,
     calculation: node.calculation.map((seg: any) => ({
       text: seg.text,

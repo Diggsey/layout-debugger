@@ -126,9 +126,6 @@ export function collectProperties(expr: CalcExpr): Record<string, string> {
   return props;
 }
 
-// Unitless CSS properties (everything else is assumed px)
-const UNITLESS_PROPS = new Set(["flex-grow", "flex-shrink", "aspect-ratio"]);
-
 // ---------------------------------------------------------------------------
 // Builder helpers — each computes and stores the unit at construction time
 // ---------------------------------------------------------------------------
@@ -143,15 +140,19 @@ export function constant<T extends number>(n: LiteralNumber<T>, unit: Units = UN
 
 export function prop(el: Element, name: string): CalcExpr {
   const raw = getComputedStyle(el).getPropertyValue(name);
-  const unit: Units = UNITLESS_PROPS.has(name) ? UNITLESS : PX;
   let value: number;
+  let unit: Units;
   if (raw.endsWith("px")) {
     value = parseFloat(raw);
+    unit = PX;
   } else if (raw.includes("/")) {
+    // Ratio value like "16 / 9" → unitless
     const parts = raw.split("/").map(s => parseFloat(s.trim()));
     value = parts.length === 2 && parts[1] !== 0 ? parts[0] / parts[1] : parseFloat(raw) || 0;
+    unit = UNITLESS;
   } else {
     value = parseFloat(raw) || 0;
+    unit = UNITLESS;
   }
   return { op: "property", name, value, unit };
 }

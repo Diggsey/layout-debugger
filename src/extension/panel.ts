@@ -243,7 +243,7 @@ function renderAxis(axis: AxisRender, title: string): HTMLElement {
     summary.className = "node-summary";
     summary.innerHTML =
       `<span class="nid">${node.id}</span> ` +
-      `<span class="val">${node.result}px</span> ` +
+      `<span class="val">${node.result}${node.resultUnit}</span> ` +
       `<span class="ndesc">${esc(node.description)}</span> ` +
       `<span class="el-ref">${esc(node.elementDesc)}</span>`;
     row.appendChild(summary);

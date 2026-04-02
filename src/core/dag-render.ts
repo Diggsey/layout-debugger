@@ -22,6 +22,8 @@ export interface RenderNode {
   kind: string;
   axis: "width" | "height";
   result: number;
+  /** Formatted unit suffix for the result (e.g. "px", "", "px²"). */
+  resultUnit: string;
   /** One-line context: why this node type is relevant. */
   description: string;
   /** Detailed calculation with values tagged by source node ID (for hover). */
@@ -104,6 +106,7 @@ function renderAxis(root: LayoutNode, axis: "width" | "height"): AxisRender {
       kind: node.kind,
       axis: node.axis,
       result: node.result,
+      resultUnit: formatUnits(node.calc.unit),
       description: node.description,
       calculation,
       expression,
@@ -252,7 +255,7 @@ export function renderDagToConsole(dag: DagResult): void {
 function logNode(node: RenderNode): void {
   const deps = node.dependsOn.length > 0 ? ` ← ${node.dependsOn.join(", ")}` : "";
   console.groupCollapsed(
-    `%c[${node.id}]%c ${node.kind} %c${node.result}px%c ${node.elementDesc}%c${deps}`,
+    `%c[${node.id}]%c ${node.kind} %c${node.result}${node.resultUnit}%c ${node.elementDesc}%c${deps}`,
     "color: #9aa0a6",
     "color: #d2a8ff",
     "color: #7ee787; font-weight: bold",
