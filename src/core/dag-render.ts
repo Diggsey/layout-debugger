@@ -5,6 +5,7 @@
  * appears immediately below its parent — like git log --first-parent.
  */
 import type { DagResult, LayoutNode, CalcExpr } from "./dag";
+import { calcUnit } from "./dag";
 import { describeElement } from "./utils";
 
 /** A segment of a calculation string: either plain text or a value linked to a node. */
@@ -120,77 +121,108 @@ function renderAxis(root: LayoutNode, axis: "width" | "height"): AxisRender {
 // CalcExpr → CalcSegment[] conversion
 // ---------------------------------------------------------------------------
 
+/** Operator precedence levels for parenthesization. */
+function precedence(op: string): number {
+  switch (op) {
+    case "add": case "sub": return 1;
+    case "mul": case "div": return 2;
+    default: return 3; // leaf, max, min — no parens needed
+  }
+}
+
+/** Format a number with its unit suffix. */
+function fmtValue(value: number, unit: string): string {
+  return unit ? `${value}${unit}` : `${value}`;
+}
+
 /**
  * Convert a CalcExpr tree into a flat array of CalcSegments for display.
- * Ref nodes become tagged values that can be hovered in the UI.
+ * Handles operator precedence with parentheses and proper unit display.
  */
 function calcToSegments(
   expr: CalcExpr,
   nodeIds: Map<LayoutNode, string>,
+  parentPrec = 0,
+  isRightOfNonAssoc = false,
 ): CalcSegment[] {
+  const myPrec = precedence(expr.op);
+  // Need parens if parent binds tighter, or if we're the right operand
+  // of a non-associative op (sub, div) at the same precedence
+  const needParens = myPrec < parentPrec || (isRightOfNonAssoc && myPrec === parentPrec);
+
+  let segs: CalcSegment[];
   switch (expr.op) {
-    case "ref":
-      return [{ text: `${expr.node.result}px`, refId: nodeIds.get(expr.node) }];
-
-    case "constant":
-      return [{ text: `${expr.value}` }];
-
-    case "property":
-      return [{ text: `${expr.value}px (${expr.name})` }];
-
-    case "measured":
-      return [{ text: `${expr.value}px (${expr.label})` }];
-
-    case "add": {
-      const segs: CalcSegment[] = [];
-      for (let i = 0; i < expr.args.length; i++) {
-        if (i > 0) segs.push({ text: " + " });
-        segs.push(...calcToSegments(expr.args[i], nodeIds));
-      }
-      return segs;
+    case "ref": {
+      const unit = calcUnit(expr);
+      return [{ text: fmtValue(expr.node.result, unit), refId: nodeIds.get(expr.node) }];
     }
 
+    case "constant":
+      return [{ text: fmtValue(expr.value, expr.unit) }];
+
+    case "property":
+      return [{ text: `${fmtValue(expr.value, expr.unit)} (${expr.name})` }];
+
+    case "measured":
+      return [{ text: `${fmtValue(expr.value, expr.unit)} (${expr.label})` }];
+
+    case "add":
+      segs = [];
+      for (let i = 0; i < expr.args.length; i++) {
+        if (i > 0) segs.push({ text: " + " });
+        segs.push(...calcToSegments(expr.args[i], nodeIds, myPrec, false));
+      }
+      break;
+
     case "sub":
-      return [
-        ...calcToSegments(expr.left, nodeIds),
+      segs = [
+        ...calcToSegments(expr.left, nodeIds, myPrec, false),
         { text: " \u2212 " },
-        ...calcToSegments(expr.right, nodeIds),
+        ...calcToSegments(expr.right, nodeIds, myPrec, true),
       ];
+      break;
 
     case "mul":
-      return [
-        ...calcToSegments(expr.left, nodeIds),
+      segs = [
+        ...calcToSegments(expr.left, nodeIds, myPrec, false),
         { text: " \u00d7 " },
-        ...calcToSegments(expr.right, nodeIds),
+        ...calcToSegments(expr.right, nodeIds, myPrec, false),
       ];
+      break;
 
     case "div":
-      return [
-        ...calcToSegments(expr.left, nodeIds),
+      segs = [
+        ...calcToSegments(expr.left, nodeIds, myPrec, false),
         { text: " / " },
-        ...calcToSegments(expr.right, nodeIds),
+        ...calcToSegments(expr.right, nodeIds, myPrec, true),
       ];
+      break;
 
     case "max": {
-      const segs: CalcSegment[] = [{ text: "max(" }];
+      segs = [{ text: "max(" }];
       for (let i = 0; i < expr.args.length; i++) {
         if (i > 0) segs.push({ text: ", " });
-        segs.push(...calcToSegments(expr.args[i], nodeIds));
+        segs.push(...calcToSegments(expr.args[i], nodeIds, 0, false));
       }
       segs.push({ text: ")" });
-      return segs;
+      return segs; // max/min have their own parens, never need outer parens
     }
 
     case "min": {
-      const segs: CalcSegment[] = [{ text: "min(" }];
+      segs = [{ text: "min(" }];
       for (let i = 0; i < expr.args.length; i++) {
         if (i > 0) segs.push({ text: ", " });
-        segs.push(...calcToSegments(expr.args[i], nodeIds));
+        segs.push(...calcToSegments(expr.args[i], nodeIds, 0, false));
       }
       segs.push({ text: ")" });
       return segs;
     }
   }
+
+  if (needParens) {
+    return [{ text: "(" }, ...segs, { text: ")" }];
+  }
+  return segs;
 }
 
 // --- Console renderer ---

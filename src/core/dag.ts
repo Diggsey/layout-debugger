@@ -65,17 +65,20 @@ export type Axis = "width" | "height";
  */
 type LiteralNumber<T extends number> = number extends T ? never : T;
 
+/** Unit of a CalcExpr value: "px" for dimensions, "" for unitless quantities. */
+export type CalcUnit = "px" | "";
+
 export type CalcExpr =
-  | { op: "ref"; node: LayoutNode }                // another node's result
-  | { op: "constant"; value: number }              // spec-defined literal (0, 1, ...)
-  | { op: "property"; name: string; value: number } // CSS property on the node's element
-  | { op: "measured"; label: string; value: number } // browser layout measurement (not a CSS property)
-  | { op: "add"; args: CalcExpr[] }                // a + b + ...
-  | { op: "sub"; left: CalcExpr; right: CalcExpr } // a - b
-  | { op: "mul"; left: CalcExpr; right: CalcExpr } // a × b
-  | { op: "div"; left: CalcExpr; right: CalcExpr } // a ÷ b
-  | { op: "max"; args: CalcExpr[] }                // max(a, b, ...)
-  | { op: "min"; args: CalcExpr[] };               // min(a, b, ...)
+  | { op: "ref"; node: LayoutNode }                          // another node's result
+  | { op: "constant"; value: number; unit: CalcUnit }        // spec-defined literal
+  | { op: "property"; name: string; value: number; unit: CalcUnit } // CSS property
+  | { op: "measured"; label: string; value: number; unit: CalcUnit } // browser measurement
+  | { op: "add"; args: CalcExpr[] }                          // a + b + ...
+  | { op: "sub"; left: CalcExpr; right: CalcExpr }           // a - b
+  | { op: "mul"; left: CalcExpr; right: CalcExpr }           // a × b
+  | { op: "div"; left: CalcExpr; right: CalcExpr }           // a ÷ b
+  | { op: "max"; args: CalcExpr[] }                          // max(a, b, ...)
+  | { op: "min"; args: CalcExpr[] };                         // min(a, b, ...)
 
 /** Evaluate a CalcExpr tree to produce a number. */
 export function evaluate(expr: CalcExpr): number {
@@ -96,14 +99,34 @@ export function evaluate(expr: CalcExpr): number {
   }
 }
 
+/** Derive the unit of a CalcExpr from its structure. */
+export function calcUnit(expr: CalcExpr): CalcUnit {
+  switch (expr.op) {
+    case "ref": return "px"; // layout nodes produce px
+    case "constant": return expr.unit;
+    case "property": return expr.unit;
+    case "measured": return expr.unit;
+    case "add": case "sub": case "max": case "min":
+      return "px"; // additive ops preserve units; assume px if any operand is px
+    case "mul": {
+      const lu = calcUnit(expr.left), ru = calcUnit(expr.right);
+      return (lu === "px" || ru === "px") ? "px" : "";
+    }
+    case "div": {
+      const lu = calcUnit(expr.left), ru = calcUnit(expr.right);
+      return (lu === "px" && ru === "px") ? "" : lu;
+    }
+  }
+}
+
 /** Collect all CSS property names referenced in a CalcExpr tree. */
 export function collectProperties(expr: CalcExpr): Record<string, string> {
   const props: Record<string, string> = {};
   function walk(e: CalcExpr): void {
     switch (e.op) {
-      case "property": props[e.name] = `${e.value}px`; break;
-      case "measured": break; // no CSS property to collect
-      case "ref": break; // don't cross into other nodes
+      case "property": props[e.name] = e.unit ? `${e.value}${e.unit}` : String(e.value); break;
+      case "measured": break;
+      case "ref": break;
       case "constant": break;
       case "add": case "max": case "min": e.args.forEach(walk); break;
       case "sub": walk(e.left); walk(e.right); break;
@@ -115,24 +138,28 @@ export function collectProperties(expr: CalcExpr): Record<string, string> {
   return props;
 }
 
+// Unitless CSS properties (everything else is assumed px)
+const UNITLESS_PROPS = new Set(["flex-grow", "flex-shrink", "aspect-ratio"]);
+
 // Builder helpers
 export const ref = (node: LayoutNode): CalcExpr => ({ op: "ref", node });
-export function constant<T extends number>(n: LiteralNumber<T>): CalcExpr { return { op: "constant", value: n }; }
+export function constant<T extends number>(n: LiteralNumber<T>): CalcExpr { return { op: "constant", value: n, unit: "" }; }
 export function prop(el: Element, name: string): CalcExpr {
   const raw = getComputedStyle(el).getPropertyValue(name);
+  const unit: CalcUnit = UNITLESS_PROPS.has(name) ? "" : "px";
   let value: number;
   if (raw.endsWith("px")) {
     value = parseFloat(raw);
   } else if (raw.includes("/")) {
-    // Ratio value like "16 / 9" → parse as num/den
     const parts = raw.split("/").map(s => parseFloat(s.trim()));
     value = parts.length === 2 && parts[1] !== 0 ? parts[0] / parts[1] : parseFloat(raw) || 0;
   } else {
     value = parseFloat(raw) || 0;
   }
-  return { op: "property", name, value };
+  return { op: "property", name, value, unit };
 }
-export const measured = (label: string, value: number): CalcExpr => ({ op: "measured", label, value });
+export const measured = (label: string, value: number, unit: CalcUnit = "px"): CalcExpr =>
+  ({ op: "measured", label, value, unit });
 export const add = (...args: CalcExpr[]): CalcExpr => ({ op: "add", args });
 export const sub = (left: CalcExpr, right: CalcExpr): CalcExpr => ({ op: "sub", left, right });
 export const mul = (left: CalcExpr, right: CalcExpr): CalcExpr => ({ op: "mul", left, right });
