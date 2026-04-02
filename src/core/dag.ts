@@ -99,21 +99,36 @@ export function evaluate(expr: CalcExpr): number {
   }
 }
 
-/** Derive the unit of a CalcExpr from its structure. */
+/** Derive the unit of a CalcExpr from its structure. Throws on unit mismatches. */
 export function calcUnit(expr: CalcExpr): CalcUnit {
   switch (expr.op) {
-    case "ref": return calcUnit(expr.node.calc); // derive from the referenced node's CalcExpr
+    case "ref": return calcUnit(expr.node.calc);
     case "constant": return expr.unit;
     case "property": return expr.unit;
     case "measured": return expr.unit;
-    case "add": case "sub": case "max": case "min":
-      return "px"; // additive ops preserve units; assume px if any operand is px
+    case "add": case "max": case "min": {
+      const args = expr.op === "add" ? expr.args : expr.args;
+      if (args.length === 0) return "";
+      const first = calcUnit(args[0]);
+      for (let i = 1; i < args.length; i++) {
+        const u = calcUnit(args[i]);
+        if (u !== first) throw new Error(`Unit mismatch in ${expr.op}: "${first}" vs "${u}"`);
+      }
+      return first;
+    }
+    case "sub": {
+      const lu = calcUnit(expr.left), ru = calcUnit(expr.right);
+      if (lu !== ru) throw new Error(`Unit mismatch in sub: "${lu}" vs "${ru}"`);
+      return lu;
+    }
     case "mul": {
       const lu = calcUnit(expr.left), ru = calcUnit(expr.right);
+      if (lu === "px" && ru === "px") throw new Error("Cannot multiply px × px");
       return (lu === "px" || ru === "px") ? "px" : "";
     }
     case "div": {
       const lu = calcUnit(expr.left), ru = calcUnit(expr.right);
+      if (lu === "" && ru === "px") throw new Error("Cannot divide unitless by px");
       return (lu === "px" && ru === "px") ? "" : lu;
     }
   }
@@ -143,7 +158,7 @@ const UNITLESS_PROPS = new Set(["flex-grow", "flex-shrink", "aspect-ratio"]);
 
 // Builder helpers
 export const ref = (node: LayoutNode): CalcExpr => ({ op: "ref", node });
-export function constant<T extends number>(n: LiteralNumber<T>): CalcExpr { return { op: "constant", value: n, unit: "" }; }
+export function constant<T extends number>(n: LiteralNumber<T>, unit: CalcUnit = ""): CalcExpr { return { op: "constant", value: n, unit }; }
 export function prop(el: Element, name: string): CalcExpr {
   const raw = getComputedStyle(el).getPropertyValue(name);
   const unit: CalcUnit = UNITLESS_PROPS.has(name) ? "" : "px";

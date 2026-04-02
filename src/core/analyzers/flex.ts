@@ -102,12 +102,12 @@ export function flexItemMain(
       "Amount this item shrinks to fit in the container",
       myScaledShrink
         ? mul(div(ref(myScaledShrink), add(...activeShrinkNodes.map(ref))), ref(freeSpaceNode))
-        : constant(0),
+        : constant(0, "px"),
       shareInputs);
   } else {
     shareNode = fns.make("flex-no-change", el, axis,
       grow === 0 ? "This item does not grow or shrink" : "No free space to distribute",
-      constant(0), {});
+      constant(0, "px"), {});
   }
 
   const calc = add(ref(baseSizeNode), ref(shareNode));
@@ -288,7 +288,7 @@ function collectFlexSiblings(
     let minCalc: CalcExpr;
     if (minV === "auto") {
       minMain = isScroll ? 0 : measureMinContentSize(child, axis);
-      minCalc = isScroll ? constant(0) : measured("min-content", minMain);
+      minCalc = isScroll ? constant(0, "px") : measured("min-content", minMain);
     } else {
       const raw = px(minV);
       minMain = isBorderBox ? raw : raw + pb;
@@ -352,7 +352,7 @@ function collectFlexSiblings(
     const pbProps = axis === "width"
       ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
       : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
-    const innerBasisCalc = cmax(constant(0), sub(ref(basisNode), add(...pbProps.map(p => prop(child, p)))));
+    const innerBasisCalc = cmax(constant(0, "px"), sub(ref(basisNode), add(...pbProps.map(p => prop(child, p)))));
     const scaledShrinkNode = shrinkVal > 0
       ? fns.make("flex-scaled-shrink", child, axis,
           "Scaled shrink factor (flex-shrink \u00d7 inner basis)",
