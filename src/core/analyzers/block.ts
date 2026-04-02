@@ -7,7 +7,7 @@
  */
 import type { Axis, LayoutNode, SizeFns } from "../dag";
 import type { DagBuilder } from "../dag";
-import { evaluate, ref, val, sub } from "../dag";
+import { evaluate, ref, val, sub, cmax } from "../dag";
 import type { LayoutContext } from "../types";
 import { px, round } from "../utils";
 
@@ -31,7 +31,15 @@ export function blockFill(
   const mStart = px(s.getPropertyValue(mStartProp));
   const mEnd = px(s.getPropertyValue(mEndProp));
 
-  const calc = sub(ref(contentAreaNode), val(mStart + mEnd, "margins"));
+  const pb = axis === "width"
+    ? px(s.paddingLeft) + px(s.paddingRight) + px(s.borderLeftWidth) + px(s.borderRightWidth)
+    : px(s.paddingTop) + px(s.paddingBottom) + px(s.borderTopWidth) + px(s.borderBottomWidth);
+
+  // Floor by padding+border — CSS can't render negative content
+  const calc = cmax(
+    val(pb, "padding+border"),
+    sub(ref(contentAreaNode), val(mStart + mEnd, "margins")),
+  );
 
   return b.finish({ kind: "block-fill", element: el, axis,
     result: round(evaluate(calc)),
