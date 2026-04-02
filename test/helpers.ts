@@ -186,8 +186,7 @@ export interface SerializedNode {
   axis: string;
   result: number;
   inputs: Record<string, SerializedNode>;
-  literals: Record<string, number>;
-  expr: string;
+  description: string;
   cssProperties: Record<string, string>;
   ref?: boolean; // true if this is a back-reference (cycle prevention)
 }
@@ -233,8 +232,7 @@ export async function analyzeDag(page: Page, testId: string): Promise<Serialized
         axis: node.axis,
         result: node.result,
         inputs,
-        literals: node.literals || {},
-        expr: node.expr,
+        description: node.description || "",
         cssProperties: node.cssProperties || {},
       };
     }

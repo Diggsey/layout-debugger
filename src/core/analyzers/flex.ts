@@ -1,36 +1,18 @@
 /**
  * Flex layout analyzer.
  *
- * Implements sizing for flex items on both main and cross axes.
- *
  * Spec references:
  * - CSS Flexbox §9    Flex Layout Algorithm
- *   https://www.w3.org/TR/css-flexbox-1/#layout-algorithm
- *
  * - CSS Flexbox §9.2  Line Length Determination (flex basis, step 3)
- *   https://www.w3.org/TR/css-flexbox-1/#line-sizing
- *
  * - CSS Flexbox §9.3  Main Size Determination
- *   https://www.w3.org/TR/css-flexbox-1/#main-sizing
- *
  * - CSS Flexbox §9.5  Main-Axis Alignment (free space distribution)
- *   https://www.w3.org/TR/css-flexbox-1/#main-alignment
- *
  * - CSS Flexbox §9.7  Resolving Flexible Lengths
- *   https://www.w3.org/TR/css-flexbox-1/#resolve-flexible-lengths
- *   The freeze-and-redistribute loop for flex-grow / flex-shrink.
- *
  * - CSS Flexbox §9.4  Cross Size Determination
- *   https://www.w3.org/TR/css-flexbox-1/#cross-sizing
- *   Steps 7–11: determine each item's cross size, then the container's,
- *   then stretch items with align-self: stretch.
- *
  * - CSS Flexbox §4.5  Automatic Minimum Size of Flex Items
- *   https://www.w3.org/TR/css-flexbox-1/#min-size-auto
- *   "min-width: auto" on a flex item resolves to min-content.
  */
-import type { Axis, LayoutNode, SizeFns } from "../dag";
+import type { Axis, LayoutNode, SizeFns, CalcExpr } from "../dag";
 import type { DagBuilder } from "../dag";
+import { ref, val, add, sub, mul, div, cmax } from "../dag";
 import type { LayoutContext } from "../types";
 import { getExplicitSize, getSpecifiedValue } from "../sizing";
 import { px, round, measureMinContentSize } from "../utils";
@@ -39,15 +21,6 @@ import { px, round, measureMinContentSize } from "../utils";
 // Flex item — main axis
 // ---------------------------------------------------------------------------
 
-/**
- * Main-axis size of a flex item.
- *
- * CSS Flexbox §9.7: Resolving Flexible Lengths
- *   1. Determine each item's flex base size and hypothetical main size (§9.2 step 3–4)
- *   2. Collect free space = container content − Σ hypothetical outer sizes − gaps
- *   3. Distribute free space: grow if positive, shrink if negative
- *   4. Freeze items that hit min/max constraints, redistribute remainder
- */
 export function flexItemMain(
   fns: SizeFns, b: DagBuilder, el: Element, axis: Axis,
   ctx: LayoutContext, depth: number,
@@ -68,35 +41,37 @@ export function flexItemMain(
   const fb = s.flexBasis;
   const pb = itemPaddingBorder(s, axis);
   const basisVal = resolveBasis(fns, el, s, axis, containerContent.result, pb, depth);
-  const basisNode = fns.make("flex-basis", el, axis, round(basisVal), {}, {},
-    `flex-basis: ${fb} \u2192 ${round(basisVal)}px`,
-    { "flex-basis": fb, [axis]: s.getPropertyValue(axis) });
+  const basisNode = fns.make("flex-basis", el, axis,
+    `Starting size before flex grow/shrink is applied`,
+    val(round(basisVal), `flex-basis: ${fb}`),
+    {}, { "flex-basis": fb, [axis]: s.getPropertyValue(axis) });
 
-  // §4.5 Automatic Minimum Size: min-width/min-height auto → min-content
+  // §4.5 Automatic Minimum Size
   const minProp = axis === "width" ? "min-width" : "min-height";
   const minVal = s.getPropertyValue(minProp);
   const overflow = axis === "width" ? s.overflowX : s.overflowY;
   const isScroll = overflow !== "visible" && overflow !== "clip";
   let minContent: number;
   if (minVal === "auto") {
-    minContent = isScroll ? 0 : measureMinContentSize(el, axis); // border-box
+    minContent = isScroll ? 0 : measureMinContentSize(el, axis);
   } else {
     const raw = px(minVal);
     minContent = s.boxSizing === "border-box" ? raw : raw + pb;
   }
-  const minContentNode = fns.make("min-content", el, axis, round(minContent), {}, {},
-    minVal === "auto"
-      ? (isScroll ? "0 (scroll container)" : `min-content: ${round(minContent)}px`)
-      : `${minProp}: ${minVal} \u2192 ${round(minContent)}px`,
-    { [minProp]: minVal, overflow });
-
-  // §9.2 step 4: hypothetical main size = max(min-content, basis)
-  // Floor min-content by irreducible padding+border (content can never be negative)
   minContent = Math.max(minContent, pb);
+  const minContentNode = fns.make("min-content", el, axis,
+    minVal === "auto"
+      ? (isScroll ? `Minimum ${axis} is 0 (scroll container)` : `Minimum ${axis} the element can be without overflowing`)
+      : `${minProp} constraint`,
+    val(round(minContent), minVal === "auto" ? "min-content" : minVal),
+    {}, { [minProp]: minVal, overflow });
+
+  // §9.2 step 4: hypothetical main size
   const baseSize = Math.max(minContent, basisVal);
-  const baseSizeNode = fns.make("flex-base-size", el, axis, round(baseSize),
-    { basis: basisNode, minContent: minContentNode }, {},
-    `max(${round(basisVal)}px, ${round(minContent)}px) = ${round(baseSize)}px`, {});
+  const baseSizeNode = fns.make("flex-base-size", el, axis,
+    `Effective starting size \u2014 the larger of the basis and min-content`,
+    cmax(ref(basisNode), ref(minContentNode)),
+    { basis: basisNode, minContent: minContentNode }, {});
 
   // §9.3: Determine free space
   const allItems = collectFlexSiblings(fns, container, axis, depth);
@@ -105,9 +80,10 @@ export function flexItemMain(
   const totalBases = allItems.reduce((sum, item) => sum + item.hypothetical + item.margin, 0);
   const freeSpace = containerContent.result - totalBases - totalGap;
 
-  const freeSpaceNode = fns.make("flex-free-space", container, axis, round(freeSpace),
-    { containerContent }, { totalItemBases: round(totalBases), totalGaps: round(totalGap) },
-    `${round(containerContent.result)}px \u2212 ${round(totalBases)}px items \u2212 ${round(totalGap)}px gaps = ${round(freeSpace)}px`, {});
+  const freeSpaceNode = fns.make("flex-free-space", container, axis,
+    `Space remaining after all items are placed at their base size`,
+    sub(ref(containerContent), val(round(totalBases + totalGap), "items + gaps")),
+    { containerContent }, {});
 
   // §9.7: Resolve flexible lengths
   const resolved = resolveFlexLengths(allItems, containerContent.result, totalGap);
@@ -120,24 +96,34 @@ export function flexItemMain(
   const totalGrow = allItems.reduce((sum, item) => sum + item.grow, 0);
 
   let shareNode: LayoutNode;
+  let shareCalc: CalcExpr;
   if (freeSpace > 0 && grow > 0) {
-    shareNode = fns.make("flex-grow-share", el, axis, shareVal,
-      { freeSpace: freeSpaceNode }, { growFactor: grow, totalGrowFactors: totalGrow },
-      `${grow}/${totalGrow} \u00d7 ${round(freeSpace)}px = ${shareVal}px`,
-      { "flex-grow": String(grow) });
+    shareCalc = mul(div(val(grow, "flex-grow"), val(totalGrow, "total")), ref(freeSpaceNode));
+    shareNode = fns.make("flex-grow-share", el, axis,
+      `Portion of free space allocated to this item by flex-grow`,
+      shareCalc,
+      { freeSpace: freeSpaceNode }, { "flex-grow": String(grow) });
   } else if (freeSpace < 0 && shrink > 0) {
-    shareNode = fns.make("flex-shrink-share", el, axis, shareVal,
-      { freeSpace: freeSpaceNode }, { shrinkFactor: shrink },
-      `shrink: ${shareVal}px`, { "flex-shrink": String(shrink) });
+    shareCalc = val(shareVal, "shrink share");
+    shareNode = fns.make("flex-shrink-share", el, axis,
+      `Amount this item shrinks to fit in the container`,
+      shareCalc,
+      { freeSpace: freeSpaceNode }, { "flex-shrink": String(shrink) });
   } else {
-    shareNode = fns.make("flex-no-change", el, axis, 0, {}, { growFactor: grow },
-      grow === 0 ? "flex-grow: 0 \u2192 no growth" : "no free space",
-      { "flex-grow": String(grow), "flex-shrink": String(shrink) });
+    shareCalc = val(0);
+    shareNode = fns.make("flex-no-change", el, axis,
+      grow === 0 ? "This item does not grow or shrink" : "No free space to distribute",
+      shareCalc,
+      {}, { "flex-grow": String(grow), "flex-shrink": String(shrink) });
   }
 
-  return b.finish({ kind: "flex-item-main", element: el, axis, result: round(distributedSize),
-    inputs: { baseSize: baseSizeNode, growShare: shareNode }, literals: {},
-    expr: `${round(baseSize)}px + ${shareVal}px = ${round(distributedSize)}px`,
+  const calc = add(ref(baseSizeNode), ref(shareNode));
+
+  return b.finish({ kind: "flex-item-main", element: el, axis,
+    result: round(distributedSize),
+    description: `Flex item \u2014 ${axis} determined by the flex layout algorithm`,
+    calc,
+    inputs: { baseSize: baseSizeNode, growShare: shareNode },
     cssProperties: { "flex-basis": fb, "flex-grow": String(grow), "flex-shrink": String(shrink),
       [minProp]: minVal, [axis === "width" ? "max-width" : "max-height"]: s.getPropertyValue(axis === "width" ? "max-width" : "max-height") } });
 }
@@ -146,14 +132,6 @@ export function flexItemMain(
 // Flex item — cross axis
 // ---------------------------------------------------------------------------
 
-/**
- * Determine the cross-axis sizing kind without recursion.
- *
- * CSS Flexbox §9.4 step 9–11:
- *   - If the item has a definite cross size → use it
- *   - If align-self is stretch (and no definite cross size) → stretch to container
- *   - Otherwise → content-based
- */
 type FlexCrossKind = "flex-cross-stretch" | "flex-cross-content" | "explicit" | "percentage";
 
 export function determineFlexCrossKind(
@@ -171,15 +149,6 @@ export function determineFlexCrossKind(
   return (effectiveAlign === "stretch" || effectiveAlign === "normal") ? "flex-cross-stretch" : "flex-cross-content";
 }
 
-/**
- * Cross-axis size of a flex item.
- *
- * CSS Flexbox §9.4 Cross Size Determination:
- *   Step 7:  Determine hypothetical cross size of each item
- *   Step 8:  Calculate cross size of each flex line (max of items)
- *   Step 9:  Handle align-content: stretch for multi-line
- *   Step 11: Determine used cross size — stretch if align-self: stretch
- */
 export function flexItemCross(
   fns: SizeFns, b: DagBuilder, el: Element, axis: Axis,
   ctx: LayoutContext, depth: number,
@@ -199,13 +168,16 @@ export function flexItemCross(
   if (explicit) {
     if (explicit.kind === "percentage") {
       const cbNode = fns.computeSize(ctx.containingBlock, axis, depth - 1);
-      return fns.make("percentage", el, axis, size,
-        { containingBlock: cbNode }, {},
-        `${cbNode.result}px \u00d7 ${explicit.specifiedValue} = ${size}px`,
+      return fns.make("percentage", el, axis,
+        `${axis} is a percentage of the containing block`,
+        val(size, `${explicit.specifiedValue} of ${cbNode.result}px`),
+        { containingBlock: cbNode },
         { [axis]: explicit.specifiedValue });
     }
-    return fns.make("explicit", el, axis, size, {}, {},
-      `${s.getPropertyValue(axis)} \u2192 ${size}px`, { [axis]: s.getPropertyValue(axis) });
+    return fns.make("explicit", el, axis,
+      `${axis} is set explicitly in CSS`,
+      val(size, s.getPropertyValue(axis)),
+      {}, { [axis]: s.getPropertyValue(axis) });
   }
 
   const alignSelf = s.alignSelf;
@@ -213,16 +185,18 @@ export function flexItemCross(
 
   if (crossKind === "flex-cross-stretch") {
     const containerCross = fns.computeSize(ctx.parent, axis, depth - 1);
-    return fns.make("flex-cross-stretch", el, axis, size,
-      { containerCross }, {},
-      `stretch \u2192 ${containerCross.result}px \u2192 ${size}px`,
+    return fns.make("flex-cross-stretch", el, axis,
+      `Flex item stretches on the cross axis to fill the container`,
+      val(size, `stretch to ${containerCross.result}px`),
+      { containerCross },
       { "align-self": alignSelf, "align-items": alignItems });
   }
 
   const contentNode = fns.contentSize(el, axis, depth);
-  return fns.make("flex-cross-content", el, axis, size,
-    { content: contentNode }, {},
-    `content \u2192 ${size}px`,
+  return fns.make("flex-cross-content", el, axis,
+    `Flex item cross-axis size is determined by its content`,
+    ref(contentNode),
+    { content: contentNode },
     { "align-self": alignSelf, "align-items": alignItems });
 }
 
@@ -230,17 +204,6 @@ export function flexItemCross(
 // Flex basis resolution
 // ---------------------------------------------------------------------------
 
-/**
- * Resolve flex-basis to a border-box pixel value.
- *
- * CSS Flexbox §9.2 step 3 (Determine the flex base size):
- *   A. If flex-basis is a definite length → use it (interpreted per box-sizing)
- *   B. If flex-basis is "content" or "auto" and the item has a definite
- *      main size → use that
- *   C. Otherwise → compute from content via computeIntrinsicSize
- *
- * All returned values are normalized to border-box.
- */
 function resolveBasis(
   fns: SizeFns, el: Element, s: CSSStyleDeclaration, axis: Axis,
   containerContent: number, paddingBorder: number, depth: number,
@@ -258,9 +221,6 @@ function resolveBasis(
     const raw = (parseFloat(fb) / 100) * containerContent;
     basis = isBorderBox ? raw : raw + paddingBorder;
   } else if (fb === "auto") {
-    // Read the SPECIFIED value, not the computed/used value.
-    // getComputedStyle returns the post-layout used value, which is wrong
-    // for flex items whose size changed due to flex distribution.
     const specified = getSpecifiedValue(el, axis);
     if (specified && specified.endsWith("px")) {
       const raw = parseFloat(specified);
@@ -269,14 +229,12 @@ function resolveBasis(
       const raw = (parseFloat(specified) / 100) * containerContent;
       basis = isBorderBox ? raw : raw + paddingBorder;
     } else {
-      // No explicit size — compute from content using our own DAG recursion
       basis = fns.computeIntrinsicSize(el, axis, depth - 1).result;
     }
   } else {
     basis = fns.computeIntrinsicSize(el, axis, depth - 1).result;
   }
 
-  // CSS can't render negative content — floor by padding+border
   return Math.max(basis, paddingBorder);
 }
 
@@ -287,24 +245,15 @@ function resolveBasis(
 interface FlexSibling {
   element: Element; basis: number; hypothetical: number;
   grow: number; shrink: number; minMain: number; maxMain: number; margin: number;
-  /** Padding+border on the main axis (for shrink weighting per §9.7 step 3b). */
   pb: number;
 }
 
-/** Padding + border on a given axis. */
 function itemPaddingBorder(cs: CSSStyleDeclaration, axis: Axis): number {
   return axis === "width"
     ? px(cs.paddingLeft) + px(cs.paddingRight) + px(cs.borderLeftWidth) + px(cs.borderRightWidth)
     : px(cs.paddingTop) + px(cs.paddingBottom) + px(cs.borderTopWidth) + px(cs.borderBottomWidth);
 }
 
-/**
- * Collect sizing data for all flex items in a container.
- *
- * CSS Flexbox §9.2–9.3: all sizes (basis, hypothetical, min/max) are
- * normalized to border-box so the outer hypothetical main size is simply
- * hypothetical + margin.
- */
 function collectFlexSiblings(
   fns: SizeFns, container: Element, axis: Axis, depth: number,
 ): FlexSibling[] {
@@ -330,23 +279,16 @@ function collectFlexSiblings(
     const isBorderBox = cs.boxSizing === "border-box";
     const fb = cs.flexBasis;
 
-    // Compute basis normalized to border-box.
-    // CSS values from getComputedStyle are content-box; explicit flex-basis
-    // values are interpreted per box-sizing (§7.2.2).
     let basis: number;
     if (fb === "0" || fb === "0px" || fb === "0%") {
-      // flex-basis: 0 nominally means 0, but CSS can't render negative
-      // content, so the actual minimum border-box is always padding+border.
       basis = pb;
     } else if (fb.endsWith("px") && fb !== "auto") {
-      // flex-basis: <length> — interpreted per box-sizing
       const raw = parseFloat(fb);
       basis = isBorderBox ? raw : raw + pb;
     } else if (fb.endsWith("%")) {
       const raw = (parseFloat(fb) / 100) * containerContent;
       basis = isBorderBox ? raw : raw + pb;
     } else if (fb === "auto") {
-      // Read specified (authored) value, not the post-layout used value
       const specified = getSpecifiedValue(child, axis);
       if (specified && specified.endsWith("px")) {
         const raw = parseFloat(specified);
@@ -355,26 +297,20 @@ function collectFlexSiblings(
         const raw = (parseFloat(specified) / 100) * containerContent;
         basis = isBorderBox ? raw : raw + pb;
       } else {
-        // No explicit size — compute intrinsic (pre-flex) content-based size
-        // using our own DAG computation. This avoids DOM cloning which can
-        // give wrong results due to different ancestor context.
         basis = fns.computeIntrinsicSize(child, axis, depth - 1).result;
       }
     } else {
       basis = fns.computeIntrinsicSize(child, axis, depth - 1).result;
     }
 
-    // Floor basis by padding+border (CSS can't render negative content)
     basis = Math.max(basis, pb);
 
-    // min/max: getComputedStyle returns content-box for px values;
-    // measureMinContentSize returns border-box (from getBoundingClientRect on clone)
     const minV = cs.getPropertyValue(minProp);
     const ov = axis === "width" ? cs.overflowX : cs.overflowY;
     const isScroll = ov !== "visible" && ov !== "clip";
     let minMain: number;
     if (minV === "auto") {
-      minMain = isScroll ? 0 : measureMinContentSize(child, axis); // border-box
+      minMain = isScroll ? 0 : measureMinContentSize(child, axis);
     } else {
       const raw = px(minV);
       minMain = cs.boxSizing === "border-box" ? raw : raw + pb;
@@ -388,9 +324,6 @@ function collectFlexSiblings(
       maxMain = cs.boxSizing === "border-box" ? raw : raw + pb;
     }
 
-    // A box can never be smaller than its padding+border (CSS can't
-    // render negative content). Apply this floor to minMain so the
-    // freeze-and-redistribute loop in resolveFlexLengths respects it.
     minMain = Math.max(minMain, pb);
     const hypothetical = Math.max(minMain, Math.min(maxMain, basis));
 
@@ -407,24 +340,10 @@ function collectFlexSiblings(
 // Flex length resolution (freeze-and-redistribute)
 // ---------------------------------------------------------------------------
 
-/**
- * Resolve flexible lengths via the freeze-and-redistribute algorithm.
- *
- * CSS Flexbox §9.7 — Resolving Flexible Lengths:
- *   1. Determine each item as inflexible or flexible
- *   2. Size inflexible items, calculate initial free space
- *   3. Loop: distribute remaining space by flex factors,
- *      freeze items that violate min/max, repeat until stable
- *
- * Shrink distribution is weighted by flex-shrink × flex-basis (§9.7 step 3b),
- * not by flex-shrink alone.
- */
 function resolveFlexLengths(
   items: FlexSibling[], containerContent: number, totalGap: number,
 ): number[] {
   const state = items.map((item) => ({ frozen: false, target: item.basis }));
-  // §9.7 step 1: determine grow vs shrink using outer HYPOTHETICAL main sizes
-  // (clamped by min/max), not raw basis values
   const totalHypo = items.reduce((s, i) => s + i.hypothetical + i.margin, 0);
   const growing = containerContent - totalHypo - totalGap > 0;
 
@@ -448,8 +367,6 @@ function resolveFlexLengths(
       const tg = unfrozen.reduce((s, i) => s + items[i].grow, 0);
       for (const i of unfrozen) state[i].target = items[i].basis + (tg > 0 ? (items[i].grow / tg) * remaining : 0);
     } else {
-      // §9.7 step 3b: scaled flex shrink factor = flex-shrink × inner flex base size
-      // "inner" = content-box (basis minus padding+border)
       const ts = unfrozen.reduce((s, i) => s + items[i].shrink * Math.max(0, items[i].basis - items[i].pb), 0);
       for (const i of unfrozen) {
         const innerBasis = Math.max(0, items[i].basis - items[i].pb);
@@ -458,31 +375,25 @@ function resolveFlexLengths(
       }
     }
 
-    // §9.7 step 3c–d: Clamp to min/max, compute total violation, then
-    // freeze ONLY items violating in the total violation's direction.
     let totalViolation = 0;
     const clamped: number[] = [];
     for (const i of unfrozen) {
       let violation = 0;
       if (state[i].target < items[i].minMain) {
-        violation = items[i].minMain - state[i].target; // positive = min violation
+        violation = items[i].minMain - state[i].target;
         state[i].target = items[i].minMain;
       } else if (state[i].target > items[i].maxMain) {
-        violation = items[i].maxMain - state[i].target; // negative = max violation
+        violation = items[i].maxMain - state[i].target;
         state[i].target = items[i].maxMain;
       }
       if (violation !== 0) clamped.push(i);
       totalViolation += violation;
     }
     if (clamped.length === 0) break;
-    // Positive total → freeze min violations; negative → freeze max violations
     for (const i of clamped) {
       const isMin = state[i].target === items[i].minMain;
       if ((totalViolation > 0 && isMin) || (totalViolation < 0 && !isMin)) {
         state[i].frozen = true;
-      } else {
-        // Unclamped — restore to pre-clamp target for next iteration.
-        // The basis will be used again in the next iteration's distribution.
       }
     }
   }

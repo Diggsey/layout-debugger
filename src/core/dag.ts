@@ -1,9 +1,9 @@
 /**
- * Layout Computation DAG — v3
+ * Layout Computation DAG — v4
  *
- * Every meaningful value is a node. Nodes reference other nodes via `inputs`.
- * The DagBuilder deduplicates by (kind, element, axis) and serves as
- * the recursion guard — if a node is already being built, return early.
+ * Every meaningful value is a node. Each node's result is computed from
+ * a CalcExpr tree — the same tree is used for both the actual computation
+ * and the UI presentation, so they can never get out of sync.
  */
 
 // ---------------------------------------------------------------------------
@@ -53,6 +53,47 @@ export type NodeKind =
 export type Axis = "width" | "height";
 
 // ---------------------------------------------------------------------------
+// CalcExpr — the computation tree
+// ---------------------------------------------------------------------------
+
+export type CalcExpr =
+  | { op: "ref"; node: LayoutNode }               // another node's result
+  | { op: "value"; value: number; label?: string } // literal (CSS value, measurement)
+  | { op: "add"; args: CalcExpr[] }                // a + b + ...
+  | { op: "sub"; left: CalcExpr; right: CalcExpr } // a - b
+  | { op: "mul"; left: CalcExpr; right: CalcExpr } // a × b
+  | { op: "div"; left: CalcExpr; right: CalcExpr } // a ÷ b
+  | { op: "max"; args: CalcExpr[] }                // max(a, b, ...)
+  | { op: "min"; args: CalcExpr[] };               // min(a, b, ...)
+
+/** Evaluate a CalcExpr tree to produce a number. */
+export function evaluate(expr: CalcExpr): number {
+  switch (expr.op) {
+    case "ref": return expr.node.result;
+    case "value": return expr.value;
+    case "add": return expr.args.reduce((s, a) => s + evaluate(a), 0);
+    case "sub": return evaluate(expr.left) - evaluate(expr.right);
+    case "mul": return evaluate(expr.left) * evaluate(expr.right);
+    case "div": {
+      const d = evaluate(expr.right);
+      return d === 0 ? 0 : evaluate(expr.left) / d;
+    }
+    case "max": return Math.max(...expr.args.map(evaluate));
+    case "min": return Math.min(...expr.args.map(evaluate));
+  }
+}
+
+// Builder helpers
+export const ref = (node: LayoutNode): CalcExpr => ({ op: "ref", node });
+export const val = (v: number, label?: string): CalcExpr => ({ op: "value", value: v, label });
+export const add = (...args: CalcExpr[]): CalcExpr => ({ op: "add", args });
+export const sub = (left: CalcExpr, right: CalcExpr): CalcExpr => ({ op: "sub", left, right });
+export const mul = (left: CalcExpr, right: CalcExpr): CalcExpr => ({ op: "mul", left, right });
+export const div = (left: CalcExpr, right: CalcExpr): CalcExpr => ({ op: "div", left, right });
+export const cmax = (...args: CalcExpr[]): CalcExpr => ({ op: "max", args });
+export const cmin = (...args: CalcExpr[]): CalcExpr => ({ op: "min", args });
+
+// ---------------------------------------------------------------------------
 // Node
 // ---------------------------------------------------------------------------
 
@@ -60,13 +101,14 @@ export interface LayoutNode {
   kind: NodeKind;
   element: Element;
   axis: Axis;
+  /** Cached result from evaluate(calc), rounded to 2dp. */
   result: number;
-  /** Named references to other nodes (the DAG edges). */
+  /** One-line description of why this node type is relevant. */
+  description: string;
+  /** The computation tree — the sole source of truth for the result. */
+  calc: CalcExpr;
+  /** Named references to other nodes (the DAG edges for graph display). */
   inputs: Partial<Record<string, LayoutNode>>;
-  /** Named literal values from CSS properties or constants. */
-  literals: Partial<Record<string, number>>;
-  /** Human-readable expression: how result = f(inputs, literals). */
-  expr: string;
   /** Relevant CSS properties (including absent-but-relevant defaults). */
   cssProperties: Partial<Record<string, string>>;
 }
@@ -91,9 +133,10 @@ export interface SizeFns {
   contentSize(el: Element, axis: Axis, depth: number, intrinsic?: boolean): LayoutNode;
   containerContentArea(container: Element, axis: Axis, borderBoxNode: LayoutNode): LayoutNode;
   make(
-    kind: NodeKind, el: Element, axis: Axis, result: number,
-    inputs: LayoutNode["inputs"], literals: LayoutNode["literals"],
-    expr: string, cssProperties?: LayoutNode["cssProperties"],
+    kind: NodeKind, el: Element, axis: Axis,
+    description: string, calc: CalcExpr,
+    inputs: LayoutNode["inputs"],
+    cssProperties?: LayoutNode["cssProperties"],
   ): LayoutNode;
   measured(el: Element, axis: Axis, kind: NodeKind): LayoutNode;
 }

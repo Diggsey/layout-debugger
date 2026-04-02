@@ -1,33 +1,19 @@
 /**
  * Grid layout analyzer.
  *
- * Determines grid item sizes by reading the browser's resolved track sizes.
- *
  * Spec references:
  * - CSS Grid §11.1  Grid Item Sizing
- *   https://www.w3.org/TR/css-grid-1/#algo-overview
- *
- * - CSS Grid §7.2.1  Track Sizing Algorithm
- *   https://www.w3.org/TR/css-grid-1/#algo-track-sizing
- *   We don't re-implement the track sizing algorithm; instead we read
- *   the resolved gridTemplateColumns/Rows which the browser has already
- *   computed per the spec.
- *
- * - CSS Grid §8.3  Track Sizing Properties (grid-template-columns/rows)
- *   https://www.w3.org/TR/css-grid-1/#track-sizing
- *   getComputedStyle returns resolved pixel values for each track.
+ * - CSS Grid §7.2.1 Track Sizing Algorithm
+ * - CSS Grid §8.3   Track Sizing Properties
  */
 import type { Axis, LayoutNode, SizeFns } from "../dag";
 import type { DagBuilder } from "../dag";
+import { val } from "../dag";
 import type { LayoutContext } from "../types";
 import { px, round, parseTrackList } from "../utils";
 
 /**
- * Grid item sizing: size = sum of spanned tracks + gaps between them.
- *
- * CSS Grid §11.1: A grid item's size in a given axis is determined by
- * the tracks it spans. We read the item's grid-column/row-start/end
- * and sum the resolved track sizes plus inter-track gaps.
+ * Grid item sizing: measured from the DOM (track sizes determined by browser).
  */
 export function gridItem(
   fns: SizeFns, b: DagBuilder, el: Element, axis: Axis,
@@ -54,16 +40,19 @@ export function gridItem(
   const start = parseInt((elStyle as any)[startProp], 10);
   const end = parseInt((elStyle as any)[endProp], 10);
 
-  let expr: string;
+  let label: string;
   if (!isNaN(start) && !isNaN(end) && tracks.length > 0) {
     const spanned = tracks.slice(start - 1, end - 1);
     const numGaps = Math.max(0, spanned.length - 1);
-    expr = spanned.map((t) => `${round(t)}px`).join(" + ") +
-      (numGaps > 0 ? ` + ${round(gapVal * numGaps)}px gaps` : "") + ` = ${size}px`;
+    label = spanned.map((t) => `${round(t)}px`).join(" + ") +
+      (numGaps > 0 ? ` + ${round(gapVal * numGaps)}px gaps` : "");
   } else {
-    expr = `auto-placed \u2192 ${size}px`;
+    label = "auto-placed";
   }
 
-  return fns.make("grid-item", el, axis, size, { container: containerNode }, {},
-    expr, { [`grid-${axis === "width" ? "column" : "row"}`]: `${start} / ${end}`, [gapPropName]: `${gapVal}px` });
+  return fns.make("grid-item", el, axis,
+    `Grid item \u2014 ${axis} determined by the grid track it occupies`,
+    val(size, label),
+    { container: containerNode },
+    { [`grid-${axis === "width" ? "column" : "row"}`]: `${start} / ${end}`, [gapPropName]: `${gapVal}px` });
 }

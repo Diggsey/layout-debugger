@@ -4,7 +4,7 @@
  * Used by: extension communication, fuzz oracle output, test helpers.
  * All types are JSON-safe (no live DOM references).
  */
-import type { LayoutNode, DagResult, Axis } from "./dag";
+import type { LayoutNode, DagResult, Axis, CalcExpr } from "./dag";
 import { describeElement, round } from "./utils";
 
 // ---------------------------------------------------------------------------
@@ -42,7 +42,10 @@ export interface SerializedNode {
   result: number;
   /** Input name → node ID (flat, not nested). */
   inputs: Record<string, string>;
-  literals: Record<string, number>;
+  description: string;
+  /** Serialized CalcExpr (refs converted to node ID strings). */
+  calc: any;
+  /** Text expression derived from calc. */
   expr: string;
   cssProperties: Record<string, string>;
 }
@@ -113,7 +116,6 @@ export function serializeDag(dag: DagResult): SerializedDag {
     if (existing) return existing;
 
     const id = assignId(node);
-    // Walk inputs first (so child IDs are assigned)
     const serializedInputs: Record<string, string> = {};
     for (const [key, dep] of Object.entries(node.inputs)) {
       if (dep) serializedInputs[key] = walk(dep);
@@ -127,8 +129,9 @@ export function serializeDag(dag: DagResult): SerializedDag {
       axis: node.axis,
       result: node.result,
       inputs: serializedInputs,
-      literals: node.literals as Record<string, number>,
-      expr: node.expr,
+      description: node.description,
+      calc: serializeCalcExpr(node.calc, ids),
+      expr: calcToText(node.calc),
       cssProperties: node.cssProperties as Record<string, string>,
     };
     return id;
@@ -159,7 +162,6 @@ export function measureElements(dag: DagResult): BrowserMeasurements {
 
   function walk(node: LayoutNode): void {
     if (!node || visited.has(node.element)) {
-      // Still walk inputs even if element was seen (different nodes, same element)
       if (node) {
         for (const dep of Object.values(node.inputs)) {
           if (dep) walk(dep);
@@ -194,7 +196,6 @@ export function measureElements(dag: DagResult): BrowserMeasurements {
 // Verification (oracle)
 // ---------------------------------------------------------------------------
 
-/** Kinds whose result is a computed border-box size that should match getBoundingClientRect. */
 const VERIFIABLE_KINDS = new Set([
   "block-fill", "flex-item-main", "flex-cross-stretch", "flex-cross-content",
   "grid-item", "positioned-offset", "positioned-shrink-to-fit", "clamped",
@@ -202,13 +203,11 @@ const VERIFIABLE_KINDS = new Set([
 
 const TOLERANCE = 1;
 
-/** Verify a DAG against the browser's actual layout. Returns structured results. */
 export function verifyDag(dag: DagResult): VerifyResult {
   const serialized = serializeDag(dag);
   const measurements = measureElements(dag);
   const errors: VerifyError[] = [];
 
-  // Check root results
   const targetPath = serialized.target.path;
   const targetMeasurement = measurements[targetPath];
   if (targetMeasurement) {
@@ -226,7 +225,6 @@ export function verifyDag(dag: DagResult): VerifyResult {
     }
   }
 
-  // Check all verifiable nodes
   const visited = new Set<string>();
   function checkNode(nodeId: string): void {
     if (visited.has(nodeId)) return;
@@ -240,7 +238,6 @@ export function verifyDag(dag: DagResult): VerifyResult {
         const actual = node.axis === "width" ? m.width : m.height;
         const delta = Math.abs(node.result - actual);
         if (delta > TOLERANCE) {
-          // Avoid duplicate with root check
           const isRoot = nodeId === serialized.rootWidth || nodeId === serialized.rootHeight;
           if (!isRoot) {
             errors.push({
@@ -261,4 +258,34 @@ export function verifyDag(dag: DagResult): VerifyResult {
   checkNode(serialized.rootHeight);
 
   return { ok: errors.length === 0, errors, dag: serialized, measurements };
+}
+
+// ---------------------------------------------------------------------------
+// CalcExpr serialization helpers
+// ---------------------------------------------------------------------------
+
+function serializeCalcExpr(expr: CalcExpr, ids: Map<LayoutNode, string>): any {
+  switch (expr.op) {
+    case "ref": return { op: "ref", nodeId: ids.get(expr.node) ?? "?" };
+    case "value": return { op: "value", value: expr.value, label: expr.label };
+    case "add": return { op: "add", args: expr.args.map(a => serializeCalcExpr(a, ids)) };
+    case "sub": return { op: "sub", left: serializeCalcExpr(expr.left, ids), right: serializeCalcExpr(expr.right, ids) };
+    case "mul": return { op: "mul", left: serializeCalcExpr(expr.left, ids), right: serializeCalcExpr(expr.right, ids) };
+    case "div": return { op: "div", left: serializeCalcExpr(expr.left, ids), right: serializeCalcExpr(expr.right, ids) };
+    case "max": return { op: "max", args: expr.args.map(a => serializeCalcExpr(a, ids)) };
+    case "min": return { op: "min", args: expr.args.map(a => serializeCalcExpr(a, ids)) };
+  }
+}
+
+function calcToText(expr: CalcExpr): string {
+  switch (expr.op) {
+    case "ref": return `${expr.node.result}px`;
+    case "value": return expr.label ? `${expr.value} (${expr.label})` : `${expr.value}px`;
+    case "add": return expr.args.map(calcToText).join(" + ");
+    case "sub": return `${calcToText(expr.left)} \u2212 ${calcToText(expr.right)}`;
+    case "mul": return `${calcToText(expr.left)} \u00d7 ${calcToText(expr.right)}`;
+    case "div": return `${calcToText(expr.left)} / ${calcToText(expr.right)}`;
+    case "max": return `max(${expr.args.map(calcToText).join(", ")})`;
+    case "min": return `min(${expr.args.map(calcToText).join(", ")})`;
+  }
 }

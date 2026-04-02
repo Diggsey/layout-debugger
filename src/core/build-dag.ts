@@ -3,24 +3,19 @@
  *
  * Entry point: buildDag(el) → DagResult with width and height root nodes.
  *
- * The builder dispatches to per-display-mode analyzers in src/core/analyzers/.
- * Each analyzer receives a SizeFns callback interface so it can recurse
- * into this module without circular imports.
+ * Each node's result is derived from its CalcExpr tree via evaluate().
+ * The analyzers build CalcExprs instead of doing arithmetic directly,
+ * ensuring computation and presentation can never diverge.
  *
  * Spec references (cross-cutting):
  * - CSS2 §10.2   Content width — the 'width' property
- *   https://www.w3.org/TR/CSS2/visudet.html#the-width-property
  * - CSS2 §10.5   Content height — the 'height' property
- *   https://www.w3.org/TR/CSS2/visudet.html#the-height-property
- * - CSS2 §10.4   Minimum and maximum widths: 'min-width' and 'max-width'
- *   https://www.w3.org/TR/CSS2/visudet.html#min-max-widths
- * - CSS2 §10.7   Minimum and maximum heights: 'min-height' and 'max-height'
- *   https://www.w3.org/TR/CSS2/visudet.html#min-max-heights
+ * - CSS2 §10.4   Minimum and maximum widths
+ * - CSS2 §10.7   Minimum and maximum heights
  * - CSS Sizing 3 §4  Intrinsic Size Determination
- *   https://www.w3.org/TR/css-sizing-3/#intrinsic
  */
-import type { LayoutNode, DagResult, Axis, NodeKind, SizeFns } from "./dag";
-import { DagBuilder } from "./dag";
+import type { LayoutNode, DagResult, Axis, NodeKind, SizeFns, CalcExpr } from "./dag";
+import { DagBuilder, evaluate, ref, val, add, cmax, cmin } from "./dag";
 import { identifyContext } from "./context";
 import { getExplicitSize } from "./sizing";
 import { getSpecifiedIntrinsicKeyword } from "./analyzers/properties";
@@ -52,12 +47,13 @@ export function buildDag(el: Element): DagResult {
 
 function make(
   b: DagBuilder, kind: NodeKind, el: Element, axis: Axis,
-  result: number, inputs: LayoutNode["inputs"], literals: LayoutNode["literals"],
-  expr: string, cssProperties: LayoutNode["cssProperties"] = {},
+  description: string, calc: CalcExpr,
+  inputs: LayoutNode["inputs"],
+  cssProperties: LayoutNode["cssProperties"] = {},
 ): LayoutNode {
   const existing = b.get(kind, el, axis);
   if (existing) return existing;
-  return b.finish({ kind, element: el, axis, result, inputs, literals, expr, cssProperties });
+  return b.finish({ kind, element: el, axis, result: round(evaluate(calc)), description, calc, inputs, cssProperties });
 }
 
 function measured(b: DagBuilder, el: Element, axis: Axis, kind: NodeKind): LayoutNode {
@@ -65,7 +61,8 @@ function measured(b: DagBuilder, el: Element, axis: Axis, kind: NodeKind): Layou
   if (existing) return existing;
   const rect = el.getBoundingClientRect();
   const size = round(axis === "width" ? rect.width : rect.height);
-  return b.finish({ kind, element: el, axis, result: size, inputs: {}, literals: {}, expr: `${size}px`, cssProperties: {} });
+  const desc = kind === "terminal" ? "Measured size (depth limit)" : `${kind} size`;
+  return b.finish({ kind, element: el, axis, result: size, description: desc, calc: val(size), inputs: {}, cssProperties: {} });
 }
 
 // ---------------------------------------------------------------------------
@@ -75,14 +72,11 @@ function measured(b: DagBuilder, el: Element, axis: Axis, kind: NodeKind): Layou
 /**
  * Classify how an element's size on a given axis is determined.
  *
- * This is a pure function (no recursion, no side effects) that reads
- * computed styles and returns a NodeKind. The ordering of checks mirrors
- * the CSS cascade of sizing rules:
- *   1. display: none / contents (CSS Display 3 §2.7, §2.8)
- *   2. flex main axis (CSS Flexbox §9 — always governs, even with explicit size)
- *   3. aspect-ratio (CSS Sizing 4 §5.1)
- *   4. explicit size — fixed length or percentage (CSS2 §10.2)
- *   5. intrinsic keyword — min-content, max-content, fit-content (CSS Sizing 3 §4)
+ *   1. display: none / contents
+ *   2. flex main axis (always governs, even with explicit size)
+ *   3. aspect-ratio
+ *   4. explicit size — fixed length or percentage
+ *   5. intrinsic keyword
  *   6. layout-mode dispatch — flex cross, grid, positioned, block, inline
  */
 function determineKind(el: Element, axis: Axis): NodeKind {
@@ -92,9 +86,6 @@ function determineKind(el: Element, axis: Axis): NodeKind {
   if (s.display === "none") return "display-none";
   if (s.display === "contents") return "display-contents";
 
-  // CSS Flexbox §9: flex items on the main axis are ALWAYS sized by the
-  // flex algorithm — explicit width/height feeds into flex-basis resolution
-  // but doesn't determine the final size. Must check before explicit/percentage.
   const parent = el.parentElement;
   if (parent && s.position !== "absolute" && s.position !== "fixed") {
     const parentDisplay = getComputedStyle(parent).display;
@@ -104,7 +95,6 @@ function determineKind(el: Element, axis: Axis): NodeKind {
     }
   }
 
-  // CSS Sizing 4 §5.1: aspect-ratio transfers size from one axis to the other
   const ar = s.aspectRatio;
   if (ar && ar !== "auto") {
     const match = ar.match(/^([\d.]+)\s*(?:\/\s*([\d.]+))?$/);
@@ -116,23 +106,18 @@ function determineKind(el: Element, axis: Axis): NodeKind {
     }
   }
 
-  // CSS2 §10.2/10.5: explicit width/height property
   const explicit = getExplicitSize(el, axis);
   if (explicit) return explicit.kind === "percentage" ? "percentage" : "explicit";
 
-  // CSS Sizing 3 §4: intrinsic sizing keywords
   const intrinsic = getSpecifiedIntrinsicKeyword(el, axis);
   if (intrinsic) return "intrinsic";
 
   const ctx = identifyContext(el);
 
-  // CSS Flexbox §9.4: flex item cross-axis sizing
   if (ctx.mode === "flex") {
     return determineFlexCrossKind(el, axis, ctx);
   }
-  // CSS Grid §11.1: grid item sizing
   if (ctx.mode === "grid") return "grid-item";
-  // CSS2 §10.3.7/10.6.4: positioned element sizing
   if (ctx.mode === "positioned") {
     const startProp = axis === "width" ? "left" : "top";
     const endProp = axis === "width" ? "right" : "bottom";
@@ -142,26 +127,15 @@ function determineKind(el: Element, axis: Axis): NodeKind {
   if (ctx.mode === "table-cell") return "table-cell";
   if (ctx.mode === "inline-block" || ctx.mode === "inline") return "content-kind" as NodeKind;
 
-  // CSS2 §10.3.3: block-level auto width fills containing block
   const isFloat = ctx.float !== "none";
   const fillsAvailable = axis === ctx.inlineAxis && !isFloat;
   return fillsAvailable ? "block-fill" : "content-kind" as NodeKind;
 }
 
-// "content-kind" is a placeholder — the actual kind depends on the display type
-// (content-sum or content-max). Resolved in computeSize.
-
 // ---------------------------------------------------------------------------
 // Core dispatch
 // ---------------------------------------------------------------------------
 
-/**
- * Compute the size of an element on a given axis, returning a LayoutNode.
- *
- * This is the main recursive entry point. It determines the node kind,
- * checks the cache/recursion guard, then dispatches to the appropriate
- * per-display-mode analyzer.
- */
 function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): LayoutNode {
   if (depth <= 0) return measured(b, el, axis, "terminal");
 
@@ -170,7 +144,6 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
   const cached = b.get(kind, el, axis);
   if (cached) return cached;
 
-  // Content-kind placeholder: resolve to content-sum or content-max
   if (kind === ("content-kind" as NodeKind)) {
     const s = getComputedStyle(el);
     const isFlex = s.display === "flex" || s.display === "inline-flex";
@@ -189,8 +162,14 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
 
   switch (kind) {
     case "viewport": return measured(b, el, axis, "viewport");
-    case "display-none": return make(b, "display-none", el, axis, 0, {}, {}, "display: none → 0", { display: "none" });
-    case "display-contents": return make(b, "display-contents", el, axis, 0, {}, {}, "display: contents → 0", { display: "contents" });
+    case "display-none":
+      return make(b, "display-none", el, axis,
+        "Element is hidden (display: none)", val(0),
+        {}, { display: "none" });
+    case "display-contents":
+      return make(b, "display-contents", el, axis,
+        "Element has no box (display: contents)", val(0),
+        {}, { display: "contents" });
     case "aspect-ratio": {
       const node = aspectRatio(fns, b, el, axis, ctx(), depth);
       return node ? maybeClamp(b, el, axis, node) : measured(b, el, axis, "terminal");
@@ -198,31 +177,34 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
     case "percentage": {
       const c = ctx();
       const info = getExplicitSize(el, axis)!;
-      // getExplicitSize returns content-box px; use border-box for the result
       const rect = el.getBoundingClientRect();
       const size = round(axis === "width" ? rect.width : rect.height);
       const cbNode = computeSize(b, c.containingBlock, axis, depth - 1);
-      const node = make(b, "percentage", el, axis, size,
-        { containingBlock: cbNode }, {},
-        `${cbNode.result}px × ${(info as any).specifiedValue} = ${size}px`,
+      const node = make(b, "percentage", el, axis,
+        `${axis} is a percentage of the containing block`,
+        val(size, `${(info as any).specifiedValue} of ${cbNode.result}px`),
+        { containingBlock: cbNode },
         { [axis]: (info as any).specifiedValue, "box-sizing": getComputedStyle(el).boxSizing });
       return maybeClamp(b, el, axis, node);
     }
     case "explicit": {
       const s = getComputedStyle(el);
-      // getComputedStyle returns content-box px; use border-box for the result
       const rect = el.getBoundingClientRect();
       const size = round(axis === "width" ? rect.width : rect.height);
-      const node = make(b, "explicit", el, axis, size, {}, {},
-        `${s.getPropertyValue(axis)} → ${size}px`,
-        { [axis]: s.getPropertyValue(axis), "box-sizing": s.boxSizing });
+      const node = make(b, "explicit", el, axis,
+        `${axis} is set explicitly in CSS`,
+        val(size, s.getPropertyValue(axis)),
+        {}, { [axis]: s.getPropertyValue(axis), "box-sizing": s.boxSizing });
       return maybeClamp(b, el, axis, node);
     }
     case "intrinsic": {
       const rect = el.getBoundingClientRect();
       const size = round(axis === "width" ? rect.width : rect.height);
       const kw = getSpecifiedIntrinsicKeyword(el, axis)!;
-      return make(b, "intrinsic", el, axis, size, {}, {}, `${kw} → ${size}px`, { [axis]: kw });
+      return make(b, "intrinsic", el, axis,
+        `${axis} uses an intrinsic sizing keyword`,
+        val(size, kw),
+        {}, { [axis]: kw });
     }
     case "flex-item-main":
       return maybeClamp(b, el, axis, flexItemMain(fns, b, el, axis, ctx(), depth));
@@ -249,8 +231,8 @@ function buildSizeFns(b: DagBuilder): SizeFns {
     contentSize: (el, axis, depth, intrinsic) => contentSize(b, el, axis, depth, intrinsic),
     containerContentArea: (container, axis, borderBoxNode) =>
       containerContentArea(fns, b, container, axis, borderBoxNode),
-    make: (kind, el, axis, result, inputs, literals, expr, cssProperties) =>
-      make(b, kind, el, axis, result, inputs, literals, expr, cssProperties),
+    make: (kind, el, axis, description, calc, inputs, cssProperties) =>
+      make(b, kind, el, axis, description, calc, inputs, cssProperties),
     measured: (el, axis, kind) => measured(b, el, axis, kind),
   };
   return fns;
@@ -260,20 +242,6 @@ function buildSizeFns(b: DagBuilder): SizeFns {
 // Intrinsic (content-based) size
 // ---------------------------------------------------------------------------
 
-/**
- * Compute an element's intrinsic size — what it would be based purely
- * on its content, ignoring extrinsic constraints (stretch, fill, percentage).
- *
- * CSS Sizing 3 §4: Intrinsic sizes are content-based. Used by:
- * - Flex cross-axis algorithm (§9.4 step 7–8): container cross size
- *   is the max of its items' intrinsic cross sizes before stretching
- * - Shrink-to-fit calculations
- * - Any context where we need the "natural" size
- *
- * Returns an "intrinsic-content" node wrapping the content computation,
- * or falls through to explicit/computed size if the element has one
- * (an explicit size IS the intrinsic size in that case).
- */
 function computeIntrinsicSize(
   b: DagBuilder, el: Element, axis: Axis, depth: number,
 ): LayoutNode {
@@ -283,20 +251,18 @@ function computeIntrinsicSize(
   if (existing) return existing;
   if (b.isBuilding("intrinsic-content", el, axis)) return measured(b, el, axis, "terminal");
 
-  // If the element has an explicit size, that IS its intrinsic size
   const explicit = getExplicitSize(el, axis);
   if (explicit) {
     return computeSize(b, el, axis, depth);
   }
 
-  // Content-based size with intrinsic=true so descendants also use
-  // intrinsic sizes (preventing stretch/fill cycles)
   const s = getComputedStyle(el);
   const contentNode = contentSize(b, el, axis, depth, true);
 
-  return make(b, "intrinsic-content", el, axis, contentNode.result,
-    { content: contentNode }, {},
-    `intrinsic ${axis}: ${contentNode.result}px (from content)`,
+  return make(b, "intrinsic-content", el, axis,
+    `Intrinsic ${axis} from content (display: ${s.display})`,
+    ref(contentNode),
+    { content: contentNode },
     { display: s.display, [axis]: "auto" });
 }
 
@@ -304,13 +270,6 @@ function computeIntrinsicSize(
 // Clamping (min/max constraints)
 // ---------------------------------------------------------------------------
 
-/**
- * Apply min-width/max-width (or min-height/max-height) constraints.
- *
- * CSS2 §10.4 / §10.7: The used value of width/height is constrained:
- *   used = max(min, min(max, computed))
- * Returns the original node unchanged if no clamping occurs.
- */
 function maybeClamp(b: DagBuilder, el: Element, axis: Axis, input: LayoutNode): LayoutNode {
   const s = getComputedStyle(el);
   const minProp = axis === "width" ? "min-width" : "min-height";
@@ -318,9 +277,6 @@ function maybeClamp(b: DagBuilder, el: Element, axis: Axis, input: LayoutNode): 
   const minVal = s.getPropertyValue(minProp);
   const maxVal = s.getPropertyValue(maxProp);
 
-  // CSS min/max values are interpreted per box-sizing. getComputedStyle
-  // returns the resolved value which, for content-box, is the content
-  // dimension. Convert to border-box since input.result is border-box.
   const padBorder = s.boxSizing !== "border-box"
     ? (axis === "width"
       ? px(s.paddingLeft) + px(s.paddingRight) + px(s.borderLeftWidth) + px(s.borderRightWidth)
@@ -332,10 +288,17 @@ function maybeClamp(b: DagBuilder, el: Element, axis: Axis, input: LayoutNode): 
 
   if (input.result >= minPx && (maxPx === Infinity || input.result <= maxPx)) return input;
 
-  const clamped = round(Math.max(minPx, Math.min(maxPx === Infinity ? Infinity : maxPx, input.result)));
-  return make(b, "clamped", el, axis, clamped,
-    { input }, { min: minPx, max: maxPx === Infinity ? Infinity : maxPx },
-    `clamp(${minPx}, ${input.result}px, ${maxPx === Infinity ? "\u221e" : maxPx}) = ${clamped}px`,
+  // Build the clamp CalcExpr
+  let calc: CalcExpr;
+  if (maxPx !== Infinity && input.result > maxPx) {
+    calc = cmin(val(maxPx, maxProp), ref(input));
+  } else {
+    calc = cmax(val(minPx, minProp), ref(input));
+  }
+
+  return make(b, "clamped", el, axis,
+    "Constrained by min/max",
+    calc, { input },
     { [minProp]: minVal, [maxProp]: maxVal });
 }
 
@@ -343,22 +306,6 @@ function maybeClamp(b: DagBuilder, el: Element, axis: Axis, input: LayoutNode): 
 // Content size (shared by block, inline, flex cross, intrinsic)
 // ---------------------------------------------------------------------------
 
-/**
- * Compute the content-driven size of an element on a given axis.
- *
- * Determines the kind (content-sum or content-max) based on display mode:
- * - Flex container cross-axis → content-max (tallest child)
- * - Everything else → content-sum (stacked children)
- *
- * When `intrinsic` is true, all children use computeIntrinsicSize instead
- * of computeSize, preventing cycles with stretch/fill.
- *
- * CSS Sizing 3 §4.1: max-content size of a box is the size it would be
- * if all children were at their max-content sizes.
- *
- * CSS Flexbox §9.4 step 7–8: For flex cross-axis, the container's cross
- * size = max of items' hypothetical (intrinsic) cross sizes.
- */
 function contentSize(
   b: DagBuilder, el: Element, axis: Axis, depth: number, intrinsic = false,
 ): LayoutNode {
@@ -377,12 +324,9 @@ function contentSize(
   if (existing) return existing;
   b.begin(kind, el, axis);
 
-  // For flex cross-axis, use intrinsic sizes to avoid the stretch/fill cycle
-  // (CSS Flexbox §9.4 step 7: determine hypothetical cross size)
   const isFlexCross = isFlex && !isFlexMain;
 
-  const childInputs: LayoutNode["inputs"] = {};
-  const childVals: number[] = [];
+  const childNodes: LayoutNode[] = [];
   let i = 0;
   for (const child of Array.from(el.children)) {
     const cs = getComputedStyle(child);
@@ -393,23 +337,50 @@ function contentSize(
       const childNode = useIntrinsic
         ? computeIntrinsicSize(b, child, axis, depth - 1)
         : computeSize(b, child, axis, depth - 1);
-      childInputs[`child${i}`] = childNode;
-      childVals.push(childNode.result);
-    } else {
-      const cr = child.getBoundingClientRect();
-      childVals.push(round(axis === "width" ? cr.width : cr.height));
+      childNodes.push(childNode);
     }
     i++;
   }
 
   const gap = px(axis === "width" ? s.columnGap : s.rowGap);
-  const totalGap = gap * Math.max(0, childVals.length - 1);
-  const childPart = childVals.map((v) => `${v}px`).join(mode === "sum" ? " + " : ", ");
-  const gapPart = totalGap > 0 ? ` + ${totalGap}px gaps` : "";
+  const totalGap = gap * Math.max(0, i - 1);
 
+  // Build inputs map
+  const inputs: LayoutNode["inputs"] = {};
+  childNodes.forEach((n, idx) => { inputs[`child${idx}`] = n; });
+
+  // Build CalcExpr
+  let calc: CalcExpr;
+  if (childNodes.length === 0) {
+    // No child nodes (leaf or depth limit) — use measured size
+    calc = val(size);
+  } else {
+    const childRefs = childNodes.map(n => ref(n));
+    if (mode === "sum") {
+      const args = [...childRefs];
+      if (totalGap > 0) args.push(val(totalGap, "gaps"));
+      calc = add(...args);
+    } else {
+      calc = cmax(...childRefs);
+    }
+  }
+
+  const hasChildren = childNodes.length > 0;
+  let description: string;
+  if (mode === "sum") {
+    description = hasChildren
+      ? `${axis} is determined by stacking its children`
+      : `${axis} is determined by its text/inline content`;
+  } else {
+    description = hasChildren
+      ? `${axis} is determined by its tallest/widest child`
+      : `${axis} is determined by its content`;
+  }
+
+  // For content nodes, the CalcExpr may not exactly match the measured size
+  // (e.g. text content, margin collapsing). Use the measured size as result
+  // but keep the CalcExpr for the explanation.
   return b.finish({ kind, element: el, axis, result: size,
-    inputs: childInputs,
-    literals: { gap, totalGap },
-    expr: `${mode}(${childPart})${gapPart} = ${size}px`,
+    description, calc, inputs,
     cssProperties: { [axis]: "auto", overflow: s.overflow } });
 }
