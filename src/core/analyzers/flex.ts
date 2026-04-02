@@ -33,7 +33,7 @@ import type { Axis, LayoutNode, SizeFns } from "../dag";
 import type { DagBuilder } from "../dag";
 import type { LayoutContext } from "../types";
 import { getExplicitSize, getSpecifiedValue } from "../sizing";
-import { px, round, measureMinContentSize, measureIntrinsicSize } from "../utils";
+import { px, round, measureMinContentSize } from "../utils";
 
 // ---------------------------------------------------------------------------
 // Flex item — main axis
@@ -67,7 +67,7 @@ export function flexItemMain(
   const s = getComputedStyle(el);
   const fb = s.flexBasis;
   const pb = itemPaddingBorder(s, axis);
-  const basisVal = resolveBasis(el, s, axis, containerContent.result, actualSize, pb);
+  const basisVal = resolveBasis(fns, el, s, axis, containerContent.result, pb, depth);
   const basisNode = fns.make("flex-basis", el, axis, round(basisVal), {}, {},
     `flex-basis: ${fb} \u2192 ${round(basisVal)}px`,
     { "flex-basis": fb, [axis]: s.getPropertyValue(axis) });
@@ -99,7 +99,7 @@ export function flexItemMain(
     `max(${round(basisVal)}px, ${round(minContent)}px) = ${round(baseSize)}px`, {});
 
   // §9.3: Determine free space
-  const allItems = collectFlexSiblings(container, axis);
+  const allItems = collectFlexSiblings(fns, container, axis, depth);
   const gap = px(axis === "width" ? containerStyle.columnGap : containerStyle.rowGap);
   const totalGap = gap * Math.max(0, allItems.length - 1);
   const totalBases = allItems.reduce((sum, item) => sum + item.hypothetical + item.margin, 0);
@@ -237,41 +237,47 @@ export function flexItemCross(
  *   A. If flex-basis is a definite length → use it (interpreted per box-sizing)
  *   B. If flex-basis is "content" or "auto" and the item has a definite
  *      main size → use that
- *   C. Otherwise → use the item's actual size (border-box from getBoundingClientRect)
+ *   C. Otherwise → compute from content via computeIntrinsicSize
  *
  * All returned values are normalized to border-box.
  */
 function resolveBasis(
-  el: Element, s: CSSStyleDeclaration, axis: Axis, containerContent: number,
-  actualSize: number, paddingBorder: number,
+  fns: SizeFns, el: Element, s: CSSStyleDeclaration, axis: Axis,
+  containerContent: number, paddingBorder: number, depth: number,
 ): number {
   const fb = s.flexBasis;
   const isBorderBox = s.boxSizing === "border-box";
-  if (fb === "0" || fb === "0px" || fb === "0%") return paddingBorder;
-  if (fb !== "auto" && fb !== "content" && fb.endsWith("px")) {
+
+  let basis: number;
+  if (fb === "0" || fb === "0px" || fb === "0%") {
+    basis = 0;
+  } else if (fb !== "auto" && fb !== "content" && fb.endsWith("px")) {
     const raw = parseFloat(fb);
-    return isBorderBox ? raw : raw + paddingBorder;
-  }
-  if (fb.endsWith("%")) {
+    basis = isBorderBox ? raw : raw + paddingBorder;
+  } else if (fb.endsWith("%")) {
     const raw = (parseFloat(fb) / 100) * containerContent;
-    return isBorderBox ? raw : raw + paddingBorder;
-  }
-  if (fb === "auto") {
+    basis = isBorderBox ? raw : raw + paddingBorder;
+  } else if (fb === "auto") {
     // Read the SPECIFIED value, not the computed/used value.
     // getComputedStyle returns the post-layout used value, which is wrong
     // for flex items whose size changed due to flex distribution.
     const specified = getSpecifiedValue(el, axis);
     if (specified && specified.endsWith("px")) {
       const raw = parseFloat(specified);
-      // Specified value is in terms of box-sizing
-      return isBorderBox ? raw : raw + paddingBorder;
-    }
-    if (specified && specified.endsWith("%")) {
+      basis = isBorderBox ? raw : raw + paddingBorder;
+    } else if (specified && specified.endsWith("%")) {
       const raw = (parseFloat(specified) / 100) * containerContent;
-      return isBorderBox ? raw : raw + paddingBorder;
+      basis = isBorderBox ? raw : raw + paddingBorder;
+    } else {
+      // No explicit size — compute from content using our own DAG recursion
+      basis = fns.computeIntrinsicSize(el, axis, depth - 1).result;
     }
+  } else {
+    basis = fns.computeIntrinsicSize(el, axis, depth - 1).result;
   }
-  return actualSize; // border-box from getBoundingClientRect
+
+  // CSS can't render negative content — floor by padding+border
+  return Math.max(basis, paddingBorder);
 }
 
 // ---------------------------------------------------------------------------
@@ -299,7 +305,9 @@ function itemPaddingBorder(cs: CSSStyleDeclaration, axis: Axis): number {
  * normalized to border-box so the outer hypothetical main size is simply
  * hypothetical + margin.
  */
-function collectFlexSiblings(container: Element, axis: Axis): FlexSibling[] {
+function collectFlexSiblings(
+  fns: SizeFns, container: Element, axis: Axis, depth: number,
+): FlexSibling[] {
   const minProp = axis === "width" ? "min-width" : "min-height";
   const maxProp = axis === "width" ? "max-width" : "max-height";
   const containerStyle = getComputedStyle(container);
@@ -347,14 +355,17 @@ function collectFlexSiblings(container: Element, axis: Axis): FlexSibling[] {
         const raw = (parseFloat(specified) / 100) * containerContent;
         basis = isBorderBox ? raw : raw + pb;
       } else {
-        // No explicit size — measure intrinsic (pre-flex) content-based size.
-        // Can't use getBoundingClientRect here because it returns the post-flex
-        // size, which inflates the total bases and gives wrong free space.
-        basis = measureIntrinsicSize(child, axis); // border-box
+        // No explicit size — compute intrinsic (pre-flex) content-based size
+        // using our own DAG computation. This avoids DOM cloning which can
+        // give wrong results due to different ancestor context.
+        basis = fns.computeIntrinsicSize(child, axis, depth - 1).result;
       }
     } else {
-      basis = measureIntrinsicSize(child, axis); // border-box
+      basis = fns.computeIntrinsicSize(child, axis, depth - 1).result;
     }
+
+    // Floor basis by padding+border (CSS can't render negative content)
+    basis = Math.max(basis, pb);
 
     // min/max: getComputedStyle returns content-box for px values;
     // measureMinContentSize returns border-box (from getBoundingClientRect on clone)
@@ -447,12 +458,33 @@ function resolveFlexLengths(
       }
     }
 
-    let anyFrozen = false;
+    // §9.7 step 3c–d: Clamp to min/max, compute total violation, then
+    // freeze ONLY items violating in the total violation's direction.
+    let totalViolation = 0;
+    const clamped: number[] = [];
     for (const i of unfrozen) {
-      if (state[i].target < items[i].minMain) { state[i].target = items[i].minMain; state[i].frozen = true; anyFrozen = true; }
-      else if (state[i].target > items[i].maxMain) { state[i].target = items[i].maxMain; state[i].frozen = true; anyFrozen = true; }
+      let violation = 0;
+      if (state[i].target < items[i].minMain) {
+        violation = items[i].minMain - state[i].target; // positive = min violation
+        state[i].target = items[i].minMain;
+      } else if (state[i].target > items[i].maxMain) {
+        violation = items[i].maxMain - state[i].target; // negative = max violation
+        state[i].target = items[i].maxMain;
+      }
+      if (violation !== 0) clamped.push(i);
+      totalViolation += violation;
     }
-    if (!anyFrozen) break;
+    if (clamped.length === 0) break;
+    // Positive total → freeze min violations; negative → freeze max violations
+    for (const i of clamped) {
+      const isMin = state[i].target === items[i].minMain;
+      if ((totalViolation > 0 && isMin) || (totalViolation < 0 && !isMin)) {
+        state[i].frozen = true;
+      } else {
+        // Unclamped — restore to pre-clamp target for next iteration.
+        // The basis will be used again in the next iteration's distribution.
+      }
+    }
   }
 
   return state.map((s) => round(s.target));
