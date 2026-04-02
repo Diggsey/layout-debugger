@@ -20,7 +20,9 @@ for (const file of files) {
     const spec: LayoutSpec = data.spec;
     const result = await runOracle(page, spec);
     const errorSummary = result.errors.map(
-      (e) => `${e.nodeId}: ${e.kind} ${e.elementPath} ${e.axis}: DAG=${e.dagResult} actual=${e.actual} delta=${e.delta}`,
+      (e) => e.message
+        ? `${e.nodeId}: ${e.kind} ${e.elementPath} ${e.axis}: ${e.message}`
+        : `${e.nodeId}: ${e.kind} ${e.elementPath} ${e.axis}: DAG=${e.dagResult} actual=${e.actual} delta=${e.delta}`,
     ).join("\n");
     expect(result.errors, `Regression in ${file}:\n${errorSummary}`).toEqual([]);
   });

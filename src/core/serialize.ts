@@ -84,6 +84,8 @@ export interface VerifyError {
   dagResult: number;
   actual: number;
   delta: number;
+  /** Optional message for non-delta errors (e.g. terminal nodes). */
+  message?: string;
 }
 
 export interface VerifyResult {
@@ -231,6 +233,15 @@ export function verifyDag(dag: DagResult): VerifyResult {
     visited.add(nodeId);
     const node = serialized.nodes[nodeId];
     if (!node) return;
+
+    // Terminal nodes indicate a cycle or depth limit — always an error
+    if (node.kind === "terminal") {
+      errors.push({
+        nodeId, kind: "terminal", elementPath: node.elementPath,
+        axis: node.axis, dagResult: node.result, actual: node.result, delta: 0,
+        message: node.description,
+      });
+    }
 
     if (VERIFIABLE_KINDS.has(node.kind)) {
       const m = measurements[node.elementPath];

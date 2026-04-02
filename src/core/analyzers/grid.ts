@@ -10,6 +10,7 @@ import type { Axis, LayoutNode, SizeFns } from "../dag";
 import type { DagBuilder } from "../dag";
 import { val } from "../dag";
 import type { LayoutContext } from "../types";
+import { getExplicitSize } from "../sizing";
 import { px, round, parseTrackList } from "../utils";
 
 /**
@@ -27,7 +28,17 @@ export function gridItem(
   const rect = el.getBoundingClientRect();
   const size = round(axis === "width" ? rect.width : rect.height);
 
-  const containerNode = fns.computeSize(ctx.parent, axis, depth - 1);
+  // Only compute the container's size on this axis if it has an explicit
+  // size. For auto-sized containers, the container depends on its grid
+  // items — computing it would create a cycle. The grid item's own size
+  // comes from getBoundingClientRect, not from the container node.
+  const containerExplicit = getExplicitSize(ctx.parent, axis);
+  const containerNode = containerExplicit
+    ? fns.computeSize(ctx.parent, axis, depth - 1)
+    : null;
+
+  const inputs: LayoutNode["inputs"] = {};
+  if (containerNode) inputs.container = containerNode;
 
   const tracksProp = axis === "width" ? "gridTemplateColumns" : "gridTemplateRows";
   const resolved = (containerStyle as any)[tracksProp] || "";
@@ -53,6 +64,6 @@ export function gridItem(
   return fns.make("grid-item", el, axis,
     `Grid item \u2014 ${axis} determined by the grid track it occupies`,
     val(size, label),
-    { container: containerNode },
+    inputs,
     { [`grid-${axis === "width" ? "column" : "row"}`]: `${start} / ${end}`, [gapPropName]: `${gapVal}px` });
 }

@@ -332,6 +332,13 @@ function contentSize(
   b.begin(kind, el, axis);
 
   const isFlexCross = isFlex && !isFlexMain;
+  const isGrid = display === "grid" || display === "inline-grid";
+
+  // Use intrinsic sizes for children when the parent's content size
+  // depends on them but they would cycle back (flex cross-axis children
+  // stretch to parent, grid items size from container). Also when the
+  // intrinsic flag is set (computing pre-stretch/pre-flex sizes).
+  const useIntrinsic = isFlexCross || isGrid || intrinsic;
 
   const childNodes: LayoutNode[] = [];
   let i = 0;
@@ -340,7 +347,6 @@ function contentSize(
     if (cs.position === "absolute" || cs.position === "fixed") continue;
     if (cs.display === "none" || cs.display === "contents") continue;
     if (depth > 1) {
-      const useIntrinsic = isFlexCross || intrinsic;
       const childNode = useIntrinsic
         ? computeIntrinsicSize(b, child, axis, depth - 1)
         : computeSize(b, child, axis, depth - 1);

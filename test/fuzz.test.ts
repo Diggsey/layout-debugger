@@ -42,6 +42,7 @@ test.describe("fuzz", () => {
       const summary = failures
         .map((f) => {
           const e = f.errors[0];
+          if (e.message) return `  seed=${f.seed}: ${e.kind} ${e.elementPath} ${e.axis}: ${e.message}`;
           return `  seed=${f.seed}: ${e.kind} ${e.elementPath} ${e.axis}: DAG=${e.dagResult} actual=${e.actual} delta=${e.delta}`;
         })
         .join("\n");

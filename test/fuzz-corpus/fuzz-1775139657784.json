@@ -1,0 +1,157 @@
+{
+  "seed": 1775139657784,
+  "spec": {
+    "style": {
+      "display": "grid",
+      "grid-template-columns": "3fr 3fr 1fr",
+      "width": "695px",
+      "overflow": "hidden",
+      "border": "3px solid black"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "grid",
+          "grid-template-columns": "3fr",
+          "width": "737px",
+          "overflow": "hidden",
+          "padding": "8px",
+          "box-sizing": "border-box"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "44px",
+              "height": "91px",
+              "padding": "15px",
+              "border": "3px solid black",
+              "box-sizing": "border-box"
+            }
+          }
+        ],
+        "target": true
+      },
+      {
+        "style": {
+          "width": "48px",
+          "height": "93px",
+          "padding": "6px",
+          "box-sizing": "border-box"
+        }
+      },
+      {
+        "style": {
+          "display": "grid",
+          "grid-template-columns": "3fr",
+          "width": "380px",
+          "overflow": "hidden",
+          "padding": "13px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "103px",
+              "height": "35px",
+              "padding": "8px",
+              "box-sizing": "border-box"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h2",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 113,
+      "actual": 113,
+      "delta": 0,
+      "message": "Measured size (content depends on this element’s own size)"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 737,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "value",
+          "value": 737,
+          "label": "737px"
+        },
+        "expr": "737 (737px)",
+        "cssProperties": {
+          "width": "737px",
+          "box-sizing": "border-box"
+        }
+      },
+      "h2": {
+        "id": "h2",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 113,
+        "inputs": {},
+        "description": "Measured size (content depends on this element’s own size)",
+        "calc": {
+          "op": "value",
+          "value": 113
+        },
+        "expr": "113px",
+        "cssProperties": {}
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "grid-item",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 107,
+        "inputs": {
+          "container": "h2"
+        },
+        "description": "Grid item — height determined by the grid track it occupies",
+        "calc": {
+          "op": "value",
+          "value": 107,
+          "label": "auto-placed"
+        },
+        "expr": "107 (auto-placed)",
+        "cssProperties": {
+          "grid-row": "NaN / NaN",
+          "rowGap": "0px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 737,
+      "height": 107
+    },
+    "body:nth-child(2) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 701,
+      "height": 113
+    }
+  }
+}

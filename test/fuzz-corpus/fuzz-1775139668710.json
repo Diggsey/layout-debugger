@@ -1,0 +1,295 @@
+{
+  "seed": 1775139668710,
+  "spec": {
+    "style": {
+      "overflow": "hidden",
+      "height": "344px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "130px",
+          "height": "70px",
+          "padding": "2px"
+        }
+      },
+      {
+        "style": {
+          "width": "59px",
+          "height": "57px",
+          "box-sizing": "border-box"
+        }
+      },
+      {
+        "style": {
+          "display": "grid",
+          "grid-template-columns": "3fr 2fr",
+          "width": "477px",
+          "overflow": "hidden",
+          "gap": "10px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "684px",
+              "overflow": "hidden"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "132px",
+                  "height": "57px",
+                  "display": "inline-block"
+                }
+              }
+            ]
+          },
+          {
+            "style": {
+              "width": "28px",
+              "height": "29px"
+            }
+          },
+          {
+            "style": {
+              "width": "132px",
+              "height": "22px"
+            }
+          },
+          {
+            "style": {
+              "width": "50px",
+              "height": "68px",
+              "box-sizing": "border-box"
+            }
+          }
+        ],
+        "target": true
+      },
+      {
+        "style": {
+          "width": "82px",
+          "height": "29px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h3",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3)",
+      "axis": "height",
+      "dagResult": 139,
+      "actual": 139,
+      "delta": 0,
+      "message": "Measured size (content depends on this element’s own size)"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 477,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "value",
+          "value": 477,
+          "label": "477px"
+        },
+        "expr": "477 (477px)",
+        "cssProperties": {
+          "width": "477px",
+          "box-sizing": "content-box"
+        }
+      },
+      "h3": {
+        "id": "h3",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 139,
+        "inputs": {},
+        "description": "Measured size (content depends on this element’s own size)",
+        "calc": {
+          "op": "value",
+          "value": 139
+        },
+        "expr": "139px",
+        "cssProperties": {}
+      },
+      "h2": {
+        "id": "h2",
+        "kind": "grid-item",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 61,
+        "inputs": {
+          "container": "h3"
+        },
+        "description": "Grid item — height determined by the grid track it occupies",
+        "calc": {
+          "op": "value",
+          "value": 61,
+          "label": "auto-placed"
+        },
+        "expr": "61 (auto-placed)",
+        "cssProperties": {
+          "grid-row": "NaN / NaN",
+          "rowGap": "10px"
+        }
+      },
+      "h4": {
+        "id": "h4",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 29,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "value",
+          "value": 29,
+          "label": "29px"
+        },
+        "expr": "29 (29px)",
+        "cssProperties": {
+          "height": "29px",
+          "box-sizing": "content-box"
+        }
+      },
+      "h5": {
+        "id": "h5",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(3)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 22,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "value",
+          "value": 22,
+          "label": "22px"
+        },
+        "expr": "22 (22px)",
+        "cssProperties": {
+          "height": "22px",
+          "box-sizing": "content-box"
+        }
+      },
+      "h6": {
+        "id": "h6",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(4)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 68,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "value",
+          "value": 68,
+          "label": "68px"
+        },
+        "expr": "68 (68px)",
+        "cssProperties": {
+          "height": "68px",
+          "box-sizing": "border-box"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "content-sum",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 139,
+        "inputs": {
+          "child0": "h2",
+          "child1": "h4",
+          "child2": "h5",
+          "child3": "h6"
+        },
+        "description": "height is determined by stacking its children",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "ref",
+              "nodeId": "h2"
+            },
+            {
+              "op": "ref",
+              "nodeId": "h4"
+            },
+            {
+              "op": "ref",
+              "nodeId": "h5"
+            },
+            {
+              "op": "ref",
+              "nodeId": "h6"
+            },
+            {
+              "op": "value",
+              "value": 30,
+              "label": "gaps"
+            }
+          ]
+        },
+        "expr": "61px + 29px + 22px + 68px + 30 (gaps)",
+        "cssProperties": {
+          "height": "auto",
+          "overflow": "hidden"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(3)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3)",
+      "desc": "<div>",
+      "width": 477,
+      "height": 139
+    },
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 684,
+      "height": 61
+    },
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2)",
+      "desc": "<div>",
+      "width": 28,
+      "height": 29
+    },
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(3)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(3)",
+      "desc": "<div>",
+      "width": 132,
+      "height": 22
+    },
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(4)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(4)",
+      "desc": "<div>",
+      "width": 50,
+      "height": 68
+    }
+  }
+}

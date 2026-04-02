@@ -1,0 +1,168 @@
+{
+  "seed": 1775139668462,
+  "spec": {
+    "style": {
+      "display": "grid",
+      "grid-template-columns": "1fr 2fr 3fr",
+      "width": "442px",
+      "overflow": "hidden",
+      "box-sizing": "border-box"
+    },
+    "children": [
+      {
+        "style": {
+          "overflow": "hidden"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "138px",
+              "height": "52px",
+              "padding": "13px",
+              "box-sizing": "border-box"
+            }
+          }
+        ],
+        "target": true
+      },
+      {
+        "style": {
+          "width": "81px",
+          "height": "25px",
+          "border": "2px solid black"
+        }
+      },
+      {
+        "style": {
+          "width": "76px",
+          "height": "48px",
+          "padding": "13px",
+          "border": "1px solid black"
+        }
+      },
+      {
+        "style": {
+          "width": "75px",
+          "height": "31px",
+          "box-sizing": "border-box"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h3",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 107,
+      "actual": 107,
+      "delta": 0,
+      "message": "Measured size (content depends on this element’s own size)"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h2",
+    "nodes": {
+      "w1": {
+        "id": "w1",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 442,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "value",
+          "value": 442,
+          "label": "442px"
+        },
+        "expr": "442 (442px)",
+        "cssProperties": {
+          "width": "442px",
+          "box-sizing": "border-box"
+        }
+      },
+      "w0": {
+        "id": "w0",
+        "kind": "grid-item",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 75,
+        "inputs": {
+          "container": "w1"
+        },
+        "description": "Grid item — width determined by the grid track it occupies",
+        "calc": {
+          "op": "value",
+          "value": 75,
+          "label": "auto-placed"
+        },
+        "expr": "75 (auto-placed)",
+        "cssProperties": {
+          "grid-column": "NaN / NaN",
+          "columnGap": "0px"
+        }
+      },
+      "h3": {
+        "id": "h3",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 107,
+        "inputs": {},
+        "description": "Measured size (content depends on this element’s own size)",
+        "calc": {
+          "op": "value",
+          "value": 107
+        },
+        "expr": "107px",
+        "cssProperties": {}
+      },
+      "h2": {
+        "id": "h2",
+        "kind": "grid-item",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 76,
+        "inputs": {
+          "container": "h3"
+        },
+        "description": "Grid item — height determined by the grid track it occupies",
+        "calc": {
+          "op": "value",
+          "value": 76,
+          "label": "auto-placed"
+        },
+        "expr": "76 (auto-placed)",
+        "cssProperties": {
+          "grid-row": "NaN / NaN",
+          "rowGap": "0px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 75,
+      "height": 76
+    },
+    "body:nth-child(2) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 442,
+      "height": 107
+    }
+  }
+}

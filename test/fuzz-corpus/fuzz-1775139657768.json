@@ -1,0 +1,173 @@
+{
+  "seed": 1775139657768,
+  "spec": {
+    "style": {
+      "overflow": "hidden",
+      "border": "1px solid black"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "grid",
+          "grid-template-columns": "1fr 2fr",
+          "width": "674px",
+          "overflow": "hidden",
+          "box-sizing": "border-box"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "140px",
+              "height": "28px",
+              "padding": "6px"
+            }
+          },
+          {
+            "style": {
+              "display": "grid",
+              "grid-template-columns": "3fr 1fr 3fr",
+              "width": "668px",
+              "overflow": "hidden",
+              "box-sizing": "border-box",
+              "gap": "7px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "38px",
+                  "height": "26px",
+                  "padding": "6px"
+                }
+              },
+              {
+                "style": {
+                  "width": "71px",
+                  "height": "57px",
+                  "padding": "11px",
+                  "border": "2px solid black",
+                  "box-sizing": "border-box"
+                }
+              },
+              {
+                "style": {
+                  "width": "85px",
+                  "height": "52px",
+                  "box-sizing": "border-box"
+                }
+              }
+            ],
+            "target": true
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "129px",
+          "height": "28px",
+          "box-sizing": "border-box"
+        }
+      },
+      {
+        "style": {
+          "width": "79px",
+          "height": "36px",
+          "box-sizing": "border-box"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h2",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 57,
+      "actual": 57,
+      "delta": 0,
+      "message": "Measured size (content depends on this element’s own size)"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 668,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "value",
+          "value": 668,
+          "label": "668px"
+        },
+        "expr": "668 (668px)",
+        "cssProperties": {
+          "width": "668px",
+          "box-sizing": "border-box"
+        }
+      },
+      "h2": {
+        "id": "h2",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 57,
+        "inputs": {},
+        "description": "Measured size (content depends on this element’s own size)",
+        "calc": {
+          "op": "value",
+          "value": 57
+        },
+        "expr": "57px",
+        "cssProperties": {}
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "grid-item",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 57,
+        "inputs": {
+          "container": "h2"
+        },
+        "description": "Grid item — height determined by the grid track it occupies",
+        "calc": {
+          "op": "value",
+          "value": 57,
+          "label": "auto-placed"
+        },
+        "expr": "57 (auto-placed)",
+        "cssProperties": {
+          "grid-row": "NaN / NaN",
+          "rowGap": "0px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>",
+      "width": 668,
+      "height": 57
+    },
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 674,
+      "height": 57
+    }
+  }
+}

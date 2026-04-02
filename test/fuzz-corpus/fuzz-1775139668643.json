@@ -1,0 +1,201 @@
+{
+  "seed": 1775139668643,
+  "spec": {
+    "style": {
+      "display": "grid",
+      "grid-template-columns": "1fr 1fr 3fr",
+      "width": "206px",
+      "overflow": "hidden",
+      "padding": "15px",
+      "box-sizing": "border-box"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "50px",
+          "height": "99px",
+          "padding": "9px",
+          "box-sizing": "border-box"
+        }
+      },
+      {
+        "style": {
+          "overflow": "hidden",
+          "padding": "11px",
+          "box-sizing": "border-box"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "55px",
+              "height": "98px",
+              "padding": "11px"
+            }
+          },
+          {
+            "style": {
+              "position": "relative",
+              "width": "438px",
+              "height": "454px",
+              "overflow": "hidden"
+            },
+            "children": [
+              {
+                "style": {
+                  "height": "75px",
+                  "padding": "11px",
+                  "position": "absolute",
+                  "left": "17px",
+                  "right": "9px"
+                }
+              }
+            ]
+          },
+          {
+            "style": {
+              "width": "100px",
+              "height": "91px"
+            }
+          },
+          {
+            "style": {
+              "width": "41px",
+              "height": "36px"
+            }
+          }
+        ],
+        "target": true
+      },
+      {
+        "style": {
+          "width": "56px",
+          "height": "78px",
+          "border": "3px solid black"
+        }
+      },
+      {
+        "style": {
+          "width": "44px",
+          "height": "100px",
+          "border": "2px solid black"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h3",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 857,
+      "actual": 857,
+      "delta": 0,
+      "message": "Measured size (content depends on this element’s own size)"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h2",
+    "nodes": {
+      "w1": {
+        "id": "w1",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 206,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "value",
+          "value": 206,
+          "label": "206px"
+        },
+        "expr": "206 (206px)",
+        "cssProperties": {
+          "width": "206px",
+          "box-sizing": "border-box"
+        }
+      },
+      "w0": {
+        "id": "w0",
+        "kind": "grid-item",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 31.5,
+        "inputs": {
+          "container": "w1"
+        },
+        "description": "Grid item — width determined by the grid track it occupies",
+        "calc": {
+          "op": "value",
+          "value": 31.5,
+          "label": "auto-placed"
+        },
+        "expr": "31.5 (auto-placed)",
+        "cssProperties": {
+          "grid-column": "NaN / NaN",
+          "columnGap": "0px"
+        }
+      },
+      "h3": {
+        "id": "h3",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 857,
+        "inputs": {},
+        "description": "Measured size (content depends on this element’s own size)",
+        "calc": {
+          "op": "value",
+          "value": 857
+        },
+        "expr": "857px",
+        "cssProperties": {}
+      },
+      "h2": {
+        "id": "h2",
+        "kind": "grid-item",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 723,
+        "inputs": {
+          "container": "h3"
+        },
+        "description": "Grid item — height determined by the grid track it occupies",
+        "calc": {
+          "op": "value",
+          "value": 723,
+          "label": "auto-placed"
+        },
+        "expr": "723 (auto-placed)",
+        "cssProperties": {
+          "grid-row": "NaN / NaN",
+          "rowGap": "0px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>",
+      "width": 31.5,
+      "height": 723
+    },
+    "body:nth-child(2) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 206,
+      "height": 857
+    }
+  }
+}
