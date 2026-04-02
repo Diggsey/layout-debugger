@@ -262,11 +262,13 @@ function collectFlexSiblings(
       if (specified && specified.endsWith("px")) {
         const raw = parseFloat(specified);
         basis = isBorderBox ? raw : raw + pb;
-        basisCalc = prop(child, axis);
+        // Can't use prop(child, axis) — getComputedStyle returns the post-flex
+        // used value, not the specified value. Use measured with the axis name.
+        basisCalc = measured(axis, basis, PX);
       } else if (specified && specified.endsWith("%")) {
         const raw = (parseFloat(specified) / 100) * containerContent;
         basis = isBorderBox ? raw : raw + pb;
-        basisCalc = prop(child, axis);
+        basisCalc = measured(axis, basis, PX);
       } else {
         basis = fns.computeIntrinsicSize(child, axis, depth - 1).result;
         basisCalc = ref(fns.computeIntrinsicSize(child, axis, depth - 1));
@@ -293,7 +295,15 @@ function collectFlexSiblings(
     } else {
       const raw = px(minV);
       minMain = isBorderBox ? raw : raw + pb;
-      minCalc = prop(child, minPropName);
+      // For content-box, min-height is content-box — add padding+border for border-box
+      if (isBorderBox) {
+        minCalc = prop(child, minPropName);
+      } else {
+        const pbNames = axis === "width"
+          ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
+          : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
+        minCalc = add(prop(child, minPropName), ...pbNames.map(p => prop(child, p)));
+      }
     }
     minMain = Math.max(minMain, pb);
     const minNode = fns.make("min-content", child, axis,
@@ -316,7 +326,16 @@ function collectFlexSiblings(
     if (maxMain === Infinity) {
       hypoCalc = cmax(ref(minNode), ref(basisNode));
     } else {
-      const maxCalc = prop(child, maxPropName);
+      // For content-box, max-width/height is content-box — add padding+border
+      let maxCalc: CalcExpr;
+      if (isBorderBox) {
+        maxCalc = prop(child, maxPropName);
+      } else {
+        const pbNames = axis === "width"
+          ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
+          : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
+        maxCalc = add(prop(child, maxPropName), ...pbNames.map(p => prop(child, p)));
+      }
       const maxNode = fns.make("clamped", child, axis,
         `${maxPropName} constraint`, maxCalc, {});
       hypoCalc = cmax(ref(minNode), cmin(ref(maxNode), ref(basisNode)));

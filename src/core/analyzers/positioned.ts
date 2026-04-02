@@ -8,7 +8,7 @@
  */
 import type { Axis, LayoutNode, SizeFns } from "../dag";
 import type { DagBuilder } from "../dag";
-import { ref, prop, sub, add } from "../dag";
+import { ref, prop, sub, add, cmax } from "../dag";
 import type { LayoutContext } from "../types";
 import { isAuto } from "../utils";
 
@@ -39,14 +39,21 @@ export function positioned(
       sub(ref(cbNode), add(...cbBorderProps.map(p => prop(cb, p)))),
       { borderBox: cbNode });
 
-    // border-box = CB_padding_box - left - right - marginLeft - marginRight
+    // border-box = max(padding+border, CB_padding_box - left - right - margins)
+    // Floor by padding+border — CSS can't render negative content.
     const [mStartName, mEndName] = axis === "width"
       ? ["margin-left", "margin-right"] : ["margin-top", "margin-bottom"];
+    const pbProps = axis === "width"
+      ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
+      : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
     const spacing = add(
       prop(el, startProp), prop(el, endProp),
       prop(el, mStartName), prop(el, mEndName),
     );
-    const calc = sub(ref(cbPaddingBox), spacing);
+    const calc = cmax(
+      add(...pbProps.map(p => prop(el, p))),
+      sub(ref(cbPaddingBox), spacing),
+    );
     return fns.make("positioned-offset", el, axis,
       `Absolutely positioned \u2014 ${axis} derived from opposing offsets`,
       calc,

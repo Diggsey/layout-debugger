@@ -170,11 +170,19 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
     const actualKind: NodeKind = (isFlex && !isFlexMain) ? "content-max" : "content-sum";
     const cachedContent = b.get(actualKind, el, axis);
     if (cachedContent) return cachedContent;
-    if (b.isBuilding(actualKind, el, axis)) return measured(b, el, axis, "terminal", "Measured size (content depends on this element\u2019s own size)");
+    if (b.isBuilding(actualKind, el, axis)) {
+      // Cycle: a child is trying to fill a parent whose content size depends
+      // on this child. Fall back to intrinsic (content-based) sizing which
+      // avoids the block-fill/stretch path that caused the cycle.
+      return computeIntrinsicSize(b, el, axis, depth);
+    }
     return contentSize(b, el, axis, depth);
   }
 
-  if (b.isBuilding(kind, el, axis)) return measured(b, el, axis, "terminal", "Measured size (content depends on this element\u2019s own size)");
+  if (b.isBuilding(kind, el, axis)) {
+    // Same: cycle detected — use intrinsic size instead of terminal
+    return computeIntrinsicSize(b, el, axis, depth);
+  }
 
   const fns = buildSizeFns(b);
   const ctx = () => identifyContext(el);

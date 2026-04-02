@@ -78,6 +78,8 @@ export function measureMinContentSize(el: Element, axis: "width" | "height"): nu
 export function measureIntrinsicSize(el: Element, axis: "width" | "height"): number {
   const clone = el.cloneNode(true) as HTMLElement;
   // Append overrides (don't replace — must preserve existing padding, border, etc.)
+  // Keep min-width/min-height intact — the max-content size includes min constraints
+  // per CSS Sizing 3 §4.1. Only override the target axis to auto and remove max constraints.
   clone.style.cssText += "; " + [
     "position: absolute !important",
     "visibility: hidden !important",
@@ -85,8 +87,6 @@ export function measureIntrinsicSize(el: Element, axis: "width" | "height"): num
     `${axis}: auto !important`,
     "align-self: flex-start !important",
     "flex: none !important",
-    "min-width: 0 !important",
-    "min-height: 0 !important",
     "max-width: none !important",
     "max-height: none !important",
   ].join("; ");
