@@ -56,12 +56,12 @@ function make(
   return b.finish({ kind, element: el, axis, result: round(evaluate(calc)), description, calc, inputs, cssProperties });
 }
 
-function measured(b: DagBuilder, el: Element, axis: Axis, kind: NodeKind): LayoutNode {
+function measured(b: DagBuilder, el: Element, axis: Axis, kind: NodeKind, description?: string): LayoutNode {
   const existing = b.get(kind, el, axis);
   if (existing) return existing;
   const rect = el.getBoundingClientRect();
   const size = round(axis === "width" ? rect.width : rect.height);
-  const desc = kind === "terminal" ? "Measured size (depth limit)" : `${kind} size`;
+  const desc = description ?? `Size of the browser ${kind === "viewport" ? "viewport" : kind}`;
   return b.finish({ kind, element: el, axis, result: size, description: desc, calc: val(size), inputs: {}, cssProperties: {} });
 }
 
@@ -137,7 +137,7 @@ function determineKind(el: Element, axis: Axis): NodeKind {
 // ---------------------------------------------------------------------------
 
 function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): LayoutNode {
-  if (depth <= 0) return measured(b, el, axis, "terminal");
+  if (depth <= 0) return measured(b, el, axis, "terminal", "Measured size (computation depth limit reached)");
 
   const kind = determineKind(el, axis);
 
@@ -151,11 +151,11 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
     const actualKind: NodeKind = (isFlex && !isFlexMain) ? "content-max" : "content-sum";
     const cachedContent = b.get(actualKind, el, axis);
     if (cachedContent) return cachedContent;
-    if (b.isBuilding(actualKind, el, axis)) return measured(b, el, axis, "terminal");
+    if (b.isBuilding(actualKind, el, axis)) return measured(b, el, axis, "terminal", "Measured size (content depends on this element\u2019s own size)");
     return contentSize(b, el, axis, depth);
   }
 
-  if (b.isBuilding(kind, el, axis)) return measured(b, el, axis, "terminal");
+  if (b.isBuilding(kind, el, axis)) return measured(b, el, axis, "terminal", "Measured size (content depends on this element\u2019s own size)");
 
   const fns = buildSizeFns(b);
   const ctx = () => identifyContext(el);
@@ -245,15 +245,22 @@ function buildSizeFns(b: DagBuilder): SizeFns {
 function computeIntrinsicSize(
   b: DagBuilder, el: Element, axis: Axis, depth: number,
 ): LayoutNode {
-  if (depth <= 0) return measured(b, el, axis, "terminal");
+  if (depth <= 0) return measured(b, el, axis, "terminal", "Measured size (computation depth limit reached)");
 
   const existing = b.get("intrinsic-content", el, axis);
   if (existing) return existing;
-  if (b.isBuilding("intrinsic-content", el, axis)) return measured(b, el, axis, "terminal");
+  if (b.isBuilding("intrinsic-content", el, axis)) return measured(b, el, axis, "terminal", "Measured size (circular dependency)");
 
+  // If the element has an explicit size, that IS the intrinsic size.
+  // Return it directly — don't go through computeSize which may enter
+  // the flex algorithm and cycle back to a container that's still building.
   const explicit = getExplicitSize(el, axis);
   if (explicit) {
-    return computeSize(b, el, axis, depth);
+    const rect = el.getBoundingClientRect();
+    const size = round(axis === "width" ? rect.width : rect.height);
+    return make(b, "intrinsic-content", el, axis,
+      `Intrinsic ${axis}: explicit ${size}px`,
+      val(size), {}, { [axis]: getComputedStyle(el).getPropertyValue(axis) });
   }
 
   const s = getComputedStyle(el);
