@@ -1,0 +1,207 @@
+{
+  "seed": 1775142484011,
+  "spec": {
+    "style": {
+      "position": "relative",
+      "width": "543px",
+      "height": "229px",
+      "overflow": "hidden",
+      "border": "3px solid black"
+    },
+    "children": [
+      {
+        "style": {
+          "height": "93px",
+          "border": "3px solid black",
+          "position": "absolute",
+          "left": "23px",
+          "right": "3px"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "positioned-offset",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "width",
+      "dagResult": 523,
+      "actual": 517,
+      "delta": 6
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h2",
+    "nodes": {
+      "w1": {
+        "id": "w1",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 549,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "width",
+              "value": 543
+            },
+            {
+              "op": "property",
+              "name": "padding-left",
+              "value": 0
+            },
+            {
+              "op": "property",
+              "name": "padding-right",
+              "value": 0
+            },
+            {
+              "op": "property",
+              "name": "border-left-width",
+              "value": 3
+            },
+            {
+              "op": "property",
+              "name": "border-right-width",
+              "value": 3
+            }
+          ]
+        },
+        "expr": "543px (width) + 0px (padding-left) + 0px (padding-right) + 3px (border-left-width) + 3px (border-right-width)",
+        "cssProperties": {
+          "width": "543px",
+          "padding-left": "0px",
+          "padding-right": "0px",
+          "border-left-width": "3px",
+          "border-right-width": "3px"
+        }
+      },
+      "w0": {
+        "id": "w0",
+        "kind": "positioned-offset",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 523,
+        "inputs": {
+          "containingBlock": "w1"
+        },
+        "description": "Absolutely positioned — width derived from opposing offsets",
+        "calc": {
+          "op": "sub",
+          "left": {
+            "op": "ref",
+            "nodeId": "w1"
+          },
+          "right": {
+            "op": "add",
+            "args": [
+              {
+                "op": "property",
+                "name": "left",
+                "value": 23
+              },
+              {
+                "op": "property",
+                "name": "right",
+                "value": 3
+              },
+              {
+                "op": "property",
+                "name": "margin-left",
+                "value": 0
+              },
+              {
+                "op": "property",
+                "name": "margin-right",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "expr": "549px − 23px (left) + 3px (right) + 0px (margin-left) + 0px (margin-right)",
+        "cssProperties": {
+          "left": "23px",
+          "right": "3px",
+          "margin-left": "0px",
+          "margin-right": "0px",
+          "position": "absolute"
+        }
+      },
+      "h2": {
+        "id": "h2",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 99,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "height",
+              "value": 93
+            },
+            {
+              "op": "property",
+              "name": "padding-top",
+              "value": 0
+            },
+            {
+              "op": "property",
+              "name": "padding-bottom",
+              "value": 0
+            },
+            {
+              "op": "property",
+              "name": "border-top-width",
+              "value": 3
+            },
+            {
+              "op": "property",
+              "name": "border-bottom-width",
+              "value": 3
+            }
+          ]
+        },
+        "expr": "93px (height) + 0px (padding-top) + 0px (padding-bottom) + 3px (border-top-width) + 3px (border-bottom-width)",
+        "cssProperties": {
+          "height": "93px",
+          "padding-top": "0px",
+          "padding-bottom": "0px",
+          "border-top-width": "3px",
+          "border-bottom-width": "3px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 517,
+      "height": 99
+    },
+    "body:nth-child(2) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 549,
+      "height": 235
+    }
+  }
+}

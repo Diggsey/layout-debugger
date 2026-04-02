@@ -56,9 +56,16 @@ export type Axis = "width" | "height";
 // CalcExpr — the computation tree
 // ---------------------------------------------------------------------------
 
+/**
+ * Enforces that a number is a literal type (0, 1, 2, etc.) at compile time.
+ * Rejects `number` but accepts `0 as const`, `1 as const`, etc.
+ */
+type LiteralNumber<T extends number> = number extends T ? never : T;
+
 export type CalcExpr =
-  | { op: "ref"; node: LayoutNode }               // another node's result
-  | { op: "value"; value: number; label?: string } // literal (CSS value, measurement)
+  | { op: "ref"; node: LayoutNode }                // another node's result
+  | { op: "constant"; value: number }              // spec-defined literal (0, 1, ...)
+  | { op: "property"; name: string; value: number } // CSS property on the node's element
   | { op: "add"; args: CalcExpr[] }                // a + b + ...
   | { op: "sub"; left: CalcExpr; right: CalcExpr } // a - b
   | { op: "mul"; left: CalcExpr; right: CalcExpr } // a × b
@@ -70,7 +77,8 @@ export type CalcExpr =
 export function evaluate(expr: CalcExpr): number {
   switch (expr.op) {
     case "ref": return expr.node.result;
-    case "value": return expr.value;
+    case "constant": return expr.value;
+    case "property": return expr.value;
     case "add": return expr.args.reduce((s, a) => s + evaluate(a), 0);
     case "sub": return evaluate(expr.left) - evaluate(expr.right);
     case "mul": return evaluate(expr.left) * evaluate(expr.right);
@@ -83,9 +91,32 @@ export function evaluate(expr: CalcExpr): number {
   }
 }
 
+/** Collect all CSS property names referenced in a CalcExpr tree. */
+export function collectProperties(expr: CalcExpr): Record<string, string> {
+  const props: Record<string, string> = {};
+  function walk(e: CalcExpr): void {
+    switch (e.op) {
+      case "property": props[e.name] = `${e.value}px`; break;
+      case "ref": break; // don't cross into other nodes
+      case "constant": break;
+      case "add": case "max": case "min": e.args.forEach(walk); break;
+      case "sub": walk(e.left); walk(e.right); break;
+      case "mul": walk(e.left); walk(e.right); break;
+      case "div": walk(e.left); walk(e.right); break;
+    }
+  }
+  walk(expr);
+  return props;
+}
+
 // Builder helpers
 export const ref = (node: LayoutNode): CalcExpr => ({ op: "ref", node });
-export const val = (v: number, label?: string): CalcExpr => ({ op: "value", value: v, label });
+export function constant<T extends number>(n: LiteralNumber<T>): CalcExpr { return { op: "constant", value: n }; }
+export function prop(el: Element, name: string): CalcExpr {
+  const raw = getComputedStyle(el).getPropertyValue(name);
+  const value = raw.endsWith("px") ? parseFloat(raw) : parseFloat(raw) || 0;
+  return { op: "property", name, value };
+}
 export const add = (...args: CalcExpr[]): CalcExpr => ({ op: "add", args });
 export const sub = (left: CalcExpr, right: CalcExpr): CalcExpr => ({ op: "sub", left, right });
 export const mul = (left: CalcExpr, right: CalcExpr): CalcExpr => ({ op: "mul", left, right });
@@ -132,6 +163,8 @@ export interface SizeFns {
   computeIntrinsicSize(el: Element, axis: Axis, depth: number): LayoutNode;
   contentSize(el: Element, axis: Axis, depth: number, intrinsic?: boolean): LayoutNode;
   containerContentArea(container: Element, axis: Axis, borderBoxNode: LayoutNode): LayoutNode;
+  /** CalcExpr for an element's border-box size (accounts for box-sizing). */
+  borderBoxCalc(el: Element, axis: Axis): CalcExpr;
   make(
     kind: NodeKind, el: Element, axis: Axis,
     description: string, calc: CalcExpr,

@@ -132,9 +132,11 @@ function calcToSegments(
     case "ref":
       return [{ text: `${expr.node.result}px`, refId: nodeIds.get(expr.node) }];
 
-    case "value":
-      if (expr.label) return [{ text: `${expr.value}${expr.label.match(/^[a-z%-]/) ? "" : "px "}${expr.label.match(/^[a-z%-]/) ? " (" + expr.label + ")" : expr.label}` }];
-      return [{ text: `${expr.value}px` }];
+    case "constant":
+      return [{ text: `${expr.value}` }];
+
+    case "property":
+      return [{ text: `${expr.value}px (${expr.name})` }];
 
     case "add": {
       const segs: CalcSegment[] = [];

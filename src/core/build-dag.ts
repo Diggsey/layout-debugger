@@ -15,7 +15,7 @@
  * - CSS Sizing 3 §4  Intrinsic Size Determination
  */
 import type { LayoutNode, DagResult, Axis, NodeKind, SizeFns, CalcExpr } from "./dag";
-import { DagBuilder, evaluate, ref, val, add, cmax, cmin } from "./dag";
+import { DagBuilder, evaluate, collectProperties, ref, constant, prop, add, cmax, cmin } from "./dag";
 import { identifyContext } from "./context";
 import { getExplicitSize } from "./sizing";
 import { getSpecifiedIntrinsicKeyword } from "./analyzers/properties";
@@ -49,20 +49,38 @@ function make(
   b: DagBuilder, kind: NodeKind, el: Element, axis: Axis,
   description: string, calc: CalcExpr,
   inputs: LayoutNode["inputs"],
-  cssProperties: LayoutNode["cssProperties"] = {},
+  extraCssProperties: LayoutNode["cssProperties"] = {},
 ): LayoutNode {
   const existing = b.get(kind, el, axis);
   if (existing) return existing;
+  // Auto-collect CSS properties from property() nodes in the CalcExpr,
+  // merged with any explicitly-passed descriptive properties (display, position, etc.)
+  const cssProperties = { ...collectProperties(calc), ...extraCssProperties };
   return b.finish({ kind, element: el, axis, result: round(evaluate(calc)), description, calc, inputs, cssProperties });
 }
 
 function measured(b: DagBuilder, el: Element, axis: Axis, kind: NodeKind, description?: string): LayoutNode {
   const existing = b.get(kind, el, axis);
   if (existing) return existing;
-  const rect = el.getBoundingClientRect();
-  const size = round(axis === "width" ? rect.width : rect.height);
   const desc = description ?? `Size of the browser ${kind === "viewport" ? "viewport" : kind}`;
-  return b.finish({ kind, element: el, axis, result: size, description: desc, calc: val(size), inputs: {}, cssProperties: {} });
+  // Measured nodes read their size from the element's own CSS property
+  const calc = borderBoxCalc(el, axis);
+  return b.finish({ kind, element: el, axis, result: round(evaluate(calc)), description: desc, calc, inputs: {}, cssProperties: collectProperties(calc) });
+}
+
+/** Build a CalcExpr for an element's border-box size from its CSS properties. */
+function borderBoxCalc(el: Element, axis: Axis): CalcExpr {
+  const s = getComputedStyle(el);
+  if (s.boxSizing === "border-box") {
+    return prop(el, axis);
+  }
+  // content-box: border-box = width + padding + border
+  if (axis === "width") {
+    return add(prop(el, "width"), prop(el, "padding-left"), prop(el, "padding-right"),
+      prop(el, "border-left-width"), prop(el, "border-right-width"));
+  }
+  return add(prop(el, "height"), prop(el, "padding-top"), prop(el, "padding-bottom"),
+    prop(el, "border-top-width"), prop(el, "border-bottom-width"));
 }
 
 // ---------------------------------------------------------------------------
@@ -164,11 +182,11 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
     case "viewport": return measured(b, el, axis, "viewport");
     case "display-none":
       return make(b, "display-none", el, axis,
-        "Element is hidden (display: none)", val(0),
+        "Element is hidden (display: none)", constant(0),
         {}, { display: "none" });
     case "display-contents":
       return make(b, "display-contents", el, axis,
-        "Element has no box (display: contents)", val(0),
+        "Element has no box (display: contents)", constant(0),
         {}, { display: "contents" });
     case "aspect-ratio": {
       const node = aspectRatio(fns, b, el, axis, ctx(), depth);
@@ -176,35 +194,23 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
     }
     case "percentage": {
       const c = ctx();
-      const info = getExplicitSize(el, axis)!;
-      const rect = el.getBoundingClientRect();
-      const size = round(axis === "width" ? rect.width : rect.height);
       const cbNode = computeSize(b, c.containingBlock, axis, depth - 1);
       const node = make(b, "percentage", el, axis,
         `${axis} is a percentage of the containing block`,
-        val(size, `${(info as any).specifiedValue} of ${cbNode.result}px`),
-        { containingBlock: cbNode },
-        { [axis]: (info as any).specifiedValue, "box-sizing": getComputedStyle(el).boxSizing });
+        borderBoxCalc(el, axis),
+        { containingBlock: cbNode });
       return maybeClamp(b, el, axis, node);
     }
     case "explicit": {
-      const s = getComputedStyle(el);
-      const rect = el.getBoundingClientRect();
-      const size = round(axis === "width" ? rect.width : rect.height);
       const node = make(b, "explicit", el, axis,
         `${axis} is set explicitly in CSS`,
-        val(size, s.getPropertyValue(axis)),
-        {}, { [axis]: s.getPropertyValue(axis), "box-sizing": s.boxSizing });
+        borderBoxCalc(el, axis), {});
       return maybeClamp(b, el, axis, node);
     }
     case "intrinsic": {
-      const rect = el.getBoundingClientRect();
-      const size = round(axis === "width" ? rect.width : rect.height);
-      const kw = getSpecifiedIntrinsicKeyword(el, axis)!;
       return make(b, "intrinsic", el, axis,
         `${axis} uses an intrinsic sizing keyword`,
-        val(size, kw),
-        {}, { [axis]: kw });
+        borderBoxCalc(el, axis), {});
     }
     case "flex-item-main":
       return maybeClamp(b, el, axis, flexItemMain(fns, b, el, axis, ctx(), depth));
@@ -231,6 +237,7 @@ function buildSizeFns(b: DagBuilder): SizeFns {
     contentSize: (el, axis, depth, intrinsic) => contentSize(b, el, axis, depth, intrinsic),
     containerContentArea: (container, axis, borderBoxNode) =>
       containerContentArea(fns, b, container, axis, borderBoxNode),
+    borderBoxCalc,
     make: (kind, el, axis, description, calc, inputs, cssProperties) =>
       make(b, kind, el, axis, description, calc, inputs, cssProperties),
     measured: (el, axis, kind) => measured(b, el, axis, kind),
@@ -256,11 +263,9 @@ function computeIntrinsicSize(
   // the flex algorithm and cycle back to a container that's still building.
   const explicit = getExplicitSize(el, axis);
   if (explicit) {
-    const rect = el.getBoundingClientRect();
-    const size = round(axis === "width" ? rect.width : rect.height);
     return make(b, "intrinsic-content", el, axis,
-      `Intrinsic ${axis}: explicit ${size}px`,
-      val(size), {}, { [axis]: getComputedStyle(el).getPropertyValue(axis) });
+      `Intrinsic ${axis}: set explicitly in CSS`,
+      borderBoxCalc(el, axis), {});
   }
 
   const s = getComputedStyle(el);
@@ -277,12 +282,26 @@ function computeIntrinsicSize(
 // Clamping (min/max constraints)
 // ---------------------------------------------------------------------------
 
+/** Build a CalcExpr for a min/max constraint value, converting to border-box if needed. */
+function constraintCalc(el: Element, axis: Axis, constraintProp: string): CalcExpr {
+  const s = getComputedStyle(el);
+  const base = prop(el, constraintProp);
+  if (s.boxSizing === "border-box") return base;
+  // content-box: add padding+border to convert to border-box
+  if (axis === "width") {
+    return add(base, prop(el, "padding-left"), prop(el, "padding-right"),
+      prop(el, "border-left-width"), prop(el, "border-right-width"));
+  }
+  return add(base, prop(el, "padding-top"), prop(el, "padding-bottom"),
+    prop(el, "border-top-width"), prop(el, "border-bottom-width"));
+}
+
 function maybeClamp(b: DagBuilder, el: Element, axis: Axis, input: LayoutNode): LayoutNode {
   const s = getComputedStyle(el);
-  const minProp = axis === "width" ? "min-width" : "min-height";
-  const maxProp = axis === "width" ? "max-width" : "max-height";
-  const minVal = s.getPropertyValue(minProp);
-  const maxVal = s.getPropertyValue(maxProp);
+  const minPropName = axis === "width" ? "min-width" : "min-height";
+  const maxPropName = axis === "width" ? "max-width" : "max-height";
+  const minVal = s.getPropertyValue(minPropName);
+  const maxVal = s.getPropertyValue(maxPropName);
 
   const padBorder = s.boxSizing !== "border-box"
     ? (axis === "width"
@@ -295,18 +314,16 @@ function maybeClamp(b: DagBuilder, el: Element, axis: Axis, input: LayoutNode): 
 
   if (input.result >= minPx && (maxPx === Infinity || input.result <= maxPx)) return input;
 
-  // Build the clamp CalcExpr
   let calc: CalcExpr;
   if (maxPx !== Infinity && input.result > maxPx) {
-    calc = cmin(val(maxPx, maxProp), ref(input));
+    calc = cmin(constraintCalc(el, axis, maxPropName), ref(input));
   } else {
-    calc = cmax(val(minPx, minProp), ref(input));
+    calc = cmax(constraintCalc(el, axis, minPropName), ref(input));
   }
 
   return make(b, "clamped", el, axis,
     "Constrained by min/max",
-    calc, { input },
-    { [minProp]: minVal, [maxProp]: maxVal });
+    calc, { input });
 }
 
 // ---------------------------------------------------------------------------
@@ -356,7 +373,6 @@ function contentSize(
   }
 
   const gap = px(axis === "width" ? s.columnGap : s.rowGap);
-  const totalGap = gap * Math.max(0, i - 1);
 
   // Build inputs map
   const inputs: LayoutNode["inputs"] = {};
@@ -364,14 +380,19 @@ function contentSize(
 
   // Build CalcExpr
   let calc: CalcExpr;
+  const gapPropName = axis === "width" ? "column-gap" : "row-gap";
   if (childNodes.length === 0) {
-    // No child nodes (leaf or depth limit) — use measured size
-    calc = val(size);
+    // No child nodes (leaf or depth limit) — use measured size from CSS property
+    calc = borderBoxCalc(el, axis);
   } else {
     const childRefs = childNodes.map(n => ref(n));
     if (mode === "sum") {
-      const args = [...childRefs];
-      if (totalGap > 0) args.push(val(totalGap, "gaps"));
+      // Interleave gap property refs between children: child0 + gap + child1 + gap + child2
+      const args: CalcExpr[] = [childRefs[0]];
+      for (let j = 1; j < childRefs.length; j++) {
+        if (gap > 0) args.push(prop(el, gapPropName));
+        args.push(childRefs[j]);
+      }
       calc = add(...args);
     } else {
       calc = cmax(...childRefs);

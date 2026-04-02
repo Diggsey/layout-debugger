@@ -1,0 +1,236 @@
+{
+  "seed": 1775142479025,
+  "spec": {
+    "style": {
+      "position": "relative",
+      "width": "329px",
+      "height": "482px",
+      "overflow": "hidden",
+      "padding": "6px",
+      "box-sizing": "border-box"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "grid",
+          "grid-template-columns": "1fr 3fr",
+          "width": "225px",
+          "overflow": "hidden",
+          "border": "4px solid black",
+          "position": "absolute",
+          "top": "16px",
+          "bottom": "7px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "112px",
+              "height": "96px",
+              "padding": "9px",
+              "box-sizing": "border-box"
+            }
+          },
+          {
+            "style": {
+              "position": "relative",
+              "width": "565px",
+              "height": "213px",
+              "overflow": "hidden",
+              "padding": "13px",
+              "border": "4px solid black"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "77px",
+                  "padding": "2px",
+                  "border": "4px solid black",
+                  "box-sizing": "border-box",
+                  "position": "absolute",
+                  "top": "24px",
+                  "bottom": "25px"
+                },
+                "target": true
+              },
+              {
+                "style": {
+                  "width": "98px",
+                  "height": "91px",
+                  "padding": "6px"
+                }
+              }
+            ]
+          },
+          {
+            "style": {
+              "width": "64px",
+              "height": "30px",
+              "box-sizing": "border-box"
+            }
+          },
+          {
+            "style": {
+              "width": "49px",
+              "height": "83px",
+              "box-sizing": "border-box"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h1",
+      "kind": "positioned-offset",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 198,
+      "actual": 190,
+      "delta": 8
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 77,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "width",
+          "value": 77
+        },
+        "expr": "77px (width)",
+        "cssProperties": {
+          "width": "77px"
+        }
+      },
+      "h2": {
+        "id": "h2",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 247,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "height",
+              "value": 213
+            },
+            {
+              "op": "property",
+              "name": "padding-top",
+              "value": 13
+            },
+            {
+              "op": "property",
+              "name": "padding-bottom",
+              "value": 13
+            },
+            {
+              "op": "property",
+              "name": "border-top-width",
+              "value": 4
+            },
+            {
+              "op": "property",
+              "name": "border-bottom-width",
+              "value": 4
+            }
+          ]
+        },
+        "expr": "213px (height) + 13px (padding-top) + 13px (padding-bottom) + 4px (border-top-width) + 4px (border-bottom-width)",
+        "cssProperties": {
+          "height": "213px",
+          "padding-top": "13px",
+          "padding-bottom": "13px",
+          "border-top-width": "4px",
+          "border-bottom-width": "4px"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "positioned-offset",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 198,
+        "inputs": {
+          "containingBlock": "h2"
+        },
+        "description": "Absolutely positioned — height derived from opposing offsets",
+        "calc": {
+          "op": "sub",
+          "left": {
+            "op": "ref",
+            "nodeId": "h2"
+          },
+          "right": {
+            "op": "add",
+            "args": [
+              {
+                "op": "property",
+                "name": "top",
+                "value": 24
+              },
+              {
+                "op": "property",
+                "name": "bottom",
+                "value": 25
+              },
+              {
+                "op": "property",
+                "name": "margin-top",
+                "value": 0
+              },
+              {
+                "op": "property",
+                "name": "margin-bottom",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "expr": "247px − 24px (top) + 25px (bottom) + 0px (margin-top) + 0px (margin-bottom)",
+        "cssProperties": {
+          "top": "24px",
+          "bottom": "25px",
+          "margin-top": "0px",
+          "margin-bottom": "0px",
+          "position": "absolute"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 77,
+      "height": 190
+    },
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>",
+      "width": 599,
+      "height": 247
+    }
+  }
+}
