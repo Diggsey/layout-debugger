@@ -13,8 +13,11 @@
  *   px × unitless = px (merge with empty)
  */
 
+/** The set of base unit names supported by the system. */
+export type BaseUnit = "px";
+
 /** A dimensional unit as a map of base unit names to their exponents. */
-export type Units = Readonly<Record<string, number>>;
+export type Units = Readonly<Partial<Record<BaseUnit, number>>>;
 
 /** The unitless (dimensionless) unit. */
 export const UNITLESS: Units = Object.freeze({});
@@ -24,8 +27,8 @@ export const PX: Units = Object.freeze({ px: 1 });
 
 /** Check if two Units are equal. */
 export function unitsEqual(a: Units, b: Units): boolean {
-  const keysA = Object.keys(a);
-  const keysB = Object.keys(b);
+  const keysA = Object.keys(a) as BaseUnit[];
+  const keysB = Object.keys(b) as BaseUnit[];
   if (keysA.length !== keysB.length) return false;
   for (const k of keysA) {
     if (a[k] !== b[k]) return false;
@@ -35,9 +38,9 @@ export function unitsEqual(a: Units, b: Units): boolean {
 
 /** Multiply units: adds exponents. px × px = px². */
 export function unitsMul(a: Units, b: Units): Units {
-  const result: Record<string, number> = { ...a };
-  for (const [k, v] of Object.entries(b)) {
-    result[k] = (result[k] ?? 0) + v;
+  const result: Partial<Record<BaseUnit, number>> = { ...a };
+  for (const k of Object.keys(b) as BaseUnit[]) {
+    result[k] = (result[k] ?? 0) + b[k]!;
     if (result[k] === 0) delete result[k];
   }
   return result;
@@ -45,9 +48,9 @@ export function unitsMul(a: Units, b: Units): Units {
 
 /** Divide units: subtracts exponents. px / px = unitless. */
 export function unitsDiv(a: Units, b: Units): Units {
-  const result: Record<string, number> = { ...a };
-  for (const [k, v] of Object.entries(b)) {
-    result[k] = (result[k] ?? 0) - v;
+  const result: Partial<Record<BaseUnit, number>> = { ...a };
+  for (const k of Object.keys(b) as BaseUnit[]) {
+    result[k] = (result[k] ?? 0) - b[k]!;
     if (result[k] === 0) delete result[k];
   }
   return result;
@@ -66,7 +69,8 @@ export function unitsAssertEqual(a: Units, b: Units, context: string): void {
 /** Format units for display: "px", "", "px²", etc. */
 export function formatUnits(u: Units): string {
   const parts: string[] = [];
-  for (const [name, exp] of Object.entries(u)) {
+  for (const name of Object.keys(u) as BaseUnit[]) {
+    const exp = u[name]!;
     if (exp === 1) parts.push(name);
     else if (exp !== 0) parts.push(`${name}${toSuperscript(exp)}`);
   }
