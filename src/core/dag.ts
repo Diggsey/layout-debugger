@@ -31,8 +31,11 @@ export type NodeKind =
   | "flex-base-size" // max(basis, min-content)
   | "flex-free-space" // container - items - gaps
   | "flex-grow-share"
+  | "flex-grow-factor"    // a sibling's flex-grow value
   | "flex-shrink-share"
+  | "flex-scaled-shrink"  // flex-shrink × inner basis (shrink weighting)
   | "flex-no-change"
+  | "flex-outer-hypo"     // sibling's outer hypothetical size (hypo + margin)
   | "flex-item-main" // base + share
   | "flex-cross-stretch"
   | "flex-cross-content"
