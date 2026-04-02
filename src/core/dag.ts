@@ -102,7 +102,7 @@ export function evaluate(expr: CalcExpr): number {
 /** Derive the unit of a CalcExpr from its structure. */
 export function calcUnit(expr: CalcExpr): CalcUnit {
   switch (expr.op) {
-    case "ref": return "px"; // layout nodes produce px
+    case "ref": return calcUnit(expr.node.calc); // derive from the referenced node's CalcExpr
     case "constant": return expr.unit;
     case "property": return expr.unit;
     case "measured": return expr.unit;
