@@ -1,0 +1,107 @@
+{
+  "seed": 1343,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "flex-wrap": "wrap",
+      "width": "473px",
+      "height": "333px",
+      "overflow": "hidden",
+      "align-content": "flex-start"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "24px",
+          "height": "88px",
+          "padding-top": "2px",
+          "box-sizing": "border-box",
+          "flex-basis": "141px"
+        },
+        "target": true
+      },
+      {
+        "style": {
+          "width": "76px",
+          "height": "74px",
+          "padding-top": "5px",
+          "padding-bottom": "2px",
+          "padding-left": "4px",
+          "box-sizing": "border-box"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "width",
+      "dagResult": 141,
+      "actual": 141,
+      "delta": 0,
+      "message": "Size of the browser terminal"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 141,
+        "inputs": {},
+        "description": "Size of the browser terminal",
+        "calc": {
+          "op": "property",
+          "name": "width",
+          "value": 141,
+          "unit": "px"
+        },
+        "expr": "141px (width)",
+        "cssProperties": {
+          "width": "141px"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 88,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 88,
+          "unit": "px"
+        },
+        "expr": "88px (height)",
+        "cssProperties": {
+          "height": "88px",
+          "box-sizing": "border-box"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 141,
+      "height": 88
+    }
+  }
+}

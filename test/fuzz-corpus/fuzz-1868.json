@@ -1,0 +1,164 @@
+{
+  "seed": 1868,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "flex-wrap": "wrap",
+      "width": "498px",
+      "height": "263px",
+      "overflow": "hidden",
+      "box-sizing": "border-box"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "flex",
+          "flex-direction": "row",
+          "flex-wrap": "wrap",
+          "width": "366px",
+          "height": "290px",
+          "overflow": "scroll",
+          "padding": "6px",
+          "box-sizing": "border-box",
+          "flex-basis": "112px"
+        },
+        "children": [
+          {
+            "style": {
+              "overflow": "hidden",
+              "padding": "6px",
+              "aspect-ratio": "2 / 4",
+              "height": "320px",
+              "flex-basis": "79px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "135px",
+                  "height": "78px",
+                  "padding-top": "5px",
+                  "padding-right": "13px"
+                }
+              }
+            ]
+          },
+          {
+            "style": {
+              "width": "139px",
+              "height": "93px",
+              "box-sizing": "border-box",
+              "margin": "1px"
+            },
+            "target": true
+          },
+          {
+            "style": {
+              "width": "105px",
+              "height": "87px",
+              "flex-basis": "56px"
+            }
+          },
+          {
+            "style": {
+              "width": "52px",
+              "height": "85px",
+              "border": "1px solid black",
+              "box-sizing": "border-box",
+              "flex-basis": "137px"
+            }
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "56px",
+          "height": "86px",
+          "flex-grow": "2"
+        }
+      },
+      {
+        "style": {
+          "width": "114px",
+          "height": "85px",
+          "box-sizing": "border-box",
+          "margin-right": "2px",
+          "margin-left": "13px",
+          "flex-basis": "167px",
+          "margin": "5px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+      "axis": "width",
+      "dagResult": 139,
+      "actual": 139,
+      "delta": 0,
+      "message": "Size of the browser terminal"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 139,
+        "inputs": {},
+        "description": "Size of the browser terminal",
+        "calc": {
+          "op": "property",
+          "name": "width",
+          "value": 139,
+          "unit": "px"
+        },
+        "expr": "139px (width)",
+        "cssProperties": {
+          "width": "139px"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 93,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 93,
+          "unit": "px"
+        },
+        "expr": "93px (height)",
+        "cssProperties": {
+          "height": "93px",
+          "box-sizing": "border-box"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>",
+      "width": 139,
+      "height": 93
+    }
+  }
+}

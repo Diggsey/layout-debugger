@@ -1,0 +1,98 @@
+{
+  "seed": 433,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "flex-wrap": "wrap",
+      "width": "444px",
+      "height": "321px",
+      "overflow": "hidden",
+      "padding": "7px",
+      "box-sizing": "border-box"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "89px",
+          "height": "95px",
+          "box-sizing": "border-box",
+          "flex-basis": "85px",
+          "flex-grow": "1"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h1",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 307,
+      "actual": 307,
+      "delta": 0,
+      "message": "Size of the browser terminal"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 89,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "width",
+          "value": 89,
+          "unit": "px"
+        },
+        "expr": "89px (width)",
+        "cssProperties": {
+          "width": "89px",
+          "box-sizing": "border-box"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 307,
+        "inputs": {},
+        "description": "Size of the browser terminal",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 307,
+          "unit": "px"
+        },
+        "expr": "307px (height)",
+        "cssProperties": {
+          "height": "307px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 89,
+      "height": 307
+    }
+  }
+}

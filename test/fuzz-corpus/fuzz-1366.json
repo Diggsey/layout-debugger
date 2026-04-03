@@ -1,0 +1,113 @@
+{
+  "seed": 1366,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "flex-wrap": "wrap",
+      "width": "477px",
+      "height": "480px",
+      "overflow": "auto",
+      "align-content": "flex-start"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "131px",
+          "height": "20px",
+          "box-sizing": "border-box",
+          "flex-grow": "1",
+          "margin-bottom": "6px",
+          "margin-left": "3px"
+        },
+        "target": true
+      },
+      {
+        "style": {
+          "width": "58px",
+          "height": "36px",
+          "border": "2px solid black",
+          "flex-grow": "0"
+        }
+      },
+      {
+        "style": {
+          "width": "73px",
+          "height": "22px",
+          "flex-basis": "168px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "width",
+      "dagResult": 244,
+      "actual": 244,
+      "delta": 0,
+      "message": "Size of the browser terminal"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 244,
+        "inputs": {},
+        "description": "Size of the browser terminal",
+        "calc": {
+          "op": "property",
+          "name": "width",
+          "value": 244,
+          "unit": "px"
+        },
+        "expr": "244px (width)",
+        "cssProperties": {
+          "width": "244px"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 20,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 20,
+          "unit": "px"
+        },
+        "expr": "20px (height)",
+        "cssProperties": {
+          "height": "20px",
+          "box-sizing": "border-box"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 244,
+      "height": 20
+    }
+  }
+}

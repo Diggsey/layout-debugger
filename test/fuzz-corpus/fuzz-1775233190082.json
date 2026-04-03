@@ -1,0 +1,211 @@
+{
+  "seed": 1775233190082,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "610px",
+      "overflow": "hidden",
+      "padding": "8px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "30px",
+          "height": "92px",
+          "padding-right": "2px",
+          "flex-shrink": "0",
+          "flex-basis": "auto",
+          "max-width": "233px"
+        }
+      },
+      {
+        "style": {
+          "width": "88px",
+          "height": "51px",
+          "box-sizing": "border-box",
+          "display": "none",
+          "flex-shrink": "1",
+          "max-width": "245px"
+        }
+      },
+      {
+        "style": {
+          "overflow": "hidden",
+          "aspect-ratio": "2 / 4",
+          "width": "201px",
+          "flex-grow": "1"
+        },
+        "children": [
+          {
+            "style": {
+              "overflow": "hidden",
+              "padding": "4px",
+              "aspect-ratio": "2 / 3",
+              "height": "207px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "103px",
+                  "height": "84px",
+                  "margin": "9px",
+                  "display": "contents"
+                }
+              }
+            ],
+            "target": true
+          },
+          {
+            "style": {
+              "width": "49px",
+              "height": "98px",
+              "border": "2px solid black",
+              "box-sizing": "border-box"
+            }
+          },
+          {
+            "style": {
+              "width": "80px",
+              "height": "53px",
+              "box-sizing": "border-box",
+              "margin": "9px"
+            }
+          },
+          {
+            "style": {
+              "width": "142px",
+              "height": "95px",
+              "box-sizing": "border-box",
+              "margin-top": "14px",
+              "margin-right": "11px",
+              "margin-bottom": "12px"
+            }
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "39px",
+          "height": "20px",
+          "padding": "10px",
+          "border": "1px solid black",
+          "flex-grow": "3",
+          "flex-basis": "76px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "aspect-ratio",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+      "axis": "width",
+      "dagResult": 143.33,
+      "actual": 146,
+      "delta": 2.67
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "h1": {
+        "id": "h1",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 215,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "height",
+              "value": 207,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-top",
+              "value": 4,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-bottom",
+              "value": 4,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-top-width",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-bottom-width",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "207px (height) + 4px (padding-top) + 4px (padding-bottom) + 0px (border-top-width) + 0px (border-bottom-width)",
+        "cssProperties": {
+          "height": "207px",
+          "padding-top": "4px",
+          "padding-bottom": "4px",
+          "border-top-width": "0px",
+          "border-bottom-width": "0px",
+          "box-sizing": "content-box"
+        }
+      },
+      "w0": {
+        "id": "w0",
+        "kind": "aspect-ratio",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 143.33,
+        "inputs": {
+          "otherAxis": "h1"
+        },
+        "description": "width derived from the other axis via aspect-ratio",
+        "calc": {
+          "op": "mul",
+          "left": {
+            "op": "ref",
+            "nodeId": "h1"
+          },
+          "right": {
+            "op": "property",
+            "name": "aspect-ratio",
+            "value": 0.6666666666666666,
+            "unit": ""
+          }
+        },
+        "expr": "215px × 0.6666666666666666 (aspect-ratio)",
+        "cssProperties": {
+          "aspect-ratio": "0.6666666666666666"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 146,
+      "height": 215
+    }
+  }
+}

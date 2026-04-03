@@ -1,0 +1,97 @@
+{
+  "seed": 760,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "flex-wrap": "wrap",
+      "width": "325px",
+      "height": "332px",
+      "overflow": "scroll",
+      "box-sizing": "border-box"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "78px",
+          "height": "76px",
+          "padding": "15px",
+          "box-sizing": "border-box",
+          "flex-grow": "1"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h1",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 332,
+      "actual": 332,
+      "delta": 0,
+      "message": "Size of the browser terminal"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 78,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "width",
+          "value": 78,
+          "unit": "px"
+        },
+        "expr": "78px (width)",
+        "cssProperties": {
+          "width": "78px",
+          "box-sizing": "border-box"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 332,
+        "inputs": {},
+        "description": "Size of the browser terminal",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 332,
+          "unit": "px"
+        },
+        "expr": "332px (height)",
+        "cssProperties": {
+          "height": "332px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 78,
+      "height": 332
+    }
+  }
+}

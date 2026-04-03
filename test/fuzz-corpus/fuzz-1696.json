@@ -1,0 +1,100 @@
+{
+  "seed": 1696,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "flex-wrap": "wrap",
+      "width": "203px",
+      "height": "415px",
+      "overflow": "hidden",
+      "box-sizing": "border-box",
+      "gap": "3px",
+      "align-content": "flex-start"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "35px",
+          "height": "92px",
+          "padding": "5px",
+          "border": "3px solid black",
+          "box-sizing": "border-box",
+          "flex-grow": "2"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "width",
+      "dagResult": 203,
+      "actual": 203,
+      "delta": 0,
+      "message": "Size of the browser terminal"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 203,
+        "inputs": {},
+        "description": "Size of the browser terminal",
+        "calc": {
+          "op": "property",
+          "name": "width",
+          "value": 203,
+          "unit": "px"
+        },
+        "expr": "203px (width)",
+        "cssProperties": {
+          "width": "203px"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 92,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 92,
+          "unit": "px"
+        },
+        "expr": "92px (height)",
+        "cssProperties": {
+          "height": "92px",
+          "box-sizing": "border-box"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 203,
+      "height": 92
+    }
+  }
+}

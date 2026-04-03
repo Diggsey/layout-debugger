@@ -1,0 +1,99 @@
+{
+  "seed": 202,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "flex-wrap": "wrap",
+      "width": "431px",
+      "height": "230px",
+      "overflow": "hidden",
+      "gap": "9px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "48px",
+          "height": "60px",
+          "padding-top": "7px",
+          "padding-right": "3px",
+          "padding-bottom": "11px",
+          "box-sizing": "border-box",
+          "margin": "3px"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "width",
+      "dagResult": 48,
+      "actual": 48,
+      "delta": 0,
+      "message": "Size of the browser terminal"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 48,
+        "inputs": {},
+        "description": "Size of the browser terminal",
+        "calc": {
+          "op": "property",
+          "name": "width",
+          "value": 48,
+          "unit": "px"
+        },
+        "expr": "48px (width)",
+        "cssProperties": {
+          "width": "48px"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 60,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 60,
+          "unit": "px"
+        },
+        "expr": "60px (height)",
+        "cssProperties": {
+          "height": "60px",
+          "box-sizing": "border-box"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 48,
+      "height": 60
+    }
+  }
+}

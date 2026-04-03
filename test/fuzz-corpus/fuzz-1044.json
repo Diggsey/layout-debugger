@@ -1,0 +1,247 @@
+{
+  "seed": 1044,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "flex-wrap": "wrap",
+      "width": "275px",
+      "height": "273px",
+      "overflow": "hidden"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "grid",
+          "grid-template-columns": "2fr",
+          "width": "396px",
+          "overflow": "scroll",
+          "padding": "5px",
+          "flex-basis": "95px",
+          "flex-grow": "1"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "110px",
+              "height": "31px",
+              "padding": "2px",
+              "border": "2px solid black",
+              "margin": "3px",
+              "display": "contents"
+            }
+          }
+        ],
+        "target": true
+      },
+      {
+        "style": {
+          "width": "60px",
+          "height": "81px",
+          "border-top": "1px solid black",
+          "flex-basis": "84px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "width",
+      "dagResult": 191,
+      "actual": 191,
+      "delta": 0,
+      "message": "Size of the browser terminal"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 191,
+        "inputs": {},
+        "description": "Size of the browser terminal",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "width",
+              "value": 181,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-left",
+              "value": 5,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-right",
+              "value": 5,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-left-width",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-right-width",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "181px (width) + 5px (padding-left) + 5px (padding-right) + 0px (border-left-width) + 0px (border-right-width)",
+        "cssProperties": {
+          "width": "181px",
+          "padding-left": "5px",
+          "padding-right": "5px",
+          "border-left-width": "0px",
+          "border-right-width": "0px"
+        }
+      },
+      "h2": {
+        "id": "h2",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 273,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "height",
+              "value": 273,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-top",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-bottom",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-top-width",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-bottom-width",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "273px (height) + 0px (padding-top) + 0px (padding-bottom) + 0px (border-top-width) + 0px (border-bottom-width)",
+        "cssProperties": {
+          "height": "273px",
+          "padding-top": "0px",
+          "padding-bottom": "0px",
+          "border-top-width": "0px",
+          "border-bottom-width": "0px",
+          "box-sizing": "content-box"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "flex-cross-stretch",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 273,
+        "inputs": {
+          "containerCross": "h2"
+        },
+        "description": "Flex item stretches on the cross axis to fill the container",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "height",
+              "value": 263,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-top",
+              "value": 5,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-bottom",
+              "value": 5,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-top-width",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-bottom-width",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "263px (height) + 5px (padding-top) + 5px (padding-bottom) + 0px (border-top-width) + 0px (border-bottom-width)",
+        "cssProperties": {
+          "height": "263px",
+          "padding-top": "5px",
+          "padding-bottom": "5px",
+          "border-top-width": "0px",
+          "border-bottom-width": "0px",
+          "align-self": "auto",
+          "align-items": "normal"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 191,
+      "height": 273
+    },
+    "body:nth-child(2) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 275,
+      "height": 273
+    }
+  }
+}

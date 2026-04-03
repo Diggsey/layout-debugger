@@ -1,0 +1,105 @@
+{
+  "seed": 834,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "flex-wrap": "wrap",
+      "width": "208px",
+      "height": "272px",
+      "overflow": "hidden"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "78px",
+          "height": "81px",
+          "padding": "9px",
+          "margin": "5px"
+        }
+      },
+      {
+        "style": {
+          "width": "85px",
+          "height": "52px",
+          "padding": "10px",
+          "border": "2px solid black",
+          "box-sizing": "border-box",
+          "flex-basis": "91px"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h1",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "axis": "height",
+      "dagResult": 91,
+      "actual": 91,
+      "delta": 0,
+      "message": "Size of the browser terminal"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 85,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "width",
+          "value": 85,
+          "unit": "px"
+        },
+        "expr": "85px (width)",
+        "cssProperties": {
+          "width": "85px",
+          "box-sizing": "border-box"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 91,
+        "inputs": {},
+        "description": "Size of the browser terminal",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 91,
+          "unit": "px"
+        },
+        "expr": "91px (height)",
+        "cssProperties": {
+          "height": "91px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>",
+      "width": 85,
+      "height": 91
+    }
+  }
+}

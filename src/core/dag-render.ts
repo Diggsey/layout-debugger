@@ -1,10 +1,11 @@
 /**
  * DAG renderer: linearizes a DagResult for display.
  *
- * Uses DFS pre-order so the "main chain" (first dependency of each node)
- * appears immediately below its parent — like git log --first-parent.
+ * Uses topological sort (via layoutDag) so shared dependencies appear
+ * below all their parents. Side branches are placed before the main line.
  */
 import type { DagResult, LayoutNode, CalcExpr } from "./dag";
+import { layoutDag, type DagInput } from "./dag-layout";
 import { formatUnits } from "./units";
 import { describeElement } from "./utils";
 
@@ -13,6 +14,8 @@ export interface CalcSegment {
   text: string;
   /** If set, this segment is a value that came from the node with this ID. */
   refId?: string;
+  /** If set, this is a CSS property or measured value with this label. */
+  label?: string;
 }
 
 export interface RenderNode {
@@ -30,6 +33,7 @@ export interface RenderNode {
   calculation: CalcSegment[];
   expression: string;
   cssProperties: Record<string, string | undefined>;
+  cssReasons: Record<string, string | undefined>;
   dependsOn: string[];
 }
 
@@ -55,47 +59,59 @@ export function renderDag(dag: DagResult): DagRenderResult {
   };
 }
 
+/** Priority for input keys — lower = main line, higher = side branch. */
+const INPUT_ORDER: Record<string, number> = {
+  containingBlockContent: 0, containingBlock: 0, containerCross: 0,
+  containerContent: 0, container: 0, freeSpace: 0, borderBox: 0,
+  input: 0, growShare: 0, otherAxis: 0,
+  baseSize: 10, basis: 10, minContent: 10, content: 10,
+};
+
+function inputPriority(key: string): number {
+  if (key in INPUT_ORDER) return INPUT_ORDER[key];
+  if (key.startsWith("child")) return 10;
+  return 5;
+}
+
+/** Get a node's dependencies sorted by input priority (main line first). */
+function sortedInputs(node: LayoutNode): [string, LayoutNode][] {
+  return (Object.entries(node.inputs).filter(([, v]) => v) as [string, LayoutNode][])
+    .sort((a, b) => inputPriority(a[0]) - inputPriority(b[0]));
+}
+
 function renderAxis(root: LayoutNode, axis: "width" | "height"): AxisRender {
-  const visited = new Map<LayoutNode, string>();
-  const order: LayoutNode[] = [];
-
-  const INPUT_ORDER: Record<string, number> = {
-    containingBlockContent: 0, containingBlock: 0, containerCross: 0,
-    containerContent: 0, container: 0, freeSpace: 0, borderBox: 0,
-    input: 0, growShare: 0, otherAxis: 0,
-    baseSize: 10, basis: 10, minContent: 10, content: 10,
-  };
-
-  function inputPriority(key: string): number {
-    if (key in INPUT_ORDER) return INPUT_ORDER[key];
-    if (key.startsWith("child")) return 10;
-    return 5;
+  // Step 1: Collect all reachable nodes
+  const allNodes: LayoutNode[] = [];
+  const seen = new Set<LayoutNode>();
+  function collect(n: LayoutNode): void {
+    if (seen.has(n)) return;
+    seen.add(n);
+    allNodes.push(n);
+    for (const v of Object.values(n.inputs)) if (v) collect(v);
   }
+  collect(root);
 
-  function visit(node: LayoutNode): void {
-    if (visited.has(node)) return;
-    visited.set(node, "");
-    order.push(node);
+  // Step 2: Map LayoutNode ↔ temporary index
+  const nodeToIdx = new Map<LayoutNode, number>();
+  allNodes.forEach((n, i) => nodeToIdx.set(n, i));
 
-    const entries = Object.entries(node.inputs).filter(([, v]) => v) as [string, LayoutNode][];
-    entries.sort((a, b) => {
-      const pa = inputPriority(a[0]);
-      const pb = inputPriority(b[0]);
-      if (pa !== pb) return pb - pa;
-      return entries.indexOf(b) - entries.indexOf(a);
-    });
-    for (const [, dep] of entries) {
-      visit(dep);
-    }
-  }
+  // Step 3: Build DagInput (children sorted by input priority)
+  const dagInput: DagInput[] = allNodes.map((n) => ({
+    id: String(nodeToIdx.get(n)!),
+    children: sortedInputs(n).map(([, dep]) => String(nodeToIdx.get(dep)!)),
+  }));
 
-  visit(root);
+  // Step 4: Compute topological order via layoutDag
+  const layout = layoutDag(dagInput);
 
-  order.forEach((node, i) => visited.set(node, `${axis[0]}${i}`));
+  // Step 5: Map back to LayoutNodes in topological order, assign display IDs
+  const order = layout.order.map(id => allNodes[parseInt(id)]);
+  const nodeIds = new Map<LayoutNode, string>();
+  order.forEach((node, i) => nodeIds.set(node, `${axis[0]}${i}`));
 
+  // Step 6: Build RenderNodes
   const nodes: RenderNode[] = order.map((node) => {
-    const id = visited.get(node)!;
-    const nodeIds = visited;
+    const id = nodeIds.get(node)!;
     const calculation = calcToSegments(node.calc, nodeIds);
     const expression = calculation.map((s) => s.text).join("");
 
@@ -111,9 +127,8 @@ function renderAxis(root: LayoutNode, axis: "width" | "height"): AxisRender {
       calculation,
       expression,
       cssProperties: node.cssProperties,
-      dependsOn: (Object.entries(node.inputs).filter(([, v]) => v) as [string, LayoutNode][])
-        .sort((a, b) => inputPriority(a[0]) - inputPriority(b[0]))
-        .map(([, dep]) => visited.get(dep)!),
+      cssReasons: node.cssReasons,
+      dependsOn: sortedInputs(node).map(([, dep]) => nodeIds.get(dep)!),
     };
   });
 
@@ -164,10 +179,10 @@ function calcToSegments(
       return [{ text: fmtValue(expr.value, formatUnits(expr.unit)) }];
 
     case "property":
-      return [{ text: `${fmtValue(expr.value, formatUnits(expr.unit))} (${expr.name})` }];
+      return [{ text: fmtValue(expr.value, formatUnits(expr.unit)), label: expr.name }];
 
     case "measured":
-      return [{ text: `${fmtValue(expr.value, formatUnits(expr.unit))} (${expr.label})` }];
+      return [{ text: fmtValue(expr.value, formatUnits(expr.unit)), label: expr.label }];
 
     case "add":
       segs = [];

@@ -1,0 +1,183 @@
+{
+  "seed": 1155,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "flex-wrap": "wrap",
+      "width": "474px",
+      "height": "310px",
+      "overflow": "hidden",
+      "padding": "7px",
+      "box-sizing": "border-box",
+      "align-content": "space-between"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "23px",
+          "height": "59px",
+          "display": "contents",
+          "flex-basis": "71px",
+          "flex-grow": "1"
+        }
+      },
+      {
+        "style": {
+          "width": "23px",
+          "height": "28px",
+          "padding": "3px",
+          "border": "1px solid black",
+          "flex-basis": "195px",
+          "margin-right": "5px"
+        },
+        "target": true
+      },
+      {
+        "style": {
+          "width": "76px",
+          "height": "73px",
+          "border": "3px solid black",
+          "flex-basis": "153px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "axis": "width",
+      "dagResult": 203,
+      "actual": 203,
+      "delta": 0,
+      "message": "Size of the browser terminal"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 203,
+        "inputs": {},
+        "description": "Size of the browser terminal",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "width",
+              "value": 195,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-left",
+              "value": 3,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-right",
+              "value": 3,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-left-width",
+              "value": 1,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-right-width",
+              "value": 1,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "195px (width) + 3px (padding-left) + 3px (padding-right) + 1px (border-left-width) + 1px (border-right-width)",
+        "cssProperties": {
+          "width": "195px",
+          "padding-left": "3px",
+          "padding-right": "3px",
+          "border-left-width": "1px",
+          "border-right-width": "1px"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 36,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "height",
+              "value": 28,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-top",
+              "value": 3,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-bottom",
+              "value": 3,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-top-width",
+              "value": 1,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-bottom-width",
+              "value": 1,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "28px (height) + 3px (padding-top) + 3px (padding-bottom) + 1px (border-top-width) + 1px (border-bottom-width)",
+        "cssProperties": {
+          "height": "28px",
+          "padding-top": "3px",
+          "padding-bottom": "3px",
+          "border-top-width": "1px",
+          "border-bottom-width": "1px",
+          "box-sizing": "content-box"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>",
+      "width": 203,
+      "height": 36
+    }
+  }
+}

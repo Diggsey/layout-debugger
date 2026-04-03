@@ -1,0 +1,173 @@
+{
+  "seed": 1414,
+  "spec": {
+    "style": {
+      "width": "664px",
+      "overflow": "hidden"
+    },
+    "children": [
+      {
+        "style": {
+          "position": "relative",
+          "width": "311px",
+          "height": "332px",
+          "overflow": "scroll",
+          "box-sizing": "border-box",
+          "display": "inline-block",
+          "margin": "0px"
+        },
+        "children": [
+          {
+            "style": {
+              "display": "flex",
+              "flex-direction": "column",
+              "flex-wrap": "wrap",
+              "height": "311px",
+              "overflow": "hidden",
+              "padding-top": "7px",
+              "padding-left": "5px",
+              "box-sizing": "border-box",
+              "position": "absolute",
+              "left": "4px",
+              "right": "12px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "76px",
+                  "height": "36px",
+                  "border": "3px solid black",
+                  "box-sizing": "border-box",
+                  "margin": "3px"
+                },
+                "target": true
+              },
+              {
+                "style": {
+                  "width": "26px",
+                  "height": "84px",
+                  "flex-basis": "59px"
+                }
+              },
+              {
+                "style": {
+                  "width": "55px",
+                  "height": "36px",
+                  "border": "1px solid black"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "style": {
+          "display": "inline-block",
+          "flex-direction": "row",
+          "width": "690px",
+          "overflow": "hidden",
+          "padding-top": "12px",
+          "padding-left": "7px",
+          "gap": "16px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "57px",
+              "height": "88px",
+              "box-sizing": "border-box",
+              "flex-basis": "154px"
+            }
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "83px",
+          "height": "56px",
+          "border": "3px solid black",
+          "display": "inline-block"
+        }
+      },
+      {
+        "style": {
+          "width": "194px",
+          "height": "65px",
+          "padding": "15px",
+          "display": "inline-block"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h1",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 36,
+      "actual": 36,
+      "delta": 0,
+      "message": "Size of the browser terminal"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 76,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "width",
+          "value": 76,
+          "unit": "px"
+        },
+        "expr": "76px (width)",
+        "cssProperties": {
+          "width": "76px",
+          "box-sizing": "border-box"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 36,
+        "inputs": {},
+        "description": "Size of the browser terminal",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 36,
+          "unit": "px"
+        },
+        "expr": "36px (height)",
+        "cssProperties": {
+          "height": "36px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 76,
+      "height": 36
+    }
+  }
+}

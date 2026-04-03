@@ -312,28 +312,28 @@ test.describe("DAG: aspect-ratio", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("DAG render: node ordering", () => {
-  test("flex item: same-element detail branches before parent chain continues", async ({ page }) => {
+  test("flex item: topological ordering — every node appears after all its dependents", async ({ page }) => {
     await loadFixture(page, "flex.html");
     const nodes = await renderDagAxis(page, "grow1", "width");
 
     // Root is flex-item-main
     expect(nodes[0].kind).toBe("flex-item-main");
 
-    // Same-element detail nodes (base-size, basis, min-content) should appear
-    // before the parent-chain nodes (grow-share, free-space, content-area, explicit)
-    const kinds = nodes.map((n) => n.kind);
-    const baseSizeIdx = kinds.indexOf("flex-base-size");
-    const growShareIdx = kinds.indexOf("flex-grow-share");
-    expect(baseSizeIdx).toBeGreaterThan(0);
-    expect(growShareIdx).toBeGreaterThan(baseSizeIdx);
+    // Topological invariant: every node appears before all nodes it depends on
+    const idToIdx = new Map(nodes.map((n, i) => [n.id, i]));
+    for (const node of nodes) {
+      for (const dep of node.dependsOn) {
+        const depIdx = idToIdx.get(dep)!;
+        const nodeIdx = idToIdx.get(node.id)!;
+        expect(nodeIdx, `${node.id} (${node.kind}) should appear before its dependency ${dep}`).toBeLessThan(depIdx);
+      }
+    }
 
-    // flex-basis and min-content should be between base-size and grow-share
-    const basisIdx = kinds.indexOf("flex-basis");
-    const minContentIdx = kinds.indexOf("min-content");
-    expect(basisIdx).toBeGreaterThan(baseSizeIdx);
-    expect(basisIdx).toBeLessThan(growShareIdx);
-    expect(minContentIdx).toBeGreaterThan(baseSizeIdx);
-    expect(minContentIdx).toBeLessThan(growShareIdx);
+    // All expected flex node kinds are present
+    const kinds = new Set(nodes.map((n) => n.kind));
+    expect(kinds.has("flex-item-main")).toBe(true);
+    expect(kinds.has("flex-base-size")).toBe(true);
+    expect(kinds.has("flex-basis")).toBe(true);
   });
 
   test("block-fill: parent chain is the main line", async ({ page }) => {

@@ -2,6 +2,7 @@
 // It needs page context (not isolated content script world) for getComputedStyle, etc.
 function injectEngine(): void {
   const script = document.createElement("script");
+  script.type = "module";
   script.src = chrome.runtime.getURL("engine.js");
   script.onload = () => script.remove();
   script.onerror = () => {

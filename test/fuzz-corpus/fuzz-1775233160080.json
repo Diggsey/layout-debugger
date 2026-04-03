@@ -1,0 +1,228 @@
+{
+  "seed": 1775233160080,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "627px",
+      "overflow": "hidden",
+      "padding": "12px",
+      "box-sizing": "border-box"
+    },
+    "children": [
+      {
+        "style": {
+          "overflow": "auto",
+          "box-sizing": "border-box",
+          "aspect-ratio": "4 / 3",
+          "height": "300px",
+          "flex-grow": "0",
+          "flex-shrink": "0"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "133px",
+              "height": "95px",
+              "padding": "10px"
+            }
+          }
+        ],
+        "target": true
+      },
+      {
+        "style": {
+          "display": "flex",
+          "flex-direction": "column",
+          "height": "458px",
+          "overflow": "scroll",
+          "flex-grow": "1",
+          "flex-basis": "auto"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "127px",
+              "height": "90px",
+              "box-sizing": "border-box",
+              "flex-grow": "1",
+              "max-height": "318px"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "aspect-ratio",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "width",
+      "dagResult": 400,
+      "actual": 1256,
+      "delta": 856
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "h3": {
+        "id": "h3",
+        "kind": "flex-basis",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 300,
+        "inputs": {},
+        "description": "Starting size before flex grow/shrink",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 300,
+          "unit": "px"
+        },
+        "expr": "300px (height)",
+        "cssProperties": {
+          "height": "300px"
+        }
+      },
+      "h4": {
+        "id": "h4",
+        "kind": "min-content",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 0,
+        "inputs": {},
+        "description": "Minimum height from content",
+        "calc": {
+          "op": "constant",
+          "value": 0,
+          "unit": "px"
+        },
+        "expr": "0px",
+        "cssProperties": {}
+      },
+      "h2": {
+        "id": "h2",
+        "kind": "flex-base-size",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 300,
+        "inputs": {
+          "basis": "h3",
+          "minContent": "h4"
+        },
+        "description": "Hypothetical main size (basis clamped by min/max)",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "ref",
+              "nodeId": "h4"
+            },
+            {
+              "op": "ref",
+              "nodeId": "h3"
+            }
+          ]
+        },
+        "expr": "max(0px, 300px)",
+        "cssProperties": {}
+      },
+      "h5": {
+        "id": "h5",
+        "kind": "flex-no-change",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 0,
+        "inputs": {},
+        "description": "This item does not grow or shrink",
+        "calc": {
+          "op": "constant",
+          "value": 0,
+          "unit": "px"
+        },
+        "expr": "0px",
+        "cssProperties": {}
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "flex-item-main",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 300,
+        "inputs": {
+          "baseSize": "h2",
+          "growShare": "h5"
+        },
+        "description": "Flex item — height determined by the flex layout algorithm",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "ref",
+              "nodeId": "h2"
+            },
+            {
+              "op": "ref",
+              "nodeId": "h5"
+            }
+          ]
+        },
+        "expr": "300px + 0px",
+        "cssProperties": {
+          "flex-basis": "auto",
+          "flex-grow": "0",
+          "flex-shrink": "0"
+        }
+      },
+      "w0": {
+        "id": "w0",
+        "kind": "aspect-ratio",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 400,
+        "inputs": {
+          "otherAxis": "h1"
+        },
+        "description": "width derived from the other axis via aspect-ratio",
+        "calc": {
+          "op": "mul",
+          "left": {
+            "op": "ref",
+            "nodeId": "h1"
+          },
+          "right": {
+            "op": "property",
+            "name": "aspect-ratio",
+            "value": 1.3333333333333333,
+            "unit": ""
+          }
+        },
+        "expr": "300px × 1.3333333333333333 (aspect-ratio)",
+        "cssProperties": {
+          "aspect-ratio": "1.3333333333333333"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 1256,
+      "height": 300
+    }
+  }
+}

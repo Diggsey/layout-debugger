@@ -64,9 +64,9 @@ export function measureMinContentSize(el: Element, axis: "width" | "height"): nu
   ].join("; ");
   // Append to body (not the flex container) to avoid layout interference
   document.body.appendChild(clone);
-  const size = clone.getBoundingClientRect()[axis];
+  const value = clone.getBoundingClientRect()[axis];
   clone.remove();
-  return size;
+  return value;
 }
 
 /**

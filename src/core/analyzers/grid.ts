@@ -18,29 +18,19 @@ export function gridItem(
   fns: SizeFns, b: DagBuilder, el: Element, axis: Axis,
   ctx: LayoutContext, depth: number,
 ): LayoutNode {
-  const existing = b.get("grid-item", el, axis);
-  if (existing) return existing;
-
-  const elStyle = getComputedStyle(el);
+  const nb = fns.begin("grid-item", el, axis);
+  if (!nb) return b.get("grid-item", el, axis)!;
 
   const containerExplicit = getExplicitSize(ctx.parent, axis);
-  const containerNode = containerExplicit
-    ? fns.computeSize(ctx.parent, axis, depth - 1)
-    : null;
+  if (containerExplicit) {
+    nb.input("container", fns.computeSize(ctx.parent, axis, depth - 1));
+  }
 
-  const inputs: LayoutNode["inputs"] = {};
-  if (containerNode) inputs.container = containerNode;
+  const trackProp = `grid-${axis === "width" ? "column" : "row"}`;
+  nb.css(trackProp, "Which grid track(s) this item spans");
 
-  const startProp = axis === "width" ? "gridColumnStart" : "gridRowStart";
-  const endProp = axis === "width" ? "gridColumnEnd" : "gridRowEnd";
-  const start = parseInt((elStyle as any)[startProp], 10);
-  const end = parseInt((elStyle as any)[endProp], 10);
-
-  // Grid item size comes from the resolved track sizes (browser-computed).
-  const calc = fns.borderBoxCalc(el, axis);
-
-  return fns.make("grid-item", el, axis,
-    `Grid item \u2014 ${axis} determined by the grid track it occupies`,
-    calc, inputs,
-    { [`grid-${axis === "width" ? "column" : "row"}`]: `${start} / ${end}` });
+  return nb
+    .describe(`Grid item \u2014 ${axis} determined by the grid track it occupies`)
+    .calc(fns.borderBoxCalc(el, axis))
+    .finish();
 }

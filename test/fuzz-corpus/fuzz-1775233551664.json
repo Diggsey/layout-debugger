@@ -1,0 +1,142 @@
+{
+  "seed": 1775233551664,
+  "spec": {
+    "style": {
+      "width": "714px",
+      "overflow": "visible"
+    },
+    "children": [
+      {
+        "style": {
+          "overflow": "hidden",
+          "padding": "6px",
+          "aspect-ratio": "1 / 4",
+          "width": "114px",
+          "display": "inline-block"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "90px",
+              "height": "90px",
+              "padding": "2px"
+            }
+          }
+        ],
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h1",
+      "kind": "aspect-ratio",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 504,
+      "actual": 468,
+      "delta": 36
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 126,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "width",
+              "value": 114,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-left",
+              "value": 6,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-right",
+              "value": 6,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-left-width",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-right-width",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "114px (width) + 6px (padding-left) + 6px (padding-right) + 0px (border-left-width) + 0px (border-right-width)",
+        "cssProperties": {
+          "width": "114px",
+          "padding-left": "6px",
+          "padding-right": "6px",
+          "border-left-width": "0px",
+          "border-right-width": "0px",
+          "box-sizing": "content-box"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "aspect-ratio",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 504,
+        "inputs": {
+          "otherAxis": "w0"
+        },
+        "description": "height derived from the other axis via aspect-ratio",
+        "calc": {
+          "op": "div",
+          "left": {
+            "op": "ref",
+            "nodeId": "w0"
+          },
+          "right": {
+            "op": "property",
+            "name": "aspect-ratio",
+            "value": 0.25,
+            "unit": ""
+          }
+        },
+        "expr": "126px / 0.25 (aspect-ratio)",
+        "cssProperties": {
+          "aspect-ratio": "0.25"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 126,
+      "height": 468
+    }
+  }
+}

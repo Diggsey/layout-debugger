@@ -15,7 +15,7 @@
  * - CSS Sizing 3 §4  Intrinsic Size Determination
  */
 import type { LayoutNode, DagResult, Axis, NodeKind, SizeFns, CalcExpr } from "./dag";
-import { DagBuilder, evaluate, collectProperties, ref, constant, prop, add, cmax, cmin } from "./dag";
+import { DagBuilder, ref, constant, prop, add, cmax, cmin } from "./dag";
 import { PX } from "./units";
 import { identifyContext } from "./context";
 import { getExplicitSize } from "./sizing";
@@ -46,29 +46,26 @@ export function buildDag(el: Element): DagResult {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function make(
-  b: DagBuilder, kind: NodeKind, el: Element, axis: Axis,
-  description: string, calc: CalcExpr,
-  inputs: LayoutNode["inputs"],
-  extraCssProperties: LayoutNode["cssProperties"] = {},
-): LayoutNode {
+/**
+ * One-shot node creation via NodeBuilder. Returns existing if cached.
+ * All CSS props in the CalcExpr are auto-collected by DagBuilder.finish().
+ */
+function make(b: DagBuilder, kind: NodeKind, el: Element, axis: Axis,
+  description: string, calc: CalcExpr, inputs: LayoutNode["inputs"],
+): NodeBuilder | undefined {
   const existing = b.get(kind, el, axis);
-  if (existing) return existing;
-  // Auto-collect CSS properties from property() nodes in the CalcExpr,
-  // merged with any explicitly-passed descriptive properties (display, position, etc.)
-  const cssProperties = { ...collectProperties(calc), ...extraCssProperties };
-  return b.finish({ kind, element: el, axis, result: round(evaluate(calc)), description, calc, inputs, cssProperties });
+  if (existing) return undefined;
+  return b.begin(kind, el, axis).describe(description).calc(calc).inputs(inputs);
 }
 
 function measured(b: DagBuilder, el: Element, axis: Axis, kind: NodeKind, description?: string): LayoutNode {
   const existing = b.get(kind, el, axis);
   if (existing) return existing;
   const desc = description ?? `Size of the browser ${kind === "viewport" ? "viewport" : kind}`;
-  // Measured nodes read their size from the element's own CSS property
-  const calc = borderBoxCalc(el, axis);
-  return b.finish({ kind, element: el, axis, result: round(evaluate(calc)), description: desc, calc, inputs: {}, cssProperties: collectProperties(calc) });
+  return b.begin(kind, el, axis).describe(desc).calc(borderBoxCalc(el, axis)).finish();
 }
 
+/** Build a CalcExpr for an element's border-box size from its CSS properties. */
 /** Build a CalcExpr for an element's border-box size from its CSS properties. */
 function borderBoxCalc(el: Element, axis: Axis): CalcExpr {
   const s = getComputedStyle(el);
@@ -106,16 +103,27 @@ function determineKind(el: Element, axis: Axis): NodeKind {
   if (s.display === "contents") return "display-contents";
 
   const parent = el.parentElement;
+  let isGridItem = false;
   if (parent && s.position !== "absolute" && s.position !== "fixed") {
     const parentDisplay = getComputedStyle(parent).display;
     if (parentDisplay === "flex" || parentDisplay === "inline-flex") {
-      const direction = getComputedStyle(parent).flexDirection;
-      if (axis === flexMainAxisProp(direction)) return "flex-item-main";
+      const ps = getComputedStyle(parent);
+      const direction = ps.flexDirection;
+      if (axis === flexMainAxisProp(direction)) {
+        // Single-line flex: use our flex algorithm
+        if (ps.flexWrap === "nowrap") return "flex-item-main";
+        // Multi-line flex (wrap): not implemented, fall through to explicit/content sizing
+      }
+    }
+    if (parentDisplay === "grid" || parentDisplay === "inline-grid") {
+      isGridItem = true;
     }
   }
 
+  // Skip aspect-ratio for grid items (the grid algorithm governs their size).
+  // Flex items CAN use aspect-ratio for their basis when flex-basis: auto.
   const ar = s.aspectRatio;
-  if (ar && ar !== "auto") {
+  if (!isGridItem && ar && ar !== "auto") {
     const match = ar.match(/^([\d.]+)\s*(?:\/\s*([\d.]+))?$/);
     if (match) {
       const explicit = getExplicitSize(el, axis);
@@ -189,14 +197,20 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
 
   switch (kind) {
     case "viewport": return measured(b, el, axis, "viewport");
-    case "display-none":
-      return make(b, "display-none", el, axis,
-        "Element is hidden (display: none)", constant(0, PX),
-        {}, { display: "none" });
-    case "display-contents":
-      return make(b, "display-contents", el, axis,
-        "Element has no box (display: contents)", constant(0, PX),
-        {}, { display: "contents" });
+    case "display-none": {
+      const nb = make(b, "display-none", el, axis,
+        "Element is hidden (display: none)", constant(0, PX), {});
+      if (!nb) return b.get("display-none", el, axis)!;
+      nb.setCss("display", "none", "Element is hidden and has no size");
+      return nb.finish();
+    }
+    case "display-contents": {
+      const nb = make(b, "display-contents", el, axis,
+        "Element has no box (display: contents)", constant(0, PX), {});
+      if (!nb) return b.get("display-contents", el, axis)!;
+      nb.setCss("display", "contents", "Element has no box — children participate in parent layout");
+      return nb.finish();
+    }
     case "aspect-ratio": {
       const node = aspectRatio(fns, b, el, axis, ctx(), depth);
       return node ? maybeClamp(b, el, axis, node) : measured(b, el, axis, "terminal");
@@ -204,22 +218,27 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
     case "percentage": {
       const c = ctx();
       const cbNode = computeSize(b, c.containingBlock, axis, depth - 1);
-      const node = make(b, "percentage", el, axis,
+      const nb = make(b, "percentage", el, axis,
         `${axis} is a percentage of the containing block`,
-        borderBoxCalc(el, axis),
-        { containingBlock: cbNode });
-      return maybeClamp(b, el, axis, node);
+        borderBoxCalc(el, axis), { containingBlock: cbNode });
+      if (!nb) return b.get("percentage", el, axis)!;
+      nb.css("box-sizing", "Determines whether padding/border are included");
+      return maybeClamp(b, el, axis, nb.finish());
     }
     case "explicit": {
-      const node = make(b, "explicit", el, axis,
+      const nb = make(b, "explicit", el, axis,
         `${axis} is set explicitly in CSS`,
         borderBoxCalc(el, axis), {});
-      return maybeClamp(b, el, axis, node);
+      if (!nb) return b.get("explicit", el, axis)!;
+      nb.css("box-sizing", "Determines whether padding/border are included");
+      return maybeClamp(b, el, axis, nb.finish());
     }
     case "intrinsic": {
-      return make(b, "intrinsic", el, axis,
+      const nb = make(b, "intrinsic", el, axis,
         `${axis} uses an intrinsic sizing keyword`,
         borderBoxCalc(el, axis), {});
+      if (!nb) return b.get("intrinsic", el, axis)!;
+      return nb.finish();
     }
     case "flex-item-main":
       return maybeClamp(b, el, axis, flexItemMain(fns, b, el, axis, ctx(), depth));
@@ -247,9 +266,12 @@ function buildSizeFns(b: DagBuilder): SizeFns {
     containerContentArea: (container, axis, borderBoxNode) =>
       containerContentArea(fns, b, container, axis, borderBoxNode),
     borderBoxCalc,
-    make: (kind, el, axis, description, calc, inputs, cssProperties) =>
-      make(b, kind, el, axis, description, calc, inputs, cssProperties),
     measured: (el, axis, kind) => measured(b, el, axis, kind),
+    begin: (kind, el, axis) => {
+      const existing = b.get(kind, el, axis);
+      if (existing) return undefined;
+      return b.begin(kind, el, axis);
+    },
   };
   return fns;
 }
@@ -272,19 +294,63 @@ function computeIntrinsicSize(
   // the flex algorithm and cycle back to a container that's still building.
   const explicit = getExplicitSize(el, axis);
   if (explicit) {
-    return make(b, "intrinsic-content", el, axis,
+    const nb = make(b, "intrinsic-content", el, axis,
       `Intrinsic ${axis}: set explicitly in CSS`,
       borderBoxCalc(el, axis), {});
+    return nb ? nb.finish() : b.get("intrinsic-content", el, axis)!;
   }
 
-  const s = getComputedStyle(el);
+  // If aspect-ratio can derive this axis from an explicit other axis, compute it.
+  const arStyle = getComputedStyle(el);
+  const arVal = arStyle.aspectRatio;
+  if (arVal && arVal !== "auto" && arStyle.overflow !== "scroll" && arStyle.overflow !== "auto") {
+    const otherAxis: Axis = axis === "width" ? "height" : "width";
+    const otherExplicit = getExplicitSize(el, otherAxis);
+    if (otherExplicit) {
+      // Compute the other axis border-box, then derive this axis via ratio
+      const otherBB = computeIntrinsicSize(b, el, otherAxis, depth);
+      const arMatch = arVal.match(/^([\d.]+)\s*(?:\/\s*([\d.]+))?$/);
+      if (arMatch) {
+        const ratioW = parseFloat(arMatch[1]);
+        const ratioH = arMatch[2] ? parseFloat(arMatch[2]) : 1;
+        const ratio = ratioW / ratioH; // width / height
+        const isBorderBox = arStyle.boxSizing === "border-box";
+
+        let result: number;
+        if (isBorderBox) {
+          result = axis === "width" ? otherBB.result * ratio : otherBB.result / ratio;
+        } else {
+          // content-box: need to subtract other pb, apply ratio, add this pb
+          const otherPbNames = otherAxis === "width"
+            ? ["paddingLeft", "paddingRight", "borderLeftWidth", "borderRightWidth"] as const
+            : ["paddingTop", "paddingBottom", "borderTopWidth", "borderBottomWidth"] as const;
+          const thisPbNames = axis === "width"
+            ? ["paddingLeft", "paddingRight", "borderLeftWidth", "borderRightWidth"] as const
+            : ["paddingTop", "paddingBottom", "borderTopWidth", "borderBottomWidth"] as const;
+          const otherPb = otherPbNames.reduce((s, p) => s + (parseFloat((arStyle as any)[p]) || 0), 0);
+          const thisPb = thisPbNames.reduce((s, p) => s + (parseFloat((arStyle as any)[p]) || 0), 0);
+          const otherContent = otherBB.result - otherPb;
+          const thisContent = axis === "width" ? otherContent * ratio : otherContent / ratio;
+          result = thisContent + thisPb;
+        }
+        const nb = make(b, "intrinsic-content", el, axis,
+          `Intrinsic ${axis}: derived from aspect-ratio`,
+          borderBoxCalc(el, axis), { otherAxis: otherBB });
+        if (nb) return nb.finishWithResult(round(result));
+        return b.get("intrinsic-content", el, axis)!;
+      }
+    }
+  }
+
   const contentNode = contentSize(b, el, axis, depth, true);
 
-  return make(b, "intrinsic-content", el, axis,
-    `Intrinsic ${axis} from content (display: ${s.display})`,
-    ref(contentNode),
-    { content: contentNode },
-    { display: s.display, [axis]: "auto" });
+  const nb = make(b, "intrinsic-content", el, axis,
+    `Intrinsic ${axis} from content`,
+    ref(contentNode), { content: contentNode });
+  if (!nb) return b.get("intrinsic-content", el, axis)!;
+  nb.css("display", "Determines how children are laid out");
+  nb.setCss(axis, "auto", "Not set explicitly — sized by content");
+  return nb.finish();
 }
 
 // ---------------------------------------------------------------------------
@@ -330,9 +396,15 @@ function maybeClamp(b: DagBuilder, el: Element, axis: Axis, input: LayoutNode): 
     calc = cmax(constraintCalc(el, axis, minPropName), ref(input));
   }
 
-  return make(b, "clamped", el, axis,
-    "Constrained by min/max",
-    calc, { input });
+  const nb = make(b, "clamped", el, axis, "Constrained by min/max", calc, { input });
+  if (!nb) return b.get("clamped", el, axis)!;
+  nb.css("box-sizing", "Determines how min/max constraints are interpreted");
+  if (maxPx !== Infinity && input.result > maxPx) {
+    nb.setCss(maxPropName, maxVal);
+  } else {
+    nb.setCss(minPropName, minVal);
+  }
+  return nb.finish();
 }
 
 // ---------------------------------------------------------------------------
@@ -355,15 +427,14 @@ function contentSize(
 
   const existing = b.get(kind, el, axis);
   if (existing) return existing;
-  b.begin(kind, el, axis);
+  const nb = b.begin(kind, el, axis);
+
+  // Record contextual CSS properties
+  nb.setCss(axis, "auto", "Not set explicitly — sized by content");
+  nb.css("overflow", "Affects minimum size calculation");
 
   const isFlexCross = isFlex && !isFlexMain;
   const isGrid = display === "grid" || display === "inline-grid";
-
-  // Use intrinsic sizes for children when the parent's content size
-  // depends on them but they would cycle back (flex cross-axis children
-  // stretch to parent, grid items size from container). Also when the
-  // intrinsic flag is set (computing pre-stretch/pre-flex sizes).
   const useIntrinsic = isFlexCross || isGrid || intrinsic;
 
   const childNodes: LayoutNode[] = [];
@@ -381,49 +452,51 @@ function contentSize(
     i++;
   }
 
-  const gap = px(axis === "width" ? s.columnGap : s.rowGap);
+  const gap = nb.cssPx(axis === "width" ? "column-gap" : "row-gap");
 
-  // Build inputs map
-  const inputs: LayoutNode["inputs"] = {};
-  childNodes.forEach((n, idx) => { inputs[`child${idx}`] = n; });
+  childNodes.forEach((n, idx) => { nb.input(`child${idx}`, n); });
 
-  // Build CalcExpr
+  // Build CalcExpr: children + gaps + padding + border = border-box size
   let calc: CalcExpr;
   const gapPropName = axis === "width" ? "column-gap" : "row-gap";
   if (childNodes.length === 0) {
-    // No child nodes (leaf or depth limit) — use measured size from CSS property
     calc = borderBoxCalc(el, axis);
   } else {
     const childRefs = childNodes.map(n => ref(n));
+    const pbProps = axis === "width"
+      ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
+      : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
+    const pbTerms: CalcExpr[] = pbProps
+      .filter(p => nb.cssPx(p) > 0)
+      .map(p => nb.prop(p));
+
     if (mode === "sum") {
-      // Interleave gap property refs between children: child0 + gap + child1 + gap + child2
       const args: CalcExpr[] = [childRefs[0]];
       for (let j = 1; j < childRefs.length; j++) {
-        if (gap > 0) args.push(prop(el, gapPropName));
+        if (gap > 0) args.push(nb.prop(gapPropName));
         args.push(childRefs[j]);
       }
+      args.push(...pbTerms);
       calc = add(...args);
     } else {
-      calc = cmax(...childRefs);
+      if (pbTerms.length > 0) {
+        calc = add(cmax(...childRefs), ...pbTerms);
+      } else {
+        calc = cmax(...childRefs);
+      }
     }
   }
 
   const hasChildren = childNodes.length > 0;
-  let description: string;
   if (mode === "sum") {
-    description = hasChildren
+    nb.describe(hasChildren
       ? `${axis} is determined by stacking its children`
-      : `${axis} is determined by its text/inline content`;
+      : `${axis} is determined by its text/inline content`);
   } else {
-    description = hasChildren
+    nb.describe(hasChildren
       ? `${axis} is determined by its tallest/widest child`
-      : `${axis} is determined by its content`;
+      : `${axis} is determined by its content`);
   }
 
-  // For content nodes, the CalcExpr may not exactly match the measured size
-  // (e.g. text content, margin collapsing). Use the measured size as result
-  // but keep the CalcExpr for the explanation.
-  return b.finish({ kind, element: el, axis, result: size,
-    description, calc, inputs,
-    cssProperties: { [axis]: "auto", overflow: s.overflow } });
+  return nb.calc(calc).finishWithResult(size);
 }

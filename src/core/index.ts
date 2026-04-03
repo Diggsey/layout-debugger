@@ -1,10 +1,10 @@
 export { buildDag } from "./build-dag";
 export { renderDag, renderDagToConsole } from "./dag-render";
-export { DagBuilder } from "./dag";
+export { DagBuilder, NodeBuilder } from "./dag";
 export type { LayoutNode, DagResult, NodeKind, Axis, SizeFns, CalcExpr } from "./dag";
 export type { Units } from "./units";
 export { UNITLESS, PX, formatUnits } from "./units";
-export { evaluate, calcUnit, collectProperties, ref, constant, prop, measured, add, sub, mul, div, cmax, cmin } from "./dag";
+export { evaluate, calcUnit, ref, constant, prop, propVal, measured, add, sub, mul, div, cmax, cmin } from "./dag";
 export type { DagRenderResult, AxisRender, RenderNode } from "./dag-render";
 export type { LayoutContext } from "./types";
 export { serializeDag, measureElements, verifyDag, getElementPath } from "./serialize";

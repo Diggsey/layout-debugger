@@ -13,7 +13,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["engine.ts"],
+      "resources": ["engine.ts", "assets/*"],
       "matches": ["<all_urls>"]
     }
   ],

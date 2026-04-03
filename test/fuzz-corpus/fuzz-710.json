@@ -1,0 +1,139 @@
+{
+  "seed": 710,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "flex-wrap": "wrap",
+      "width": "321px",
+      "height": "413px",
+      "overflow": "hidden",
+      "box-sizing": "border-box"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "grid",
+          "grid-template-columns": "1fr",
+          "width": "644px",
+          "overflow": "hidden",
+          "border": "1px solid black",
+          "box-sizing": "border-box",
+          "margin": "8px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "146px",
+              "height": "64px",
+              "box-sizing": "border-box",
+              "margin": "9px"
+            }
+          }
+        ],
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "width",
+      "dagResult": 305,
+      "actual": 305,
+      "delta": 0,
+      "message": "Size of the browser terminal"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 305,
+        "inputs": {},
+        "description": "Size of the browser terminal",
+        "calc": {
+          "op": "property",
+          "name": "width",
+          "value": 305,
+          "unit": "px"
+        },
+        "expr": "305px (width)",
+        "cssProperties": {
+          "width": "305px"
+        }
+      },
+      "h2": {
+        "id": "h2",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 413,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 413,
+          "unit": "px"
+        },
+        "expr": "413px (height)",
+        "cssProperties": {
+          "height": "413px",
+          "box-sizing": "border-box"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "flex-cross-stretch",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 397,
+        "inputs": {
+          "containerCross": "h2"
+        },
+        "description": "Flex item stretches on the cross axis to fill the container",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 397,
+          "unit": "px"
+        },
+        "expr": "397px (height)",
+        "cssProperties": {
+          "height": "397px",
+          "align-self": "auto",
+          "align-items": "normal"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 305,
+      "height": 397
+    },
+    "body:nth-child(2) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 321,
+      "height": 413
+    }
+  }
+}

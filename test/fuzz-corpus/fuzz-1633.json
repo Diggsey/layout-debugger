@@ -1,0 +1,254 @@
+{
+  "seed": 1633,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "302px",
+      "overflow": "hidden",
+      "padding": "3px",
+      "gap": "17px"
+    },
+    "children": [
+      {
+        "style": {
+          "overflow": "scroll",
+          "padding-top": "3px",
+          "padding-bottom": "7px",
+          "aspect-ratio": "4 / 2",
+          "height": "189px",
+          "flex-basis": "95px",
+          "align-self": "flex-start",
+          "max-width": "285px",
+          "margin": "2px"
+        },
+        "children": [
+          {
+            "style": {
+              "display": "flex",
+              "flex-direction": "column",
+              "flex-wrap": "wrap",
+              "width": "369px",
+              "height": "378px",
+              "overflow": "hidden",
+              "box-sizing": "border-box"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "121px",
+                  "height": "78px",
+                  "flex-basis": "56px",
+                  "flex-grow": "1"
+                }
+              },
+              {
+                "style": {
+                  "width": "97px",
+                  "height": "45px",
+                  "box-sizing": "border-box",
+                  "flex-basis": "147px",
+                  "flex-grow": "0"
+                }
+              },
+              {
+                "style": {
+                  "width": "95px",
+                  "height": "58px",
+                  "padding": "15px",
+                  "border": "4px solid black",
+                  "margin": "6px"
+                }
+              },
+              {
+                "style": {
+                  "width": "101px",
+                  "height": "26px",
+                  "padding-top": "6px",
+                  "border": "3px solid black",
+                  "margin": "0px"
+                },
+                "target": true
+              }
+            ]
+          },
+          {
+            "style": {
+              "width": "53px",
+              "height": "98px",
+              "padding-top": "4px",
+              "padding-right": "6px",
+              "padding-bottom": "12px",
+              "padding-left": "10px",
+              "box-sizing": "border-box",
+              "margin": "2px"
+            }
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "149px",
+          "height": "99px",
+          "padding": "9px",
+          "border": "4px solid black",
+          "box-sizing": "border-box",
+          "margin-left": "9px",
+          "flex-grow": "0"
+        }
+      },
+      {
+        "style": {
+          "width": "128px",
+          "height": "53px",
+          "padding": "7px",
+          "box-sizing": "border-box",
+          "margin-top": "13px",
+          "margin-bottom": "8px",
+          "margin-left": "6px",
+          "display": "none",
+          "flex-grow": "2",
+          "flex-shrink": "3",
+          "min-width": "80px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h1",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(4)",
+      "axis": "height",
+      "dagResult": 38,
+      "actual": 38,
+      "delta": 0,
+      "message": "Size of the browser terminal"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(4)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(4)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 107,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "width",
+              "value": 101,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-left",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-right",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-left-width",
+              "value": 3,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-right-width",
+              "value": 3,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "101px (width) + 0px (padding-left) + 0px (padding-right) + 3px (border-left-width) + 3px (border-right-width)",
+        "cssProperties": {
+          "width": "101px",
+          "padding-left": "0px",
+          "padding-right": "0px",
+          "border-left-width": "3px",
+          "border-right-width": "3px",
+          "box-sizing": "content-box"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(4)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 38,
+        "inputs": {},
+        "description": "Size of the browser terminal",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "height",
+              "value": 26,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-top",
+              "value": 6,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-bottom",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-top-width",
+              "value": 3,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-bottom-width",
+              "value": 3,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "26px (height) + 6px (padding-top) + 0px (padding-bottom) + 3px (border-top-width) + 3px (border-bottom-width)",
+        "cssProperties": {
+          "height": "26px",
+          "padding-top": "6px",
+          "padding-bottom": "0px",
+          "border-top-width": "3px",
+          "border-bottom-width": "3px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(4)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(4)",
+      "desc": "<div>",
+      "width": 107,
+      "height": 38
+    }
+  }
+}

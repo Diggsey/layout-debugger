@@ -1,0 +1,154 @@
+{
+  "seed": 1058,
+  "spec": {
+    "style": {
+      "overflow": "hidden",
+      "box-sizing": "border-box",
+      "aspect-ratio": "2 / 4",
+      "height": "331px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "49px",
+          "height": "70px"
+        }
+      },
+      {
+        "style": {
+          "width": "126px",
+          "height": "71px",
+          "display": "contents"
+        }
+      },
+      {
+        "style": {
+          "overflow": "hidden",
+          "aspect-ratio": "3 / 2",
+          "width": "165px"
+        },
+        "children": [
+          {
+            "style": {
+              "overflow": "scroll",
+              "padding": "2px",
+              "box-sizing": "border-box",
+              "aspect-ratio": "1 / 2",
+              "width": "164px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "117px",
+                  "height": "86px"
+                }
+              },
+              {
+                "style": {
+                  "width": "58px",
+                  "height": "33px",
+                  "box-sizing": "border-box"
+                }
+              },
+              {
+                "style": {
+                  "width": "147px",
+                  "height": "57px",
+                  "padding-top": "14px",
+                  "padding-right": "4px",
+                  "border": "4px solid black"
+                }
+              }
+            ],
+            "target": true
+          },
+          {
+            "style": {
+              "width": "64px",
+              "height": "77px"
+            }
+          },
+          {
+            "style": {
+              "width": "131px",
+              "height": "27px",
+              "border": "2px solid black",
+              "box-sizing": "border-box"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h1",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 328,
+      "actual": 328,
+      "delta": 0,
+      "message": "Size of the browser terminal"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 164,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "width",
+          "value": 164,
+          "unit": "px"
+        },
+        "expr": "164px (width)",
+        "cssProperties": {
+          "width": "164px",
+          "box-sizing": "border-box"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 328,
+        "inputs": {},
+        "description": "Size of the browser terminal",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 328,
+          "unit": "px"
+        },
+        "expr": "328px (height)",
+        "cssProperties": {
+          "height": "328px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 164,
+      "height": 328
+    }
+  }
+}

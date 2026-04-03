@@ -9,7 +9,7 @@ export default defineConfig({
   projects: [
     {
       name: 'default',
-      testMatch: /dag\.test\.ts|fuzz-corpus\.test\.ts/,
+      testMatch: /dag\.test\.ts|dag-layout\.test\.ts|fuzz-corpus\.test\.ts/,
     },
     {
       name: 'fuzz',

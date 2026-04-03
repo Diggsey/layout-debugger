@@ -7,9 +7,8 @@
  */
 import type { Axis, LayoutNode, SizeFns } from "../dag";
 import type { DagBuilder } from "../dag";
-import { evaluate, collectProperties, ref, prop, add, sub, cmax } from "../dag";
+import { ref, add, sub, cmax } from "../dag";
 import type { LayoutContext } from "../types";
-import { round } from "../utils";
 
 /**
  * Block-fill: auto-width block fills containing block content area minus margins.
@@ -18,9 +17,8 @@ export function blockFill(
   fns: SizeFns, b: DagBuilder, el: Element, axis: Axis,
   ctx: LayoutContext, depth: number,
 ): LayoutNode {
-  const existing = b.get("block-fill", el, axis);
-  if (existing) return existing;
-  b.begin("block-fill", el, axis);
+  const nb = fns.begin("block-fill", el, axis);
+  if (!nb) return b.get("block-fill", el, axis)!;
 
   const cbNode = fns.computeSize(ctx.containingBlock, axis, depth - 1);
   const contentAreaNode = containerContentArea(fns, b, ctx.containingBlock, axis, cbNode);
@@ -32,17 +30,15 @@ export function blockFill(
     : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
 
   // Floor by padding+border — CSS can't render negative content
-  const calc = cmax(
-    add(...pbProps.map(p => prop(el, p))),
-    sub(ref(contentAreaNode), add(prop(el, mStartName), prop(el, mEndName))),
-  );
-
-  return b.finish({ kind: "block-fill", element: el, axis,
-    result: round(evaluate(calc)),
-    description: `Block element \u2014 ${axis} fills the available space in its parent`,
-    calc,
-    inputs: { containingBlockContent: contentAreaNode },
-    cssProperties: { [axis]: "auto", ...collectProperties(calc) } });
+  return nb
+    .setCss(axis, "auto", "Not set explicitly — fills available space")
+    .describe(`Block element \u2014 ${axis} fills the available space in its parent`)
+    .calc(cmax(
+      add(...pbProps.map(p => nb.prop(p))),
+      sub(ref(contentAreaNode), add(nb.prop(mStartName), nb.prop(mEndName))),
+    ))
+    .input("containingBlockContent", contentAreaNode)
+    .finish();
 }
 
 /**
@@ -52,19 +48,16 @@ export function containerContentArea(
   fns: SizeFns, b: DagBuilder, container: Element, axis: Axis,
   borderBoxNode: LayoutNode,
 ): LayoutNode {
-  const existing = b.get("content-area", container, axis);
-  if (existing) return existing;
+  const nb = fns.begin("content-area", container, axis);
+  if (!nb) return b.get("content-area", container, axis)!;
 
   const pbProps = axis === "width"
     ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
     : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
 
-  const calc = sub(ref(borderBoxNode), add(...pbProps.map(p => prop(container, p))));
-
-  return b.finish({ kind: "content-area", element: container, axis,
-    result: round(evaluate(calc)),
-    description: `Usable space inside element after subtracting padding and border`,
-    calc,
-    inputs: { borderBox: borderBoxNode },
-    cssProperties: {} });
+  return nb
+    .describe("Usable space inside element after subtracting padding and border")
+    .calc(sub(ref(borderBoxNode), add(...pbProps.map(p => nb.prop(p)))))
+    .input("borderBox", borderBoxNode)
+    .finish();
 }

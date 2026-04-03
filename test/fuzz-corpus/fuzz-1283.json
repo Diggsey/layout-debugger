@@ -1,0 +1,125 @@
+{
+  "seed": 1283,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "flex-wrap": "wrap",
+      "width": "331px",
+      "height": "499px",
+      "overflow": "hidden"
+    },
+    "children": [
+      {
+        "style": {
+          "position": "relative",
+          "width": "240px",
+          "height": "438px",
+          "overflow": "hidden",
+          "box-sizing": "border-box",
+          "margin-top": "15px",
+          "margin-left": "13px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "56px",
+              "box-sizing": "border-box",
+              "position": "absolute",
+              "top": "19px",
+              "bottom": "23px",
+              "margin": "9px"
+            }
+          }
+        ],
+        "target": true
+      },
+      {
+        "style": {
+          "width": "126px",
+          "height": "84px",
+          "padding-top": "4px",
+          "padding-right": "13px",
+          "padding-bottom": "10px",
+          "margin-top": "9px",
+          "margin-right": "14px",
+          "margin-bottom": "12px",
+          "display": "contents",
+          "flex-basis": "186px",
+          "flex-grow": "0"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h1",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 438,
+      "actual": 438,
+      "delta": 0,
+      "message": "Size of the browser terminal"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 240,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "width",
+          "value": 240,
+          "unit": "px"
+        },
+        "expr": "240px (width)",
+        "cssProperties": {
+          "width": "240px",
+          "box-sizing": "border-box"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 438,
+        "inputs": {},
+        "description": "Size of the browser terminal",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 438,
+          "unit": "px"
+        },
+        "expr": "438px (height)",
+        "cssProperties": {
+          "height": "438px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 240,
+      "height": 438
+    }
+  }
+}

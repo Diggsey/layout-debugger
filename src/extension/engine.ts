@@ -16,9 +16,11 @@ function serializeNode(node: RenderNode) {
     calculation: node.calculation.map((seg: any) => ({
       text: seg.text,
       refId: seg.refId,
+      label: seg.label,
     })),
     expression: node.expression,
     cssProperties: node.cssProperties,
+    cssReasons: node.cssReasons,
     dependsOn: node.dependsOn,
   };
 }

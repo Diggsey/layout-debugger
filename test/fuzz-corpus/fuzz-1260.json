@@ -1,0 +1,292 @@
+{
+  "seed": 1260,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "flex-wrap": "wrap",
+      "width": "278px",
+      "height": "377px",
+      "overflow": "hidden"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "grid",
+          "grid-template-columns": "3fr 2fr 3fr 3fr",
+          "width": "501px",
+          "overflow": "hidden",
+          "padding-right": "10px",
+          "padding-left": "13px",
+          "border": "4px solid black",
+          "flex-basis": "138px",
+          "flex-grow": "0"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "131px",
+              "height": "37px",
+              "border": "4px solid black",
+              "box-sizing": "border-box"
+            }
+          },
+          {
+            "style": {
+              "overflow": "hidden",
+              "padding": "15px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "121px",
+                  "height": "32px",
+                  "padding": "14px",
+                  "box-sizing": "border-box",
+                  "margin": "0px"
+                }
+              }
+            ],
+            "target": true
+          },
+          {
+            "style": {
+              "display": "grid",
+              "grid-template-columns": "1fr",
+              "width": "751px",
+              "overflow": "hidden",
+              "padding": "15px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "104px",
+                  "height": "69px",
+                  "box-sizing": "border-box"
+                }
+              }
+            ]
+          },
+          {
+            "style": {
+              "width": "81px",
+              "height": "72px",
+              "padding-right": "11px",
+              "padding-left": "9px",
+              "margin": "0px"
+            }
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "132px",
+          "height": "63px",
+          "box-sizing": "border-box",
+          "margin-top": "10px",
+          "margin-bottom": "1px",
+          "margin-left": "2px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w1",
+      "kind": "terminal",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "width",
+      "dagResult": 169,
+      "actual": 169,
+      "delta": 0,
+      "message": "Size of the browser terminal"
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h2",
+    "nodes": {
+      "w1": {
+        "id": "w1",
+        "kind": "terminal",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 169,
+        "inputs": {},
+        "description": "Size of the browser terminal",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "width",
+              "value": 138,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-left",
+              "value": 13,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-right",
+              "value": 10,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-left-width",
+              "value": 4,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-right-width",
+              "value": 4,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "138px (width) + 13px (padding-left) + 10px (padding-right) + 4px (border-left-width) + 4px (border-right-width)",
+        "cssProperties": {
+          "width": "138px",
+          "padding-left": "13px",
+          "padding-right": "10px",
+          "border-left-width": "4px",
+          "border-right-width": "4px"
+        }
+      },
+      "w0": {
+        "id": "w0",
+        "kind": "grid-item",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 30,
+        "inputs": {
+          "container": "w1"
+        },
+        "description": "Grid item — width determined by the grid track it occupies",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "width",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-left",
+              "value": 15,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-right",
+              "value": 15,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-left-width",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-right-width",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "0px (width) + 15px (padding-left) + 15px (padding-right) + 0px (border-left-width) + 0px (border-right-width)",
+        "cssProperties": {
+          "width": "0px",
+          "padding-left": "15px",
+          "padding-right": "15px",
+          "border-left-width": "0px",
+          "border-right-width": "0px",
+          "grid-column": "auto"
+        }
+      },
+      "h2": {
+        "id": "h2",
+        "kind": "grid-item",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 197,
+        "inputs": {},
+        "description": "Grid item — height determined by the grid track it occupies",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "height",
+              "value": 167,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-top",
+              "value": 15,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-bottom",
+              "value": 15,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-top-width",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-bottom-width",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "167px (height) + 15px (padding-top) + 15px (padding-bottom) + 0px (border-top-width) + 0px (border-bottom-width)",
+        "cssProperties": {
+          "height": "167px",
+          "padding-top": "15px",
+          "padding-bottom": "15px",
+          "border-top-width": "0px",
+          "border-bottom-width": "0px",
+          "grid-row": "auto"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>",
+      "width": 30,
+      "height": 197
+    },
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 169,
+      "height": 205
+    }
+  }
+}

@@ -29,42 +29,48 @@ export function positioned(
   if (!isAuto(startVal) && !isAuto(endVal)) {
     const cbNode = fns.computeSize(ctx.containingBlock, axis, depth - 1);
     // For abs positioning, the CB is the PADDING box (border-box - borders).
-    // Create a padding-box node for the CB.
     const cb = ctx.containingBlock;
     const cbBorderProps = axis === "width"
       ? ["border-left-width", "border-right-width"] as const
       : ["border-top-width", "border-bottom-width"] as const;
-    const cbPaddingBox = fns.make("content-area", cb, axis,
-      "Containing block padding box (for positioned descendants)",
-      sub(ref(cbNode), add(...cbBorderProps.map(p => prop(cb, p)))),
-      { borderBox: cbNode });
+
+    const cbNb = fns.begin("content-area", cb, axis);
+    const cbPaddingBox = cbNb
+      ? cbNb.describe("Containing block padding box (for positioned descendants)")
+        .calc(sub(ref(cbNode), add(...cbBorderProps.map(p => prop(cb, p)))))
+        .input("borderBox", cbNode)
+        .finish()
+      : b.get("content-area", cb, axis)!;
 
     // border-box = max(padding+border, CB_padding_box - left - right - margins)
-    // Floor by padding+border — CSS can't render negative content.
+    const nb = fns.begin("positioned-offset", el, axis);
+    if (!nb) return b.get("positioned-offset", el, axis)!;
+
+    nb.css("position", "Taken out of normal flow — sized by offsets");
     const [mStartName, mEndName] = axis === "width"
       ? ["margin-left", "margin-right"] : ["margin-top", "margin-bottom"];
     const pbProps = axis === "width"
       ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
       : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
     const spacing = add(
-      prop(el, startProp), prop(el, endProp),
-      prop(el, mStartName), prop(el, mEndName),
+      nb.prop(startProp), nb.prop(endProp),
+      nb.prop(mStartName), nb.prop(mEndName),
     );
-    const calc = cmax(
-      add(...pbProps.map(p => prop(el, p))),
-      sub(ref(cbPaddingBox), spacing),
-    );
-    return fns.make("positioned-offset", el, axis,
-      `Absolutely positioned \u2014 ${axis} derived from opposing offsets`,
-      calc,
-      { containingBlock: cbNode },
-      { position: s.position });
+    return nb
+      .describe(`Absolutely positioned \u2014 ${axis} derived from opposing offsets`)
+      .calc(cmax(add(...pbProps.map(p => nb.prop(p))), sub(ref(cbPaddingBox), spacing)))
+      .input("containingBlock", cbNode)
+      .finish();
   }
 
+  const nb = fns.begin("positioned-shrink-to-fit", el, axis);
+  if (!nb) return b.get("positioned-shrink-to-fit", el, axis)!;
+
+  nb.css("position", "Taken out of normal flow — sized by content");
   const contentNode = fns.contentSize(el, axis, depth);
-  return fns.make("positioned-shrink-to-fit", el, axis,
-    `Absolutely positioned \u2014 ${axis} shrinks to fit content`,
-    ref(contentNode),
-    { content: contentNode },
-    { position: s.position });
+  return nb
+    .describe(`Absolutely positioned \u2014 ${axis} shrinks to fit content`)
+    .calc(ref(contentNode))
+    .input("content", contentNode)
+    .finish();
 }
