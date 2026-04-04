@@ -11,8 +11,13 @@ import {
 
 /** Set a highlight overlay element's color. */
 function hlOn(el: SVGElement, color: string): void {
-  if (el.tagName === "circle") el.setAttribute("fill", color);
-  else el.setAttribute("stroke", color);
+  if (el.tagName === "g") {
+    el.setAttribute("color", color);
+  } else if (el.tagName === "circle") {
+    el.setAttribute("fill", color);
+  } else {
+    el.setAttribute("stroke", color);
+  }
 }
 
 /** Highlight full edge paths and dots when hovering a node row. */
@@ -47,8 +52,13 @@ export function highlightGraph(section: HTMLElement, nodeId: string, deps: strin
 export function clearGraphHighlight(section: HTMLElement): void {
   section.querySelectorAll(".hl").forEach((el) => {
     const svg = el as SVGElement;
-    if (svg.tagName === "circle") svg.setAttribute("fill", "transparent");
-    else svg.setAttribute("stroke", "transparent");
+    if (svg.tagName === "g") {
+      svg.setAttribute("color", "transparent");
+    } else if (svg.tagName === "circle") {
+      svg.setAttribute("fill", "transparent");
+    } else {
+      svg.setAttribute("stroke", "transparent");
+    }
   });
   section.querySelectorAll(".detail-rail[data-edges]").forEach((el) => {
     (el as SVGElement).setAttribute("stroke", LINE_COLOR);

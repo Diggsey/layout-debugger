@@ -38,7 +38,7 @@ body {
 .graph-row:hover .node-summary { background: #161b22; }
 
 .gutter-svg { flex-shrink: 0; display: block; }
-.hl-layer .hl { transition: stroke 0.2s, fill 0.2s; }
+.hl-layer .hl { transition: stroke 0.2s, fill 0.2s, color 0.2s; }
 
 .node-summary {
   flex: 1; display: flex; align-items: center; gap: 6px;
@@ -134,6 +134,12 @@ body {
 .pk-hl { color: #d2a8ff; }
 .pv-hl { color: #f0883e; }
 .pr { display: block; font-size: 9px; color: #6e7681; font-weight: normal; }
+
+/* Collapse/expand dot indicators */
+.collapse-hit { cursor: pointer; pointer-events: all; }
+.collapse-ring { opacity: 0; transition: opacity 0.15s; }
+.graph-row.collapsed .collapse-ring { opacity: 1; }
+.graph-row.dot-hover [data-dot] { color: #3fb950; }
 
 /* Collapse row animation — height only; content fades separately */
 .row-exit {

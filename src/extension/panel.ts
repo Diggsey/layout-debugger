@@ -474,18 +474,12 @@ function attachDelegation(state: AxisState): void {
       return;
     }
 
-    // SVG hit area click (the transparent circle over the dot)
-    if (target instanceof SVGElement) {
-      const svg = target.closest("svg.gutter-svg");
-      if (svg) {
-        const hit = target.closest("circle:not(.hl)");
-        if (hit && hit.getAttribute("fill") === "transparent") {
-          e.stopPropagation();
-          const row = svg.closest<HTMLElement>(".graph-row");
-          if (row?.dataset.nodeId) toggleCollapse(state, row.dataset.nodeId);
-          return;
-        }
-      }
+    // SVG hit area click
+    if (target instanceof SVGElement && target.classList.contains("collapse-hit")) {
+      e.stopPropagation();
+      const row = target.closest<HTMLElement>(".graph-row");
+      if (row?.dataset.nodeId) toggleCollapse(state, row.dataset.nodeId);
+      return;
     }
 
     // Summary click → toggle detail
@@ -511,6 +505,11 @@ function attachDelegation(state: AxisState): void {
 
   container.addEventListener("mouseover", (e) => {
     const target = e.target as HTMLElement;
+
+    // Collapse dot hover
+    if (target instanceof SVGElement && target.classList.contains("collapse-hit")) {
+      target.closest<HTMLElement>(".graph-row")?.classList.add("dot-hover");
+    }
 
     // Calc-ref hover
     const calcRef = target.closest<HTMLElement>(".calc-ref");
@@ -556,6 +555,11 @@ function attachDelegation(state: AxisState): void {
 
   container.addEventListener("mouseout", (e) => {
     const target = e.target as HTMLElement;
+
+    // Collapse dot un-hover
+    if (target instanceof SVGElement && target.classList.contains("collapse-hit")) {
+      target.closest<HTMLElement>(".graph-row")?.classList.remove("dot-hover");
+    }
 
     // Calc-ref un-hover
     const calcRef = target.closest<HTMLElement>(".calc-ref");
@@ -603,14 +607,15 @@ function buildRow(
 
   const hasDeps = node.dependsOn.some((d) => state.allNodeIds.has(d));
   if (hasDeps && canCollapse) {
-    const dotEl = svg.querySelector("circle")!;
+    // Hit area for click — transparent, on top of everything
+    const dotCircle = svg.querySelector("[data-dot] circle")!;
     const hitArea = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    hitArea.setAttribute("cx", dotEl.getAttribute("cx")!);
-    hitArea.setAttribute("cy", dotEl.getAttribute("cy")!);
+    hitArea.setAttribute("cx", dotCircle.getAttribute("cx")!);
+    hitArea.setAttribute("cy", dotCircle.getAttribute("cy")!);
     hitArea.setAttribute("r", String(DOT_R + 6));
     hitArea.setAttribute("fill", "transparent");
     hitArea.style.cursor = "pointer";
-    hitArea.style.pointerEvents = "all";
+    hitArea.classList.add("collapse-hit");
     svg.appendChild(hitArea);
 
     const badge = document.createElement("span");

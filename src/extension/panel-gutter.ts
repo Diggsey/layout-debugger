@@ -131,12 +131,17 @@ export function renderRowSvg(info: RowInfo, numCols: number): SVGSVGElement {
   svg.setAttribute("width", String(svgW));
   svg.setAttribute("height", String(ROW_H));
   svg.setAttribute("class", "gutter-svg");
+  // Slight overflow so lines at tile boundaries overlap, preventing sub-pixel gaps
+  svg.style.overflow = "visible";
 
   const midY = ROW_H / 2;
   const branchY = midY + ROW_H / 4;
   const mergeY = midY - ROW_H / 4;
   const col = info.col;
   const nodeX = cx(col);
+  // Extend lines past tile edges to prevent sub-pixel gaps between rows
+  const TOP = -0.5;
+  const BOT = ROW_H + 0.5;
 
   // --- Crossing points: where horizontal branch/merge lines cross vertical rails ---
   const crossingYs = new Map<number, number[]>();
@@ -172,10 +177,10 @@ export function renderRowSvg(info: RowInfo, numCols: number): SVGSVGElement {
     const edgeTag = (info.passingEdges.get(c) ?? []).join(" ");
     const gaps = crossingYs.get(c);
     if (!gaps || gaps.length === 0) {
-      svgLine(svg, cX, 0, cX, ROW_H, undefined, edgeTag);
+      svgLine(svg, cX, TOP, cX, BOT, undefined, edgeTag);
     } else {
       const sorted = [...gaps].sort((a, b) => a - b);
-      let y = 0;
+      let y = TOP;
       for (const gapY of sorted) {
         if (y < gapY - CROSS_GAP / 2) {
           svgLine(svg, cX, y, cX, gapY - CROSS_GAP / 2, undefined, edgeTag);
@@ -183,7 +188,7 @@ export function renderRowSvg(info: RowInfo, numCols: number): SVGSVGElement {
         y = gapY + CROSS_GAP / 2;
       }
       if (y < ROW_H) {
-        svgLine(svg, cX, y, cX, ROW_H, undefined, edgeTag);
+        svgLine(svg, cX, y, cX, BOT, undefined, edgeTag);
       }
     }
   }
@@ -194,10 +199,10 @@ export function renderRowSvg(info: RowInfo, numCols: number): SVGSVGElement {
 
   // 2. This node's column verticals
   if (info.arrivedFromAbove) {
-    svgLine(svg, nodeX, 0, nodeX, midY - DOT_R, "incoming", mainInTag);
+    svgLine(svg, nodeX, TOP, nodeX, midY - DOT_R, "incoming", mainInTag);
   }
   if (info.continuesBelow) {
-    svgLine(svg, nodeX, midY + DOT_R, nodeX, ROW_H, "outgoing", mainOutTag);
+    svgLine(svg, nodeX, midY + DOT_R, nodeX, BOT, "outgoing", mainOutTag);
   }
 
   // 3. Branch connectors: vertical down → curve right → horizontal segments → per-target curve + vertical
@@ -220,7 +225,7 @@ export function renderRowSvg(info: RowInfo, numCols: number): SVGSVGElement {
       const bcTag = info.branchEdgeId.get(sorted[i]) ?? "";
       svgPath(svg, `M ${bcX - CURVE_R} ${branchY} Q ${bcX} ${branchY} ${bcX} ${branchY + CURVE_R}`, "outgoing", bcTag);
       if (branchY + CURVE_R < ROW_H) {
-        svgLine(svg, bcX, branchY + CURVE_R, bcX, ROW_H, "outgoing", bcTag);
+        svgLine(svg, bcX, branchY + CURVE_R, bcX, BOT, "outgoing", bcTag);
       }
       segStartX = bcX - CURVE_R;
     }
@@ -231,7 +236,7 @@ export function renderRowSvg(info: RowInfo, numCols: number): SVGSVGElement {
     const mcX = cx(mc);
     const mcTag = info.mergeEdgeId.get(mc) ?? "";
     if (mcX < nodeX) {
-      svgLine(svg, mcX, 0, mcX, mergeY - CURVE_R, "incoming", mcTag);
+      svgLine(svg, mcX, TOP, mcX, mergeY - CURVE_R, "incoming", mcTag);
       svgPath(svg, `M ${mcX} ${mergeY - CURVE_R} Q ${mcX} ${mergeY} ${mcX + CURVE_R} ${mergeY}`, "incoming", mcTag);
       if (mcX + CURVE_R < nodeX - CURVE_R) {
         svgLine(svg, mcX + CURVE_R, mergeY, nodeX - CURVE_R, mergeY, "incoming", mcTag);
@@ -241,7 +246,7 @@ export function renderRowSvg(info: RowInfo, numCols: number): SVGSVGElement {
         svgLine(svg, nodeX, mergeY + CURVE_R, nodeX, midY - DOT_R, "incoming", mcTag);
       }
     } else {
-      svgLine(svg, mcX, 0, mcX, mergeY - CURVE_R, "incoming", mcTag);
+      svgLine(svg, mcX, TOP, mcX, mergeY - CURVE_R, "incoming", mcTag);
       svgPath(svg, `M ${mcX} ${mergeY - CURVE_R} Q ${mcX} ${mergeY} ${mcX - CURVE_R} ${mergeY}`, "incoming", mcTag);
       if (mcX - CURVE_R > nodeX + CURVE_R) {
         svgLine(svg, nodeX + CURVE_R, mergeY, mcX - CURVE_R, mergeY, "incoming", mcTag);
@@ -253,19 +258,33 @@ export function renderRowSvg(info: RowInfo, numCols: number): SVGSVGElement {
     }
   }
 
-  // 5. Node dot
+  // 5. Node dot + collapse ring (grouped; both use currentColor so
+  //    changing `color` on the group recolors dot and ring together)
+  const dotGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  dotGroup.dataset.dot = info.nodeId;
+  dotGroup.setAttribute("color", DOT_COLOR);
+  const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  ring.setAttribute("cx", String(nodeX));
+  ring.setAttribute("cy", String(midY));
+  ring.setAttribute("r", String(DOT_R + 3));
+  ring.setAttribute("fill", "none");
+  ring.setAttribute("stroke", "currentColor");
+  ring.setAttribute("stroke-width", "1.5");
+  ring.classList.add("collapse-ring");
+  dotGroup.appendChild(ring);
   const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
   dot.setAttribute("cx", String(nodeX));
   dot.setAttribute("cy", String(midY));
   dot.setAttribute("r", String(DOT_R));
-  dot.setAttribute("fill", DOT_COLOR);
-  dot.dataset.dot = info.nodeId;
-  svg.appendChild(dot);
+  dot.setAttribute("fill", "currentColor");
+  dotGroup.appendChild(dot);
+  svg.appendChild(dotGroup);
 
   // 6. Highlight overlay: duplicate edge-tagged elements with transparent stroke/fill.
   //    Drawn last (on top). CSS transitions interpolate between transparent and highlight colors.
   const overlay = document.createElementNS("http://www.w3.org/2000/svg", "g");
   overlay.classList.add("hl-layer");
+  overlay.setAttribute("pointer-events", "none");
   for (const el of svg.querySelectorAll("[data-edges]")) {
     const clone = el.cloneNode(false) as SVGElement;
     clone.removeAttribute("class");
@@ -273,12 +292,11 @@ export function renderRowSvg(info: RowInfo, numCols: number): SVGSVGElement {
     clone.setAttribute("stroke", "transparent");
     overlay.appendChild(clone);
   }
-  const dotClone = dot.cloneNode(false) as SVGElement;
-  dotClone.removeAttribute("class");
-  dotClone.classList.add("hl");
-  dotClone.setAttribute("fill", "transparent");
-  dotClone.dataset.dot = info.nodeId;
-  overlay.appendChild(dotClone);
+  const dotGroupClone = dotGroup.cloneNode(true) as SVGElement;
+  dotGroupClone.classList.add("hl");
+  dotGroupClone.setAttribute("color", "transparent");
+  dotGroupClone.dataset.dot = info.nodeId;
+  overlay.appendChild(dotGroupClone);
   svg.appendChild(overlay);
 
   return svg;
