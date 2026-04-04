@@ -1,6 +1,6 @@
 // Panel entry point: devtools integration, axis rendering, collapse/expand.
 
-import { layoutDag, renderAscii, type DagInput } from "../core/dag-layout";
+import { layoutDag, renderAscii, type DagInput, type LayoutResult, type VisualEdge } from "../core/dag-layout";
 import type { DagRender, AxisRender, RenderNode } from "./panel-types";
 import { COL_W, DOT_R, LINE_COLOR, LINE_W, cx, esc, formatKind } from "./panel-types";
 import { type RowInfo, buildRowInfos, colsBelow, renderRowSvg } from "./panel-gutter";
@@ -66,7 +66,102 @@ function showResult(dag: DagRender): void {
 }
 
 // ---------------------------------------------------------------------------
-// Axis rendering
+// Axis state — persists across re-renders within an axis section
+// ---------------------------------------------------------------------------
+
+interface AxisState {
+  axis: AxisRender;
+  nodeMap: Map<string, RenderNode>;
+  /** Full set of all node IDs (never changes). */
+  allNodeIds: Set<string>;
+  /** Full-graph DagInput (never changes). */
+  fullDagInput: DagInput[];
+  /** Layout computed from the full graph (stable columns/order). */
+  fullLayout: LayoutResult;
+  /** Node IDs currently collapsed by the user. */
+  collapsedSet: Set<string>;
+  /** Node IDs whose detail panels are open. */
+  openDetails: Set<string>;
+  /** Stable DOM containers. */
+  section: HTMLElement;
+  rowContainer: HTMLElement;
+  asciiPre: HTMLElement;
+}
+
+// ---------------------------------------------------------------------------
+// Visible node computation
+// ---------------------------------------------------------------------------
+
+/** BFS from the root, skipping children of collapsed nodes. */
+function getVisibleNodes(state: AxisState): Set<string> {
+  const visible = new Set<string>();
+  const root = state.axis.nodes[0];
+  if (!root) return visible;
+
+  const queue = [root.id];
+  while (queue.length > 0) {
+    const id = queue.shift()!;
+    if (visible.has(id)) continue;
+    visible.add(id);
+
+    if (state.collapsedSet.has(id)) continue;
+
+    const node = state.nodeMap.get(id)!;
+    for (const dep of node.dependsOn) {
+      if (state.allNodeIds.has(dep) && !visible.has(dep)) queue.push(dep);
+    }
+  }
+  return visible;
+}
+
+/** Count descendants hidden by collapsing a node. */
+function countHiddenDescendants(
+  nodeId: string, nodeMap: Map<string, RenderNode>,
+  allNodeIds: Set<string>, visibleSet: Set<string>,
+): number {
+  const reached = new Set<string>();
+  const stack = [...(nodeMap.get(nodeId)?.dependsOn ?? []).filter(d => allNodeIds.has(d))];
+  while (stack.length > 0) {
+    const id = stack.pop()!;
+    if (reached.has(id)) continue;
+    reached.add(id);
+    const n = nodeMap.get(id);
+    if (n) {
+      for (const dep of n.dependsOn) {
+        if (allNodeIds.has(dep) && !reached.has(dep)) stack.push(dep);
+      }
+    }
+  }
+  let count = 0;
+  for (const id of reached) if (!visibleSet.has(id)) count++;
+  return count;
+}
+
+/**
+ * Filter a full-graph LayoutResult to only visible nodes.
+ * Keeps the same column assignments (stable positions) but
+ * produces new contiguous row indices and filters edges.
+ */
+function filterLayout(full: LayoutResult, visibleSet: Set<string>): LayoutResult {
+  const order = full.order.filter((id) => visibleSet.has(id));
+  const rows = new Map<string, number>();
+  order.forEach((id, i) => rows.set(id, i));
+
+  const edges: VisualEdge[] = full.edges.filter(
+    (e) => visibleSet.has(e.fromId) && visibleSet.has(e.toId),
+  );
+
+  return {
+    order,
+    columns: full.columns, // stable — same columns as full graph
+    rows,
+    edges,
+    numCols: full.numCols, // stable — same width as full graph
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Axis rendering — one-time setup
 // ---------------------------------------------------------------------------
 
 function renderAxis(axis: AxisRender, title: string): HTMLElement {
@@ -78,15 +173,15 @@ function renderAxis(axis: AxisRender, title: string): HTMLElement {
   section.appendChild(hdr);
   if (axis.nodes.length === 0) return section;
 
-  // Compute layout
-  const nodeSet = new Set(axis.nodes.map((n) => n.id));
-  const dagInput: DagInput[] = axis.nodes.map((n) => ({
-    id: n.id,
-    children: n.dependsOn.filter((id) => nodeSet.has(id)),
-  }));
-  const layout = layoutDag(dagInput);
   const nodeMap = new Map(axis.nodes.map((n) => [n.id, n]));
-  const rowInfos = buildRowInfos(layout);
+  const allNodeIds = new Set(axis.nodes.map((n) => n.id));
+
+  // Compute layout once from the full graph
+  const fullDagInput: DagInput[] = axis.nodes.map((n) => ({
+    id: n.id,
+    children: n.dependsOn.filter((id) => allNodeIds.has(id)),
+  }));
+  const fullLayout = layoutDag(fullDagInput);
 
   // ASCII debug view (collapsed by default)
   const asciiToggle = document.createElement("div");
@@ -94,7 +189,7 @@ function renderAxis(axis: AxisRender, title: string): HTMLElement {
   asciiToggle.textContent = "\u25b6 ASCII debug";
   const asciiPre = document.createElement("pre");
   asciiPre.className = "ascii-debug";
-  asciiPre.textContent = renderAscii(dagInput);
+  asciiPre.textContent = renderAscii(fullDagInput);
   asciiToggle.addEventListener("click", () => {
     asciiPre.classList.toggle("open");
     asciiToggle.textContent = asciiPre.classList.contains("open")
@@ -103,36 +198,354 @@ function renderAxis(axis: AxisRender, title: string): HTMLElement {
   section.appendChild(asciiToggle);
   section.appendChild(asciiPre);
 
-  // Build rows
-  const svgW = layout.numCols * COL_W + 4;
-  for (const id of layout.order) {
-    const node = nodeMap.get(id)!;
-    const info = rowInfos.get(id)!;
-    const deps = node.dependsOn.filter((d) => nodeSet.has(d));
+  // Row container — rebuilt on every collapse/expand
+  const rowContainer = document.createElement("div");
+  rowContainer.className = "row-container";
+  section.appendChild(rowContainer);
 
-    const svg = renderRowSvg(info, layout.numCols);
-    const row = buildRow(node, svg, deps, section);
-    const detail = buildDetail(node, info, svgW, nodeMap, nodeSet, section);
+  const state: AxisState = {
+    axis,
+    nodeMap,
+    allNodeIds,
+    fullDagInput,
+    fullLayout,
+    collapsedSet: new Set(),
+    openDetails: new Set(),
+    section,
+    rowContainer,
+    asciiPre,
+  };
 
-    summary(row).addEventListener("click", () => detail.classList.toggle("open"));
-    row.addEventListener("mouseenter", () => {
-      highlightInPage(node.elementPath);
-      highlightGraph(section, node.id, deps);
-    });
-    row.addEventListener("mouseleave", () => {
-      clearHighlightInPage();
-      clearGraphHighlight(section);
-    });
+  // Event delegation on rowContainer (survives re-renders)
+  attachDelegation(state);
 
-    section.appendChild(row);
-    section.appendChild(detail);
-  }
+  // Initial render
+  renderRows(state);
 
   return section;
 }
 
-function summary(row: HTMLElement): HTMLElement {
-  return row.querySelector(".node-summary")!;
+// ---------------------------------------------------------------------------
+// Row rendering — called on init and every collapse/expand
+// ---------------------------------------------------------------------------
+
+function renderRows(state: AxisState): void {
+  const visibleSet = getVisibleNodes(state);
+  const layout = filterLayout(state.fullLayout, visibleSet);
+  const rowInfos = buildRowInfos(layout);
+  const svgW = layout.numCols * COL_W + 4;
+
+  // Clear and rebuild rows
+  state.rowContainer.innerHTML = "";
+  const isRoot = layout.order.length > 0 ? layout.order[0] : null;
+
+  for (const id of layout.order) {
+    const node = state.nodeMap.get(id)!;
+    const info = rowInfos.get(id)!;
+
+    const svg = renderRowSvg(info, layout.numCols);
+    const row = buildRow(node, svg, state, visibleSet, id !== isRoot);
+    const detail = buildDetail(node, info, svgW, state.nodeMap, state.section);
+
+    // Restore open detail state
+    if (state.openDetails.has(id)) detail.classList.add("open");
+
+    state.rowContainer.appendChild(row);
+    state.rowContainer.appendChild(detail);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Animated collapse/expand
+// ---------------------------------------------------------------------------
+
+const ANIM_DURATION = 200; // ms
+
+/** Check if an edge-tag string involves any node in the set. */
+function edgeInvolvesAny(edgeAttr: string, nodeIds: Set<string>): boolean {
+  for (const eid of edgeAttr.split(" ")) {
+    const sep = eid.indexOf(">");
+    if (sep < 0) continue;
+    if (nodeIds.has(eid.slice(0, sep)) || nodeIds.has(eid.slice(sep + 1))) return true;
+  }
+  return false;
+}
+
+/** Set opacity on SVG edge/dot elements without transition (for initial state). */
+function setEdgeOpacity(container: HTMLElement, changingNodes: Set<string>, opacity: string): void {
+  for (const el of container.querySelectorAll<SVGElement>("[data-edges]")) {
+    if (edgeInvolvesAny(el.dataset.edges!, changingNodes)) {
+      el.style.opacity = opacity;
+    }
+  }
+  for (const id of changingNodes) {
+    for (const dot of container.querySelectorAll<SVGElement>(`[data-dot="${id}"]`)) {
+      dot.style.opacity = opacity;
+    }
+  }
+}
+
+/** Animate SVG edge/dot elements to target opacity with transition. */
+function fadeEdges(container: HTMLElement, changingNodes: Set<string>, opacity: string): void {
+  for (const el of container.querySelectorAll<SVGElement>("[data-edges]")) {
+    if (edgeInvolvesAny(el.dataset.edges!, changingNodes)) {
+      el.style.transition = `opacity ${ANIM_DURATION}ms ease-out`;
+      el.style.opacity = opacity;
+    }
+  }
+  for (const id of changingNodes) {
+    for (const dot of container.querySelectorAll<SVGElement>(`[data-dot="${id}"]`)) {
+      dot.style.transition = `opacity ${ANIM_DURATION}ms ease-out`;
+      dot.style.opacity = opacity;
+    }
+  }
+}
+
+function toggleCollapse(state: AxisState, nodeId: string): void {
+  const isCollapsing = !state.collapsedSet.has(nodeId);
+
+  if (isCollapsing) {
+    // Collapsing: animate disappearing rows + connected edges out, then rebuild
+    state.collapsedSet.add(nodeId);
+    const futureVisible = getVisibleNodes(state);
+
+    // Identify disappearing nodes
+    const disappearingIds = new Set<string>();
+    const disappearing: HTMLElement[] = [];
+    for (const row of state.rowContainer.querySelectorAll<HTMLElement>(".graph-row")) {
+      const id = row.dataset.nodeId!;
+      if (!futureVisible.has(id)) {
+        disappearingIds.add(id);
+        disappearing.push(row);
+        const detail = row.nextElementSibling as HTMLElement | null;
+        if (detail?.classList.contains("node-detail")) disappearing.push(detail);
+      }
+    }
+
+    if (disappearing.length === 0) {
+      renderRows(state);
+      return;
+    }
+
+    // Fade out edges in visible rows that connect to disappearing nodes
+    fadeEdges(state.rowContainer, disappearingIds, "0");
+
+    // Animate disappearing rows out
+    for (const el of disappearing) {
+      const h = el.getBoundingClientRect().height;
+      el.style.height = h + "px";
+      el.style.overflow = "hidden";
+      el.classList.add("row-exit");
+      el.offsetHeight; // force reflow
+      el.style.height = "0";
+    }
+
+    // After animation, rebuild with correct layout (fresh elements, no stale styles)
+    setTimeout(() => {
+      snapshotOpenDetails(state);
+      renderRows(state);
+    }, ANIM_DURATION);
+
+  } else {
+    // Expanding: rebuild with new rows hidden, then animate everything in
+    state.collapsedSet.delete(nodeId);
+    const prevVisible = getVisibleNodes({ ...state, collapsedSet: new Set([...state.collapsedSet, nodeId]) });
+
+    snapshotOpenDetails(state);
+    renderRows(state);
+
+    // Identify newly appearing nodes and rows
+    const appearingIds = new Set<string>();
+    const appearing: HTMLElement[] = [];
+    for (const row of state.rowContainer.querySelectorAll<HTMLElement>(".graph-row")) {
+      const id = row.dataset.nodeId!;
+      if (!prevVisible.has(id)) {
+        appearingIds.add(id);
+        appearing.push(row);
+        const detail = row.nextElementSibling as HTMLElement | null;
+        if (detail?.classList.contains("node-detail") && detail.classList.contains("open")) {
+          appearing.push(detail);
+        }
+      }
+    }
+
+    // Set initial hidden state WITHOUT transitions: edges invisible, rows at zero height.
+    setEdgeOpacity(state.rowContainer, appearingIds, "0");
+    for (const el of appearing) {
+      const h = el.getBoundingClientRect().height;
+      el.style.height = "0";
+      el.style.overflow = "hidden";
+      el.style.opacity = "0";
+      el.dataset.naturalHeight = String(h);
+    }
+
+    // Double-rAF ensures the browser paints the hidden state before we animate.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      // Now add transitions and animate to final values
+      fadeEdges(state.rowContainer, appearingIds, "1");
+      for (const el of appearing) {
+        el.style.transition = `height ${ANIM_DURATION}ms ease-out, opacity ${ANIM_DURATION}ms ease-out`;
+        el.style.height = el.dataset.naturalHeight + "px";
+        el.style.opacity = "1";
+        delete el.dataset.naturalHeight;
+      }
+
+      setTimeout(() => {
+        for (const el of appearing) {
+          el.style.transition = "";
+          el.style.height = "";
+          el.style.overflow = "";
+          el.style.opacity = "";
+        }
+        for (const el of state.rowContainer.querySelectorAll<SVGElement>("[style*='opacity']")) {
+          el.style.transition = "";
+          el.style.opacity = "";
+        }
+      }, ANIM_DURATION);
+    }));
+  }
+}
+
+/** Snapshot which detail panels are open before rebuilding. */
+function snapshotOpenDetails(state: AxisState): void {
+  state.openDetails.clear();
+  for (const detail of state.rowContainer.querySelectorAll<HTMLElement>(".node-detail.open")) {
+    const row = detail.previousElementSibling as HTMLElement | null;
+    if (row?.dataset.nodeId) state.openDetails.add(row.dataset.nodeId);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Event delegation
+// ---------------------------------------------------------------------------
+
+function attachDelegation(state: AxisState): void {
+  const container = state.rowContainer;
+  const section = state.section;
+
+  // Click delegation
+  container.addEventListener("click", (e) => {
+    const target = e.target as HTMLElement;
+
+    // Collapse badge click
+    const badge = target.closest(".collapse-badge");
+    if (badge) {
+      e.stopPropagation();
+      const row = badge.closest<HTMLElement>(".graph-row");
+      if (row?.dataset.nodeId) toggleCollapse(state, row.dataset.nodeId);
+      return;
+    }
+
+    // SVG hit area click (the transparent circle over the dot)
+    if (target instanceof SVGElement) {
+      const svg = target.closest("svg.gutter-svg");
+      if (svg) {
+        const hit = target.closest("circle:not(.hl)");
+        if (hit && hit.getAttribute("fill") === "transparent") {
+          e.stopPropagation();
+          const row = svg.closest<HTMLElement>(".graph-row");
+          if (row?.dataset.nodeId) toggleCollapse(state, row.dataset.nodeId);
+          return;
+        }
+      }
+    }
+
+    // Summary click → toggle detail
+    const summary = target.closest(".node-summary");
+    if (summary) {
+      const row = summary.closest<HTMLElement>(".graph-row");
+      if (row) {
+        const detail = row.nextElementSibling as HTMLElement | null;
+        if (detail?.classList.contains("node-detail")) {
+          detail.classList.toggle("open");
+          const id = row.dataset.nodeId;
+          if (id) {
+            if (detail.classList.contains("open")) state.openDetails.add(id);
+            else state.openDetails.delete(id);
+          }
+        }
+      }
+    }
+  });
+
+  // Hover delegation — use mouseover/mouseout (they bubble, unlike mouseenter/leave)
+  let hoveredRowId: string | null = null;
+
+  container.addEventListener("mouseover", (e) => {
+    const target = e.target as HTMLElement;
+
+    // Calc-ref hover
+    const calcRef = target.closest<HTMLElement>(".calc-ref");
+    if (calcRef) {
+      const refId = calcRef.dataset.refId;
+      const fromId = calcRef.dataset.fromId;
+      if (refId && fromId) {
+        highlightRef(section, fromId, refId);
+        const refNode = state.nodeMap.get(refId);
+        if (refNode) highlightInPage(refNode.elementPath);
+      }
+      return;
+    }
+
+    // Calc-prop hover
+    const calcProp = target.closest<HTMLElement>(".calc-prop");
+    if (calcProp) {
+      const propName = calcProp.dataset.propName;
+      const detailContent = calcProp.closest<HTMLElement>(".detail-content");
+      if (propName && detailContent) {
+        const propRow = detailContent.querySelector<HTMLElement>(`.pk[data-prop="${propName}"]`);
+        if (propRow) {
+          propRow.classList.add("pk-hl");
+          (propRow.nextElementSibling as HTMLElement | null)?.classList.add("pv-hl");
+        }
+      }
+      return;
+    }
+
+    // Row hover
+    const graphRow = target.closest<HTMLElement>(".graph-row");
+    if (graphRow && graphRow.dataset.nodeId !== hoveredRowId) {
+      hoveredRowId = graphRow.dataset.nodeId!;
+      const node = state.nodeMap.get(hoveredRowId);
+      if (node) {
+        const visibleSet = getVisibleNodes(state);
+        const deps = node.dependsOn.filter((d) => visibleSet.has(d));
+        highlightInPage(node.elementPath);
+        highlightGraph(section, hoveredRowId, deps);
+      }
+    }
+  });
+
+  container.addEventListener("mouseout", (e) => {
+    const target = e.target as HTMLElement;
+
+    // Calc-ref un-hover
+    const calcRef = target.closest<HTMLElement>(".calc-ref");
+    if (calcRef) {
+      clearRefHighlight(section);
+      clearHighlightInPage();
+      return;
+    }
+
+    // Calc-prop un-hover
+    const calcProp = target.closest<HTMLElement>(".calc-prop");
+    if (calcProp) {
+      const detailContent = calcProp.closest<HTMLElement>(".detail-content");
+      if (detailContent) {
+        detailContent.querySelectorAll(".pk-hl").forEach(el => el.classList.remove("pk-hl"));
+        detailContent.querySelectorAll(".pv-hl").forEach(el => el.classList.remove("pv-hl"));
+      }
+      return;
+    }
+
+    // Row un-hover: check if we're leaving the row container entirely
+    const relatedRow = (e.relatedTarget as HTMLElement | null)?.closest<HTMLElement>(".graph-row");
+    if (!relatedRow || relatedRow.dataset.nodeId !== hoveredRowId) {
+      hoveredRowId = null;
+      clearHighlightInPage();
+      clearGraphHighlight(section);
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -140,15 +553,18 @@ function summary(row: HTMLElement): HTMLElement {
 // ---------------------------------------------------------------------------
 
 function buildRow(
-  node: RenderNode, svg: SVGSVGElement, deps: string[], section: HTMLElement,
+  node: RenderNode, svg: SVGSVGElement,
+  state: AxisState, visibleSet: Set<string>, canCollapse: boolean,
 ): HTMLElement {
   const row = document.createElement("div");
   row.className = "graph-row";
+  if (state.collapsedSet.has(node.id)) row.classList.add("collapsed");
   row.dataset.nodeId = node.id;
   row.dataset.deps = node.dependsOn.join(",");
   row.appendChild(svg);
 
-  if (deps.length > 0) {
+  const hasDeps = node.dependsOn.some((d) => state.allNodeIds.has(d));
+  if (hasDeps && canCollapse) {
     const dotEl = svg.querySelector("circle")!;
     const hitArea = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     hitArea.setAttribute("cx", dotEl.getAttribute("cx")!);
@@ -161,14 +577,12 @@ function buildRow(
 
     const badge = document.createElement("span");
     badge.className = "collapse-badge";
-    badge.textContent = `+${deps.length}`;
-
-    const toggle = (e: Event) => {
-      e.stopPropagation();
-      toggleSubtree(section, node.id, row, svg);
-    };
-    badge.addEventListener("click", toggle);
-    hitArea.addEventListener("click", toggle);
+    if (state.collapsedSet.has(node.id)) {
+      const hidden = countHiddenDescendants(node.id, state.nodeMap, state.allNodeIds, visibleSet);
+      badge.textContent = `+${hidden}`;
+    } else {
+      badge.textContent = `+${node.dependsOn.filter(d => state.allNodeIds.has(d)).length}`;
+    }
     row.appendChild(badge);
   }
 
@@ -190,7 +604,7 @@ function buildRow(
 
 function buildDetail(
   node: RenderNode, info: RowInfo,
-  svgW: number, nodeMap: Map<string, RenderNode>, nodeSet: Set<string>,
+  svgW: number, nodeMap: Map<string, RenderNode>,
   section: HTMLElement,
 ): HTMLElement {
   const detail = document.createElement("div");
@@ -233,7 +647,7 @@ function buildDetail(
   content.appendChild(descEl);
 
   // Calculation
-  content.appendChild(buildCalcDisplay(node, nodeMap, nodeSet, section, content));
+  content.appendChild(buildCalcDisplay(node, nodeMap, section));
 
   // CSS properties
   const props = Object.entries(node.cssProperties).filter(([, v]) => v != null);
@@ -261,8 +675,8 @@ function buildDetail(
 }
 
 function buildCalcDisplay(
-  node: RenderNode, nodeMap: Map<string, RenderNode>, nodeSet: Set<string>,
-  section: HTMLElement, detailContent: HTMLElement,
+  node: RenderNode, nodeMap: Map<string, RenderNode>,
+  section: HTMLElement,
 ): HTMLElement {
   const calcLine = document.createElement("div");
   calcLine.className = "detail-calc";
@@ -276,9 +690,9 @@ function buildCalcDisplay(
 
   for (const seg of node.calculation) {
     if (seg.refId) {
-      calcExpr.appendChild(buildRefSegment(seg, node, nodeMap, section));
+      calcExpr.appendChild(buildRefSegment(seg, node, nodeMap));
     } else if (seg.label) {
-      calcExpr.appendChild(buildPropSegment(seg, detailContent));
+      calcExpr.appendChild(buildPropSegment(seg));
     } else {
       const span = document.createElement("span");
       span.className = "calc-op";
@@ -295,12 +709,12 @@ function buildCalcDisplay(
 function buildRefSegment(
   seg: { text: string; refId?: string },
   node: RenderNode, nodeMap: Map<string, RenderNode>,
-  section: HTMLElement,
 ): HTMLElement {
   const refNode = nodeMap.get(seg.refId!);
   const span = document.createElement("span");
   span.className = "calc-ref";
   span.dataset.refId = seg.refId!;
+  span.dataset.fromId = node.id;
 
   const valEl = document.createElement("span");
   valEl.className = "calc-val";
@@ -312,21 +726,11 @@ function buildRefSegment(
   labelEl.textContent = refNode ? formatKind(refNode.kind) : seg.refId!;
   span.appendChild(labelEl);
 
-  span.addEventListener("mouseenter", () => {
-    highlightRef(section, node.id, seg.refId!);
-    if (refNode) highlightInPage(refNode.elementPath);
-  });
-  span.addEventListener("mouseleave", () => {
-    clearRefHighlight(section);
-    if (refNode) clearHighlightInPage();
-  });
-
   return span;
 }
 
 function buildPropSegment(
   seg: { text: string; label?: string },
-  detailContent: HTMLElement,
 ): HTMLElement {
   const span = document.createElement("span");
   span.className = "calc-prop";
@@ -342,93 +746,5 @@ function buildPropSegment(
   labelEl.textContent = seg.label!;
   span.appendChild(labelEl);
 
-  span.addEventListener("mouseenter", () => {
-    const propRow = detailContent.querySelector(`.pk[data-prop="${seg.label}"]`);
-    if (propRow) {
-      propRow.classList.add("pk-hl");
-      (propRow.nextElementSibling as HTMLElement | null)?.classList.add("pv-hl");
-    }
-  });
-  span.addEventListener("mouseleave", () => {
-    detailContent.querySelectorAll(".pk-hl").forEach(el => el.classList.remove("pk-hl"));
-    detailContent.querySelectorAll(".pv-hl").forEach(el => el.classList.remove("pv-hl"));
-  });
-
   return span;
-}
-
-// ---------------------------------------------------------------------------
-// Collapse / expand
-// ---------------------------------------------------------------------------
-
-/** Parse the comma-separated deps from a row's dataset. */
-function rowDeps(row: HTMLElement): string[] {
-  return (row.dataset.deps ?? "").split(",").filter(Boolean);
-}
-
-function recomputeVisibility(section: HTMLElement): void {
-  const allRows = [...section.querySelectorAll<HTMLElement>(".graph-row")];
-  if (allRows.length === 0) return;
-
-  const visible = new Set<string>();
-  const queue = [allRows[0].dataset.nodeId!];
-
-  while (queue.length > 0) {
-    const id = queue.shift()!;
-    if (visible.has(id)) continue;
-    visible.add(id);
-
-    const row = section.querySelector<HTMLElement>(`.graph-row[data-node-id="${id}"]`);
-    if (!row || row.classList.contains("collapsed")) continue;
-
-    for (const dep of rowDeps(row)) {
-      if (!visible.has(dep)) queue.push(dep);
-    }
-  }
-
-  for (const row of allRows) {
-    const id = row.dataset.nodeId!;
-    const show = visible.has(id);
-    row.style.display = show ? "" : "none";
-    const detail = row.nextElementSibling as HTMLElement | null;
-    if (detail?.classList.contains("node-detail")) {
-      detail.style.display = show ? "" : "none";
-    }
-  }
-}
-
-function countDescendants(nodeId: string, section: HTMLElement): number {
-  const descendants = new Set<string>();
-  const stack: string[] = [];
-  const rootRow = section.querySelector<HTMLElement>(`.graph-row[data-node-id="${nodeId}"]`);
-  if (!rootRow) return 0;
-  for (const dep of rowDeps(rootRow)) stack.push(dep);
-
-  while (stack.length > 0) {
-    const id = stack.pop()!;
-    if (descendants.has(id)) continue;
-    descendants.add(id);
-    const row = section.querySelector<HTMLElement>(`.graph-row[data-node-id="${id}"]`);
-    if (!row) continue;
-    for (const dep of rowDeps(row)) {
-      if (!descendants.has(dep)) stack.push(dep);
-    }
-  }
-  return descendants.size;
-}
-
-function toggleSubtree(
-  section: HTMLElement, nodeId: string, row: HTMLElement, svg: SVGSVGElement,
-): void {
-  row.classList.toggle("collapsed");
-
-  const isCollapsed = row.classList.contains("collapsed");
-  svg.querySelectorAll(".outgoing").forEach((el) => {
-    (el as SVGElement).style.display = isCollapsed ? "none" : "";
-  });
-
-  recomputeVisibility(section);
-
-  const badge = row.querySelector(".collapse-badge");
-  if (badge) badge.textContent = `+${countDescendants(nodeId, section)}`;
 }
