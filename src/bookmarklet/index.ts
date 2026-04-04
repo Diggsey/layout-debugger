@@ -22,7 +22,11 @@ function whyThisSize(el: Element): DagResult {
   return dag;
 }
 
-(window as any).whyThisSize = whyThisSize;
+declare global {
+  interface Window { whyThisSize?: typeof whyThisSize; }
+}
+
+window.whyThisSize = whyThisSize;
 
 console.log(
   "%c📐 Layout Debugger loaded%c\n" +

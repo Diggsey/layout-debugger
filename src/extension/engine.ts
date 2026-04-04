@@ -1,7 +1,13 @@
 import { buildDag } from "../core/build-dag";
-import { renderDag } from "../core/dag-render";
+import { renderDag, type CalcSegment } from "../core/dag-render";
 import { getElementPath } from "../core/serialize";
 import type { RenderNode } from "../core/dag-render";
+
+declare global {
+  interface Window {
+    __layoutDebugger?: { analyze: typeof analyze; getElementPath: typeof getElementPath };
+  }
+}
 
 function serializeNode(node: RenderNode) {
   return {
@@ -13,7 +19,7 @@ function serializeNode(node: RenderNode) {
     result: node.result,
     resultUnit: node.resultUnit,
     description: node.description,
-    calculation: node.calculation.map((seg: any) => ({
+    calculation: node.calculation.map((seg: CalcSegment) => ({
       text: seg.text,
       refId: seg.refId,
       label: seg.label,
@@ -44,4 +50,4 @@ function analyze(el: Element) {
   };
 }
 
-(window as any).__layoutDebugger = { analyze, getElementPath };
+window.__layoutDebugger = { analyze, getElementPath };

@@ -15,7 +15,7 @@
  * - CSS Sizing 3 §4  Intrinsic Size Determination
  */
 import type { LayoutNode, DagResult, Axis, NodeKind, SizeFns, CalcExpr } from "./dag";
-import { DagBuilder, ref, constant, prop, add, cmax, cmin } from "./dag";
+import { DagBuilder, NodeBuilder, ref, constant, prop, add, cmax, cmin } from "./dag";
 import { PX } from "./units";
 import { identifyContext } from "./context";
 import { getExplicitSize } from "./sizing";
@@ -65,7 +65,6 @@ function measured(b: DagBuilder, el: Element, axis: Axis, kind: NodeKind, descri
   return b.begin(kind, el, axis).describe(desc).calc(borderBoxCalc(el, axis)).finish();
 }
 
-/** Build a CalcExpr for an element's border-box size from its CSS properties. */
 /** Build a CalcExpr for an element's border-box size from its CSS properties. */
 function borderBoxCalc(el: Element, axis: Axis): CalcExpr {
   const s = getComputedStyle(el);
@@ -322,13 +321,13 @@ function computeIntrinsicSize(
         } else {
           // content-box: need to subtract other pb, apply ratio, add this pb
           const otherPbNames = otherAxis === "width"
-            ? ["paddingLeft", "paddingRight", "borderLeftWidth", "borderRightWidth"] as const
-            : ["paddingTop", "paddingBottom", "borderTopWidth", "borderBottomWidth"] as const;
+            ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
+            : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
           const thisPbNames = axis === "width"
-            ? ["paddingLeft", "paddingRight", "borderLeftWidth", "borderRightWidth"] as const
-            : ["paddingTop", "paddingBottom", "borderTopWidth", "borderBottomWidth"] as const;
-          const otherPb = otherPbNames.reduce((s, p) => s + (parseFloat((arStyle as any)[p]) || 0), 0);
-          const thisPb = thisPbNames.reduce((s, p) => s + (parseFloat((arStyle as any)[p]) || 0), 0);
+            ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
+            : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
+          const otherPb = otherPbNames.reduce((s, p) => s + (parseFloat(arStyle.getPropertyValue(p)) || 0), 0);
+          const thisPb = thisPbNames.reduce((s, p) => s + (parseFloat(arStyle.getPropertyValue(p)) || 0), 0);
           const otherContent = otherBB.result - otherPb;
           const thisContent = axis === "width" ? otherContent * ratio : otherContent / ratio;
           result = thisContent + thisPb;
@@ -438,7 +437,6 @@ function contentSize(
   const useIntrinsic = isFlexCross || isGrid || intrinsic;
 
   const childNodes: LayoutNode[] = [];
-  let i = 0;
   for (const child of Array.from(el.children)) {
     const cs = getComputedStyle(child);
     if (cs.position === "absolute" || cs.position === "fixed") continue;
@@ -449,7 +447,6 @@ function contentSize(
         : computeSize(b, child, axis, depth - 1);
       childNodes.push(childNode);
     }
-    i++;
   }
 
   const gap = nb.cssPx(axis === "width" ? "column-gap" : "row-gap");

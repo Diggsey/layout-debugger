@@ -45,6 +45,15 @@ export function buildRowInfos(layout: LayoutResult): Map<string, RowInfo> {
     });
   }
 
+  function addPassingEdge(fromRow: number, toRow: number, col: number, eid: string): void {
+    for (let r = fromRow + 1; r < toRow; r++) {
+      const midInfo = infos.get(layout.order[r])!;
+      midInfo.passingCols.add(col);
+      if (!midInfo.passingEdges.has(col)) midInfo.passingEdges.set(col, []);
+      midInfo.passingEdges.get(col)!.push(eid);
+    }
+  }
+
   for (const edge of layout.edges) {
     const fromRow = layout.rows.get(edge.fromId)!;
     const toRow = layout.rows.get(edge.toId)!;
@@ -57,34 +66,19 @@ export function buildRowInfos(layout: LayoutResult): Map<string, RowInfo> {
       fromInfo.mainOutEdgeIds.push(eid);
       toInfo.arrivedFromAbove = true;
       toInfo.mainInEdgeIds.push(eid);
-      for (let r = fromRow + 1; r < toRow; r++) {
-        const midInfo = infos.get(layout.order[r])!;
-        midInfo.passingCols.add(edge.fromCol);
-        if (!midInfo.passingEdges.has(edge.fromCol)) midInfo.passingEdges.set(edge.fromCol, []);
-        midInfo.passingEdges.get(edge.fromCol)!.push(eid);
-      }
+      addPassingEdge(fromRow, toRow, edge.fromCol, eid);
     } else if (edge.type === "branch") {
       fromInfo.branchCols.push(edge.toCol);
       fromInfo.branchEdgeId.set(edge.toCol, eid);
       toInfo.arrivedFromAbove = true;
       toInfo.mainInEdgeIds.push(eid);
-      for (let r = fromRow + 1; r < toRow; r++) {
-        const midInfo = infos.get(layout.order[r])!;
-        midInfo.passingCols.add(edge.toCol);
-        if (!midInfo.passingEdges.has(edge.toCol)) midInfo.passingEdges.set(edge.toCol, []);
-        midInfo.passingEdges.get(edge.toCol)!.push(eid);
-      }
+      addPassingEdge(fromRow, toRow, edge.toCol, eid);
     } else if (edge.type === "merge") {
       toInfo.mergeCols.push(edge.fromCol);
       toInfo.mergeEdgeId.set(edge.fromCol, eid);
       fromInfo.continuesBelow = true;
       fromInfo.mainOutEdgeIds.push(eid);
-      for (let r = fromRow + 1; r < toRow; r++) {
-        const midInfo = infos.get(layout.order[r])!;
-        midInfo.passingCols.add(edge.fromCol);
-        if (!midInfo.passingEdges.has(edge.fromCol)) midInfo.passingEdges.set(edge.fromCol, []);
-        midInfo.passingEdges.get(edge.fromCol)!.push(eid);
-      }
+      addPassingEdge(fromRow, toRow, edge.fromCol, eid);
     }
   }
 

@@ -45,7 +45,7 @@ export interface SerializedNode {
   inputs: Record<string, string>;
   description: string;
   /** Serialized CalcExpr (refs converted to node ID strings). */
-  calc: any;
+  calc: SerializedCalcExpr;
   /** Text expression derived from calc. */
   expr: string;
   cssProperties: Record<string, string>;
@@ -135,7 +135,9 @@ export function serializeDag(dag: DagResult): SerializedDag {
       description: node.description,
       calc: serializeCalcExpr(node.calc, ids),
       expr: calcToText(node.calc),
-      cssProperties: node.cssProperties as Record<string, string>,
+      cssProperties: Object.fromEntries(
+        Object.entries(node.cssProperties).filter(([, v]) => v !== undefined),
+      ) as Record<string, string>,
     };
     return id;
   }
@@ -163,26 +165,23 @@ export function measureElements(dag: DagResult): BrowserMeasurements {
   const measurements: BrowserMeasurements = {};
   const visited = new Set<Element>();
 
+  const walkedNodes = new Set<LayoutNode>();
   function walk(node: LayoutNode): void {
-    if (!node || visited.has(node.element)) {
-      if (node) {
-        for (const dep of Object.values(node.inputs)) {
-          if (dep) walk(dep);
-        }
-      }
-      return;
-    }
-    visited.add(node.element);
+    if (!node || walkedNodes.has(node)) return;
+    walkedNodes.add(node);
 
-    const path = getElementPath(node.element);
-    if (!measurements[path]) {
-      const rect = node.element.getBoundingClientRect();
-      measurements[path] = {
-        path,
-        desc: describeElement(node.element),
-        width: round(rect.width),
-        height: round(rect.height),
-      };
+    if (!visited.has(node.element)) {
+      visited.add(node.element);
+      const path = getElementPath(node.element);
+      if (!measurements[path]) {
+        const rect = node.element.getBoundingClientRect();
+        measurements[path] = {
+          path,
+          desc: describeElement(node.element),
+          width: round(rect.width),
+          height: round(rect.height),
+        };
+      }
     }
 
     for (const dep of Object.values(node.inputs)) {
@@ -276,7 +275,19 @@ export function verifyDag(dag: DagResult): VerifyResult {
 // CalcExpr serialization helpers
 // ---------------------------------------------------------------------------
 
-function serializeCalcExpr(expr: CalcExpr, ids: Map<LayoutNode, string>): any {
+export type SerializedCalcExpr =
+  | { op: "ref"; nodeId: string }
+  | { op: "constant"; value: number; unit: string }
+  | { op: "property"; name: string; value: number; unit: string }
+  | { op: "measured"; label: string; value: number; unit: string }
+  | { op: "add"; args: SerializedCalcExpr[] }
+  | { op: "sub"; left: SerializedCalcExpr; right: SerializedCalcExpr }
+  | { op: "mul"; left: SerializedCalcExpr; right: SerializedCalcExpr }
+  | { op: "div"; left: SerializedCalcExpr; right: SerializedCalcExpr }
+  | { op: "max"; args: SerializedCalcExpr[] }
+  | { op: "min"; args: SerializedCalcExpr[] };
+
+function serializeCalcExpr(expr: CalcExpr, ids: Map<LayoutNode, string>): SerializedCalcExpr {
   switch (expr.op) {
     case "ref": return { op: "ref", nodeId: ids.get(expr.node) ?? "?" };
     case "constant": return { op: "constant", value: expr.value, unit: formatUnits(expr.unit) };

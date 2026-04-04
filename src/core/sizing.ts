@@ -1,9 +1,10 @@
 import { px } from "./utils";
 
-/**
- * Check if a CSS value is a content-derived sizing keyword.
- * These are NOT explicit sizes — they derive from content, like auto.
- */
+/** Element with CSS Typed OM support (Chrome/Edge). */
+interface CSSStyleValue { value: number; constructor: { name: string } }
+interface TypedStyleMap { get(name: string): CSSStyleValue | undefined }
+interface StyledElement { computedStyleMap(): TypedStyleMap }
+
 /**
  * Resolve a CSS value containing var() references by temporarily applying it
  * to a test element and reading the computed result.
@@ -93,9 +94,9 @@ export function getExplicitSize(el: Element, axis: "width" | "height"): SizeInfo
   }
 
   // CSS Typed OM (Chrome/Edge): preserves keyword values like "auto"
-  if ("computedStyleMap" in el && typeof (el as any).computedStyleMap === "function") {
+  if ("computedStyleMap" in el && typeof (el as unknown as StyledElement).computedStyleMap === "function") {
     try {
-      const map = (el as any).computedStyleMap();
+      const map = (el as unknown as StyledElement).computedStyleMap();
       const value = map.get(axis);
       // CSSKeywordValue means auto, min-content, max-content, etc. — not explicit
       if (value && value.constructor?.name === "CSSKeywordValue") {
@@ -221,9 +222,10 @@ export function getSpecifiedValue(el: Element, prop: string): string | null {
 
 /** Shim for the deprecated getMatchedCSSRules. Returns null if unavailable. */
 function getMatchedCSSRules(el: Element): CSSStyleRule[] | null {
-  if ("getMatchedCSSRules" in window) {
+  const win = window as Window & { getMatchedCSSRules?(el: Element): CSSStyleRule[] | null };
+  if (typeof win.getMatchedCSSRules === "function") {
     try {
-      const rules = (window as any).getMatchedCSSRules(el);
+      const rules = win.getMatchedCSSRules(el);
       return rules ? Array.from(rules) : null;
     } catch {
       return null;

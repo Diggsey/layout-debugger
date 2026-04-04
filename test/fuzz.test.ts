@@ -3,7 +3,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { fileURLToPath } from "url";
 import { generateSpec } from "./fuzz/generate";
-import { runOracle } from "./fuzz/oracle";
+import { runOracle, type OracleError } from "./fuzz/oracle";
 import type { LayoutSpec } from "./fuzz/format";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -14,7 +14,7 @@ const FUZZ_SEED = Number(process.env.FUZZ_SEED) || Date.now();
 
 test.describe("fuzz", () => {
   test("random layouts", async ({ page }) => {
-    const failures: { seed: number; spec: LayoutSpec; errors: any[] }[] = [];
+    const failures: { seed: number; spec: LayoutSpec; errors: OracleError[] }[] = [];
 
     for (let i = 0; i < FUZZ_N; i++) {
       const seed = FUZZ_SEED + i;

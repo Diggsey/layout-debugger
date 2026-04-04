@@ -30,9 +30,9 @@ export function highlightGraph(section: HTMLElement, nodeId: string, deps: strin
   }
 
   // Incoming edges (parents → this node): blue
-  section.querySelectorAll(".graph-row").forEach((row) => {
-    const parentId = (row as HTMLElement).dataset.nodeId!;
-    const parentDeps = ((row as HTMLElement).dataset.deps ?? "").split(",");
+  section.querySelectorAll<HTMLElement>(".graph-row").forEach((row) => {
+    const parentId = row.dataset.nodeId!;
+    const parentDeps = (row.dataset.deps ?? "").split(",");
     if (parentDeps.includes(nodeId)) {
       highlightEdge(edgeId(parentId, nodeId), HOVER_IN_COLOR);
       section.querySelectorAll(`.hl[data-dot="${parentId}"]`).forEach((el) => hlOn(el as SVGElement, HOVER_IN_COLOR));

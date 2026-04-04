@@ -75,7 +75,8 @@ function inputPriority(key: string): number {
 
 /** Get a node's dependencies sorted by input priority (main line first). */
 function sortedInputs(node: LayoutNode): [string, LayoutNode][] {
-  return (Object.entries(node.inputs).filter(([, v]) => v) as [string, LayoutNode][])
+  return Object.entries(node.inputs)
+    .filter((entry): entry is [string, LayoutNode] => entry[1] !== undefined)
     .sort((a, b) => inputPriority(a[0]) - inputPriority(b[0]));
 }
 

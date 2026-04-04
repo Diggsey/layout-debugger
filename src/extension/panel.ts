@@ -29,14 +29,14 @@ function runAnalysis(): void {
       if (!window.__layoutDebugger) return { error: "Layout Debugger engine not loaded. Refresh the page." };
       if (!$0) return { error: "No element selected." };
       try { return window.__layoutDebugger.analyze($0); }
-      catch (e) { return { error: String(e && e.stack || e) }; }
+      catch (e) { return { error: e instanceof Error ? (e.stack || e.message) : String(e) }; }
     })()`,
-    (result: any, error: any) => {
+    (result: DagRender & { error?: string }, error: chrome.devtools.inspectedWindow.EvaluationExceptionInfo) => {
       analyzeBtn.textContent = "Analyze $0";
       analyzeBtn.removeAttribute("disabled");
-      if (error) return showError(error.message || String(error));
+      if (error && error.isException) return showError(error.value || "Unknown error");
       if (result && result.error) return showError(result.error);
-      showResult(result as DagRender);
+      showResult(result);
     },
   );
 }
@@ -361,8 +361,13 @@ function buildPropSegment(
 // Collapse / expand
 // ---------------------------------------------------------------------------
 
+/** Parse the comma-separated deps from a row's dataset. */
+function rowDeps(row: HTMLElement): string[] {
+  return (row.dataset.deps ?? "").split(",").filter(Boolean);
+}
+
 function recomputeVisibility(section: HTMLElement): void {
-  const allRows = [...section.querySelectorAll(".graph-row")] as HTMLElement[];
+  const allRows = [...section.querySelectorAll<HTMLElement>(".graph-row")];
   if (allRows.length === 0) return;
 
   const visible = new Set<string>();
@@ -373,10 +378,10 @@ function recomputeVisibility(section: HTMLElement): void {
     if (visible.has(id)) continue;
     visible.add(id);
 
-    const row = section.querySelector(`.graph-row[data-node-id="${id}"]`) as HTMLElement | null;
+    const row = section.querySelector<HTMLElement>(`.graph-row[data-node-id="${id}"]`);
     if (!row || row.classList.contains("collapsed")) continue;
 
-    for (const dep of (row.dataset.deps ?? "").split(",").filter(Boolean)) {
+    for (const dep of rowDeps(row)) {
       if (!visible.has(dep)) queue.push(dep);
     }
   }
@@ -395,17 +400,17 @@ function recomputeVisibility(section: HTMLElement): void {
 function countDescendants(nodeId: string, section: HTMLElement): number {
   const descendants = new Set<string>();
   const stack: string[] = [];
-  const rootRow = section.querySelector(`.graph-row[data-node-id="${nodeId}"]`) as HTMLElement | null;
+  const rootRow = section.querySelector<HTMLElement>(`.graph-row[data-node-id="${nodeId}"]`);
   if (!rootRow) return 0;
-  for (const dep of (rootRow.dataset.deps ?? "").split(",").filter(Boolean)) stack.push(dep);
+  for (const dep of rowDeps(rootRow)) stack.push(dep);
 
   while (stack.length > 0) {
     const id = stack.pop()!;
     if (descendants.has(id)) continue;
     descendants.add(id);
-    const row = section.querySelector(`.graph-row[data-node-id="${id}"]`) as HTMLElement | null;
+    const row = section.querySelector<HTMLElement>(`.graph-row[data-node-id="${id}"]`);
     if (!row) continue;
-    for (const dep of (row.dataset.deps ?? "").split(",").filter(Boolean)) {
+    for (const dep of rowDeps(row)) {
       if (!descendants.has(dep)) stack.push(dep);
     }
   }

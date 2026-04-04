@@ -22,7 +22,7 @@ export interface SerializedResult {
 export async function loadFixture(page: Page, name: string): Promise<void> {
   const filePath = path.resolve(__dirname, 'fixtures', name);
   await page.goto(`file://${filePath}`);
-  await page.waitForFunction(() => typeof (window as any).whyThisSize === 'function');
+  await page.waitForFunction(() => typeof (window as Window & { whyThisSize?: unknown }).whyThisSize === 'function');
 }
 
 /**
@@ -34,7 +34,8 @@ export async function analyzeElement(page: Page, testId: string): Promise<Serial
     const el = document.querySelector(`[data-testid="${tid}"]`);
     if (!el) throw new Error(`Element with data-testid="${tid}" not found`);
 
-    const result = (window as any).whyThisSize(el);
+    const w = window as Window & { whyThisSize(el: Element): { borderBoxWidth: number; borderBoxHeight: number; steps: unknown[] } };
+    const result = w.whyThisSize(el);
 
     function describeEl(e: Element): string {
       const tid = e.getAttribute('data-testid');
@@ -45,7 +46,9 @@ export async function analyzeElement(page: Page, testId: string): Promise<Serial
       return `<${tag}${id}${cls}>`;
     }
 
-    function serializeStep(step: any): any {
+    // These types live in the browser context — no TS types available
+    interface BrowserStep { element: Element; summary: string; details: Record<string, string>; substeps?: BrowserStep[] }
+    function serializeStep(step: BrowserStep): SerializedStep {
       return {
         elementDesc: describeEl(step.element),
         summary: step.summary,
@@ -57,7 +60,7 @@ export async function analyzeElement(page: Page, testId: string): Promise<Serial
     return {
       borderBoxWidth: result.borderBoxWidth,
       borderBoxHeight: result.borderBoxHeight,
-      steps: result.steps.map(serializeStep),
+      steps: (result.steps as BrowserStep[]).map(serializeStep),
     };
   }, testId);
 }
@@ -204,10 +207,18 @@ export async function analyzeDag(page: Page, testId: string): Promise<Serialized
     const el = document.querySelector(`[data-testid="${tid}"]`);
     if (!el) throw new Error(`Element with data-testid="${tid}" not found`);
 
-    const { buildDag } = (window as any).LayoutDebugger;
-    if (!buildDag) throw new Error("buildDag not found");
+    // Browser-side types for the DAG nodes (live DOM, no TS module types)
+    interface BrowserNode {
+      kind: string; element: Element; axis: string; result: number;
+      inputs: Record<string, BrowserNode>; description: string;
+      cssProperties: Record<string, string>;
+    }
+    interface BrowserDag { element: Element; width: BrowserNode; height: BrowserNode }
 
-    const result = buildDag(el);
+    const w = window as Window & { LayoutDebugger: { buildDag(el: Element): BrowserDag } };
+    if (!w.LayoutDebugger?.buildDag) throw new Error("buildDag not found");
+
+    const result = w.LayoutDebugger.buildDag(el);
 
     function describeEl(e: Element): string {
       const t = e.getAttribute("data-testid");
@@ -215,13 +226,12 @@ export async function analyzeDag(page: Page, testId: string): Promise<Serialized
       return `<${e.tagName.toLowerCase()}>`;
     }
 
-    function serializeNode(node: any, visited = new Set()): any {
-      if (!node) return null;
-      // Prevent infinite recursion on DAG cycles
-      if (visited.has(node)) return { kind: node.kind, element: describeEl(node.element), result: node.result, ref: true };
+    function serializeNode(node: BrowserNode, visited = new Set<BrowserNode>()): SerializedNode {
+      if (!node) return null as unknown as SerializedNode;
+      if (visited.has(node)) return { kind: node.kind, element: describeEl(node.element), axis: node.axis, result: node.result, inputs: {}, description: "", cssProperties: {}, ref: true };
       visited.add(node);
 
-      const inputs: Record<string, any> = {};
+      const inputs: Record<string, SerializedNode> = {};
       for (const [key, dep] of Object.entries(node.inputs || {})) {
         inputs[key] = serializeNode(dep, visited);
       }
@@ -263,11 +273,21 @@ export async function renderDagAxis(
     const el = document.querySelector(`[data-testid="${tid}"]`);
     if (!el) throw new Error(`Element with data-testid="${tid}" not found`);
 
-    const { buildDag, renderDag } = (window as any).LayoutDebugger;
-    if (!buildDag || !renderDag) throw new Error("buildDag/renderDag not found");
+    interface BrowserRenderNode {
+      id: string; kind: string; element: Element; result: number;
+      dependsOn: string[]; expression: string;
+    }
+    interface BrowserAxisRender { axis: string; result: number; nodes: BrowserRenderNode[] }
+    interface BrowserRenderResult { width: BrowserAxisRender; height: BrowserAxisRender }
 
-    const dag = buildDag(el);
-    const rendered = renderDag(dag);
+    const w = window as Window & { LayoutDebugger: {
+      buildDag(el: Element): unknown;
+      renderDag(dag: unknown): BrowserRenderResult;
+    }};
+    if (!w.LayoutDebugger?.buildDag || !w.LayoutDebugger?.renderDag) throw new Error("buildDag/renderDag not found");
+
+    const dag = w.LayoutDebugger.buildDag(el);
+    const rendered = w.LayoutDebugger.renderDag(dag);
     const axisRender = ax === "width" ? rendered.width : rendered.height;
 
     function describeEl(e: Element): string {
@@ -276,7 +296,7 @@ export async function renderDagAxis(
       return `<${e.tagName.toLowerCase()}>`;
     }
 
-    return axisRender.nodes.map((n: any) => ({
+    return axisRender.nodes.map((n) => ({
       id: n.id,
       kind: n.kind,
       element: describeEl(n.element),

@@ -5,7 +5,7 @@
  * - CSS Sizing 4 §5.1  Aspect Ratio
  * - CSS Sizing 4 §5.1.1  Resolving Aspect Ratios
  */
-import type { Axis, LayoutNode, SizeFns } from "../dag";
+import type { Axis, CalcExpr, LayoutNode, SizeFns } from "../dag";
 import type { DagBuilder } from "../dag";
 import { ref, prop, mul, div, add, sub } from "../dag";
 import type { LayoutContext } from "../types";
