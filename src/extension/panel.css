@@ -135,9 +135,13 @@ body {
 .pv-hl { color: #f0883e; }
 .pr { display: block; font-size: 9px; color: #6e7681; font-weight: normal; }
 
-/* Collapse row animation */
+/* Collapse row animation — height only; content fades separately */
 .row-exit {
-  transition: height 0.2s ease-out, opacity 0.15s ease-out;
+  transition: height 0.2s ease-out;
+}
+.row-exit .node-summary,
+.row-exit .collapse-badge {
+  transition: opacity 0.15s ease-out;
   opacity: 0;
 }
 .ascii-debug {

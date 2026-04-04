@@ -261,42 +261,38 @@ function renderRows(state: AxisState): void {
 
 const ANIM_DURATION = 200; // ms
 
-/** Check if an edge-tag string involves any node in the set. */
-function edgeInvolvesAny(edgeAttr: string, nodeIds: Set<string>): boolean {
+/**
+ * Check if an SVG element should fade: true if ALL edges in its data-edges
+ * have at least one endpoint that is not in the visible set.
+ * If any edge has both endpoints visible, the element stays (shared line).
+ */
+function shouldFade(edgeAttr: string, visibleSet: Set<string>): boolean {
   for (const eid of edgeAttr.split(" ")) {
     const sep = eid.indexOf(">");
     if (sep < 0) continue;
-    if (nodeIds.has(eid.slice(0, sep)) || nodeIds.has(eid.slice(sep + 1))) return true;
+    const from = eid.slice(0, sep);
+    const to = eid.slice(sep + 1);
+    // This edge has both endpoints visible — the element is needed
+    if (visibleSet.has(from) && visibleSet.has(to)) return false;
   }
-  return false;
+  return true;
 }
 
-/** Set opacity on SVG edge/dot elements without transition (for initial state). */
-function setEdgeOpacity(container: HTMLElement, changingNodes: Set<string>, opacity: string): void {
+/** Set opacity on edge elements that connect to non-visible nodes (no transition). */
+function setEdgeOpacity(container: HTMLElement, visibleSet: Set<string>, opacity: string): void {
   for (const el of container.querySelectorAll<SVGElement>("[data-edges]")) {
-    if (edgeInvolvesAny(el.dataset.edges!, changingNodes)) {
+    if (shouldFade(el.dataset.edges!, visibleSet)) {
       el.style.opacity = opacity;
     }
   }
-  for (const id of changingNodes) {
-    for (const dot of container.querySelectorAll<SVGElement>(`[data-dot="${id}"]`)) {
-      dot.style.opacity = opacity;
-    }
-  }
 }
 
-/** Animate SVG edge/dot elements to target opacity with transition. */
-function fadeEdges(container: HTMLElement, changingNodes: Set<string>, opacity: string): void {
+/** Animate edge elements that connect to non-visible nodes. */
+function fadeEdges(container: HTMLElement, visibleSet: Set<string>, opacity: string): void {
   for (const el of container.querySelectorAll<SVGElement>("[data-edges]")) {
-    if (edgeInvolvesAny(el.dataset.edges!, changingNodes)) {
+    if (shouldFade(el.dataset.edges!, visibleSet)) {
       el.style.transition = `opacity ${ANIM_DURATION}ms ease-out`;
       el.style.opacity = opacity;
-    }
-  }
-  for (const id of changingNodes) {
-    for (const dot of container.querySelectorAll<SVGElement>(`[data-dot="${id}"]`)) {
-      dot.style.transition = `opacity ${ANIM_DURATION}ms ease-out`;
-      dot.style.opacity = opacity;
     }
   }
 }
@@ -327,15 +323,27 @@ function toggleCollapse(state: AxisState, nodeId: string): void {
       return;
     }
 
-    // Fade out edges in visible rows that connect to disappearing nodes
-    fadeEdges(state.rowContainer, disappearingIds, "0");
+    // Fade out all edge elements whose endpoints won't both be visible
+    fadeEdges(state.rowContainer, futureVisible, "0");
 
-    // Animate disappearing rows out
+    // Animate disappearing rows out (height shrinks, content fades)
     for (const el of disappearing) {
       const h = el.getBoundingClientRect().height;
       el.style.height = h + "px";
       el.style.overflow = "hidden";
-      el.classList.add("row-exit");
+      if (el.classList.contains("graph-row")) {
+        // Fade dot in the SVG
+        const dot = el.querySelector<SVGElement>(".gutter-svg [data-dot]");
+        if (dot) { dot.style.transition = `opacity 0.15s ease-out`; dot.style.opacity = "0"; }
+        el.classList.add("row-exit");
+      } else {
+        // Detail panels fade entirely
+        el.classList.add("row-exit");
+        el.style.opacity = "1";
+        el.offsetHeight; // force reflow
+        el.style.transition = `height 0.2s ease-out, opacity 0.15s ease-out`;
+        el.style.opacity = "0";
+      }
       el.offsetHeight; // force reflow
       el.style.height = "0";
     }
@@ -369,35 +377,65 @@ function toggleCollapse(state: AxisState, nodeId: string): void {
       }
     }
 
-    // Set initial hidden state WITHOUT transitions: edges invisible, rows at zero height.
-    setEdgeOpacity(state.rowContainer, appearingIds, "0");
+    // Set initial hidden state WITHOUT transitions:
+    // - Rows: zero height (gutter lines stay visible during expand)
+    // - Row content (summary, dot, badge): invisible
+    // - Edge elements where either endpoint wasn't previously visible: invisible
+    setEdgeOpacity(state.rowContainer, prevVisible, "0");
     for (const el of appearing) {
       const h = el.getBoundingClientRect().height;
       el.style.height = "0";
       el.style.overflow = "hidden";
-      el.style.opacity = "0";
       el.dataset.naturalHeight = String(h);
+      // Fade content only, not the gutter SVG lines
+      if (el.classList.contains("graph-row")) {
+        const summary = el.querySelector<HTMLElement>(".node-summary");
+        const badge = el.querySelector<HTMLElement>(".collapse-badge");
+        const dot = el.querySelector<SVGElement>(".gutter-svg [data-dot]");
+        if (summary) summary.style.opacity = "0";
+        if (badge) badge.style.opacity = "0";
+        if (dot) dot.style.opacity = "0";
+      } else {
+        // Detail panels fade entirely
+        el.style.opacity = "0";
+      }
     }
 
     // Double-rAF ensures the browser paints the hidden state before we animate.
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      // Now add transitions and animate to final values
-      fadeEdges(state.rowContainer, appearingIds, "1");
+      // Fade in edge elements that weren't previously visible
+      fadeEdges(state.rowContainer, prevVisible, "1");
+      // Expand rows and fade in content
       for (const el of appearing) {
-        el.style.transition = `height ${ANIM_DURATION}ms ease-out, opacity ${ANIM_DURATION}ms ease-out`;
+        el.style.transition = `height ${ANIM_DURATION}ms ease-out`;
         el.style.height = el.dataset.naturalHeight + "px";
-        el.style.opacity = "1";
         delete el.dataset.naturalHeight;
+        if (el.classList.contains("graph-row")) {
+          const summary = el.querySelector<HTMLElement>(".node-summary");
+          const badge = el.querySelector<HTMLElement>(".collapse-badge");
+          const dot = el.querySelector<SVGElement>(".gutter-svg [data-dot]");
+          if (summary) { summary.style.transition = `opacity ${ANIM_DURATION}ms ease-out`; summary.style.opacity = "1"; }
+          if (badge) { badge.style.transition = `opacity ${ANIM_DURATION}ms ease-out`; badge.style.opacity = "1"; }
+          if (dot) { dot.style.transition = `opacity ${ANIM_DURATION}ms ease-out`; dot.style.opacity = "1"; }
+        } else {
+          el.style.transition = `height ${ANIM_DURATION}ms ease-out, opacity ${ANIM_DURATION}ms ease-out`;
+          el.style.opacity = "1";
+        }
       }
 
       setTimeout(() => {
+        // Clean up all inline styles from animation
         for (const el of appearing) {
           el.style.transition = "";
           el.style.height = "";
           el.style.overflow = "";
           el.style.opacity = "";
+          for (const child of el.querySelectorAll<HTMLElement>("[style]")) {
+            child.style.transition = "";
+            child.style.opacity = "";
+          }
         }
-        for (const el of state.rowContainer.querySelectorAll<SVGElement>("[style*='opacity']")) {
+        for (const el of state.rowContainer.querySelectorAll<SVGElement>("[data-edges][style]")) {
           el.style.transition = "";
           el.style.opacity = "";
         }
