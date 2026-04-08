@@ -5,8 +5,7 @@
  * - CSS2 §10.3.3  Block-level, non-replaced elements in normal flow
  * - CSS2 §8.1     Box model content area
  */
-import type { Axis, LayoutNode, SizeFns } from "../dag";
-import type { DagBuilder } from "../dag";
+import type { Axis, LayoutNode, SizeFns, NodeBuilder } from "../dag";
 import { ref, add, sub, cmax } from "../dag";
 import type { LayoutContext } from "../types";
 
@@ -14,14 +13,14 @@ import type { LayoutContext } from "../types";
  * Block-fill: auto-width block fills containing block content area minus margins.
  */
 export function blockFill(
-  fns: SizeFns, b: DagBuilder, el: Element, axis: Axis,
+  fns: SizeFns, nb: NodeBuilder, axis: Axis,
   ctx: LayoutContext, depth: number,
 ): LayoutNode {
-  const nb = fns.begin("block-fill", el, axis);
-  if (!nb) return b.get("block-fill", el, axis)!;
+  const el = nb.element;
+  nb.setKind("block-fill");
 
   const cbNode = fns.computeSize(ctx.containingBlock, axis, depth - 1);
-  const contentAreaNode = containerContentArea(fns, b, ctx.containingBlock, axis, cbNode);
+  const contentAreaNode = containerContentArea(fns, ctx.containingBlock, axis, cbNode);
 
   const [mStartName, mEndName] = axis === "width"
     ? ["margin-left", "margin-right"] : ["margin-top", "margin-bottom"];
@@ -31,7 +30,7 @@ export function blockFill(
 
   // Floor by padding+border — CSS can't render negative content
   return nb
-    .setCss(axis, "auto", "Not set explicitly — fills available space")
+    .setCss(axis, "auto")
     .describe(`Block element \u2014 ${axis} fills the available space in its parent`)
     .calc(cmax(
       add(...pbProps.map(p => nb.prop(p))),
@@ -45,11 +44,10 @@ export function blockFill(
  * Content area of a container: border-box minus padding and border.
  */
 export function containerContentArea(
-  fns: SizeFns, b: DagBuilder, container: Element, axis: Axis,
-  borderBoxNode: LayoutNode,
+  fns: SizeFns, container: Element, axis: Axis, borderBoxNode: LayoutNode,
 ): LayoutNode {
   const nb = fns.begin("content-area", container, axis);
-  if (!nb) return b.get("content-area", container, axis)!;
+  if (!nb) return fns.get("content-area", container, axis)!;
 
   const pbProps = axis === "width"
     ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const

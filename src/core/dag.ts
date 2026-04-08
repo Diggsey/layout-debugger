@@ -240,7 +240,8 @@ export interface SizeFns {
   containerContentArea(container: Element, axis: Axis, borderBoxNode: LayoutNode): LayoutNode;
   borderBoxCalc(el: Element, axis: Axis): CalcExpr;
   measured(el: Element, axis: Axis, kind: NodeKind): LayoutNode;
-  begin(kind: NodeKind, el: Element, axis: Axis): NodeBuilder | undefined;
+  get(kind: NodeKind, element: Element, axis: Axis): LayoutNode | undefined;
+  begin(kind: NodeKind, element: Element, axis: Axis): NodeBuilder | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -263,10 +264,21 @@ export class DagBuilder {
     return this.building.has(this.key(kind, element, axis));
   }
 
-  /** Mark a node as building (cycle guard) and return a NodeBuilder. */
+  /** Create a NodeBuilder without registering a kind (set lazily via setKind). */
+  create(element: Element, axis: Axis): NodeBuilder {
+    return new NodeBuilder(this, element, axis);
+  }
+
+  /** Create a NodeBuilder with a known kind (registers for cycle detection). */
   begin(kind: NodeKind, element: Element, axis: Axis): NodeBuilder {
+    const nb = this.create(element, axis);
+    nb.setKind(kind);
+    return nb;
+  }
+
+  /** Register a kind as building (cycle guard). */
+  markBuilding(kind: NodeKind, element: Element, axis: Axis): void {
     this.building.add(this.key(kind, element, axis));
-    return new NodeBuilder(this, kind, element, axis);
   }
 
   /** Register a completed node. Prefer NodeBuilder.finish() instead. */
@@ -295,57 +307,145 @@ export class DagBuilder {
 }
 
 // ---------------------------------------------------------------------------
+// Auto-reason generation for CSS property reads
+// ---------------------------------------------------------------------------
+
+const REASON_TABLE: Record<string, string> = {
+  "display":          "Determines box generation and layout mode",
+  "position":         "Determines positioning scheme",
+  "flex-basis":       "Starting size before flex distribution",
+  "flex-grow":        "Growth factor relative to siblings",
+  "flex-shrink":      "Shrink factor relative to siblings",
+  "flex-direction":   "Determines main vs cross axis",
+  "flex-wrap":        "Single-line vs multi-line flex",
+  "align-self":       "Cross-axis alignment of this item",
+  "align-items":      "Container default for cross-axis alignment",
+  "box-sizing":       "Whether padding/border are included in size",
+  "overflow":         "Affects minimum size calculation",
+  "aspect-ratio":     "Ratio between width and height",
+  "writing-mode":     "Determines inline vs block axis direction",
+  "min-width":        "Minimum width constraint",
+  "max-width":        "Maximum width constraint",
+  "min-height":       "Minimum height constraint",
+  "max-height":       "Maximum height constraint",
+  "left":             "Left offset from containing block",
+  "right":            "Right offset from containing block",
+  "top":              "Top offset from containing block",
+  "bottom":           "Bottom offset from containing block",
+};
+
+function autoReason(key: string): string {
+  const prop = key.startsWith("parent.") ? key.slice(7) : key;
+  return REASON_TABLE[prop] ?? "";
+}
+
+// ---------------------------------------------------------------------------
+// ElementProxy — tracks CSS property reads on an element
+// ---------------------------------------------------------------------------
+
+/**
+ * Wraps an element for tracked CSS reads. Every `readProperty()` call
+ * records the property name + value. Use `getParent()` to create a
+ * proxy for the parent element whose reads are prefixed with "parent.".
+ */
+export class ElementProxy {
+  readonly element: Element;
+  private _style: CSSStyleDeclaration;
+  private _prefix: string;
+  private _records: [key: string, value: string][];
+
+  constructor(element: Element, records?: [string, string][], prefix = "") {
+    this.element = element;
+    this._style = getComputedStyle(element);
+    this._prefix = prefix;
+    this._records = records ?? [];
+  }
+
+  /** Read a CSS property, record it, and return the value. */
+  readProperty(name: string): string {
+    const val = this._style.getPropertyValue(name);
+    const key = this._prefix ? `${this._prefix}.${name}` : name;
+    this._records.push([key, val]);
+    return val;
+  }
+
+  /** Create a proxy for the parent element. Reads are prefixed with "parent.". */
+  getParent(): ElementProxy {
+    return new ElementProxy(this.element.parentElement!, this._records, "parent");
+  }
+
+  /** Record a synthetic CSS property (e.g. "auto" when computed style differs). */
+  record(name: string, value: string): void {
+    const key = this._prefix ? `${this._prefix}.${name}` : name;
+    this._records.push([key, value]);
+  }
+
+  /** Drain recorded reads into target maps. Existing keys are not overwritten. */
+  drainInto(props: Record<string, string>, reasons: Record<string, string>): void {
+    for (const [key, value] of this._records) {
+      if (!(key in props)) {
+        props[key] = value;
+        const reason = autoReason(key);
+        if (reason) reasons[key] = reason;
+      }
+    }
+    this._records = [];
+  }
+}
+
+// ---------------------------------------------------------------------------
 // NodeBuilder — builds a LayoutNode with automatic CSS property tracking
 // ---------------------------------------------------------------------------
 
 function round(n: number): number { return Math.round(n * 100) / 100; }
 
 /**
- * Fluent builder for a LayoutNode. All CSS property reads via css()/cssPx()/prop()
- * are automatically recorded in cssProperties.
+ * Fluent builder for a LayoutNode. CSS reads delegate to the internal
+ * ElementProxy for automatic tracking with generated reasons.
+ * Kind can be set lazily via setKind() after construction.
  */
 export class NodeBuilder {
   readonly element: Element;
   readonly axis: Axis;
-  readonly kind: NodeKind;
-  private _style: CSSStyleDeclaration;
+  readonly proxy: ElementProxy;
+  private _kind: NodeKind | null = null;
   private _builder: DagBuilder;
-  private _cssProperties: Record<string, string> = {};
-  private _cssReasons: Record<string, string> = {};
   private _inputs: LayoutNode["inputs"] = {};
   private _description = "";
   private _calc: CalcExpr | null = null;
 
-  constructor(builder: DagBuilder, kind: NodeKind, element: Element, axis: Axis) {
+  constructor(builder: DagBuilder, element: Element, axis: Axis) {
     this._builder = builder;
-    this.kind = kind;
     this.element = element;
     this.axis = axis;
-    this._style = getComputedStyle(element);
+    this.proxy = new ElementProxy(element);
   }
 
-  /** Read a CSS property value (string) and auto-record it. Optional reason for contextual reads. */
-  css(name: string, reason?: string): string {
-    const val = this._style.getPropertyValue(name);
-    this._cssProperties[name] = val;
-    if (reason) this._cssReasons[name] = reason;
-    return val;
+  /** Set the node kind (registers with DagBuilder for cycle detection). */
+  setKind(kind: NodeKind): this {
+    this._kind = kind;
+    this._builder.markBuilding(kind, this.element, this.axis);
+    return this;
   }
 
-  /** Read a CSS property as a pixel number and auto-record it. */
-  cssPx(name: string, reason?: string): number {
-    return parseFloat(this.css(name, reason)) || 0;
+  /** Read a CSS property value (string) on this element, auto-recorded. */
+  css(name: string): string {
+    return this.proxy.readProperty(name);
   }
 
-  /** Create a CalcExpr property node for this element's CSS property (auto-recorded). */
+  /** Read a CSS property as a pixel number on this element, auto-recorded. */
+  cssPx(name: string): number {
+    return parseFloat(this.css(name)) || 0;
+  }
+
+  /** Create a CalcExpr property node for this element's CSS property. */
   prop(name: string): CalcExpr {
     return prop(this.element, name);
   }
 
-  /** Manually record a CSS property value with a reason. */
-  setCss(name: string, value: string, reason?: string): this {
-    this._cssProperties[name] = value;
-    if (reason) this._cssReasons[name] = reason;
+  /** Record a CSS property with a synthetic value (e.g. "auto" when computed style differs). */
+  setCss(name: string, value: string): this {
+    this.proxy.record(name, value);
     return this;
   }
 
@@ -353,6 +453,21 @@ export class NodeBuilder {
   describe(description: string): this {
     this._description = description;
     return this;
+  }
+
+  /** Look up a cached node. */
+  get(kind: NodeKind, element: Element, axis: Axis): LayoutNode | undefined {
+    return this._builder.get(kind, element, axis);
+  }
+
+  /** Check if a node is currently being built (cycle detection). */
+  isBuilding(kind: NodeKind, element: Element, axis: Axis): boolean {
+    return this._builder.isBuilding(kind, element, axis);
+  }
+
+  /** Create a sub-node builder with a known kind. */
+  begin(kind: NodeKind, element: Element, axis: Axis): NodeBuilder {
+    return this._builder.begin(kind, element, axis);
   }
 
   /** Set the CalcExpr for the node. */
@@ -373,27 +488,27 @@ export class NodeBuilder {
     return this;
   }
 
+  private _build(result: number): LayoutNode {
+    if (!this._kind) throw new Error("NodeBuilder: kind must be set before finish()");
+    if (!this._calc) throw new Error("NodeBuilder: calc must be set before finish()");
+    const cssProperties: Record<string, string> = {};
+    const cssReasons: Record<string, string> = {};
+    this.proxy.drainInto(cssProperties, cssReasons);
+    return this._builder.finish({
+      kind: this._kind, element: this.element, axis: this.axis,
+      result,
+      description: this._description, calc: this._calc,
+      inputs: this._inputs, cssProperties, cssReasons,
+    });
+  }
+
   /** Build the LayoutNode. Result is computed from the CalcExpr. */
   finish(): LayoutNode {
-    if (!this._calc) throw new Error("NodeBuilder: calc must be set before finish()");
-    return this._builder.finish({
-      kind: this.kind, element: this.element, axis: this.axis,
-      result: round(evaluate(this._calc)),
-      description: this._description, calc: this._calc,
-      inputs: this._inputs, cssProperties: this._cssProperties,
-      cssReasons: this._cssReasons,
-    });
+    return this._build(round(evaluate(this._calc!)));
   }
 
   /** Build the LayoutNode with an explicit result (when calc doesn't exactly match the measured value). */
   finishWithResult(result: number): LayoutNode {
-    if (!this._calc) throw new Error("NodeBuilder: calc must be set before finish()");
-    return this._builder.finish({
-      kind: this.kind, element: this.element, axis: this.axis,
-      result,
-      description: this._description, calc: this._calc,
-      inputs: this._inputs, cssProperties: this._cssProperties,
-      cssReasons: this._cssReasons,
-    });
+    return this._build(result);
   }
 }

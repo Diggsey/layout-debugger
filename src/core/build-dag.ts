@@ -15,7 +15,7 @@
  * - CSS Sizing 3 §4  Intrinsic Size Determination
  */
 import type { LayoutNode, DagResult, Axis, NodeKind, SizeFns, CalcExpr } from "./dag";
-import { DagBuilder, NodeBuilder, ref, constant, prop, add, cmax, cmin } from "./dag";
+import { DagBuilder, NodeBuilder, ElementProxy, ref, constant, prop, add, cmax, cmin } from "./dag";
 import { PX } from "./units";
 import { identifyContext } from "./context";
 import { getExplicitSize } from "./sizing";
@@ -94,23 +94,25 @@ function borderBoxCalc(el: Element, axis: Axis): CalcExpr {
  *   5. intrinsic keyword
  *   6. layout-mode dispatch — flex cross, grid, positioned, block, inline
  */
-function determineKind(el: Element, axis: Axis): NodeKind {
+function determineKind(proxy: ElementProxy, axis: Axis): NodeKind {
+  const el = proxy.element;
   if (el === document.documentElement) return "viewport";
 
-  const s = getComputedStyle(el);
-  if (s.display === "none") return "display-none";
-  if (s.display === "contents") return "display-contents";
+  const display = proxy.readProperty("display");
+  if (display === "none") return "display-none";
+  if (display === "contents") return "display-contents";
 
+  const s = getComputedStyle(el);
   const parent = el.parentElement;
   let isGridItem = false;
   if (parent && s.position !== "absolute" && s.position !== "fixed") {
-    const parentDisplay = getComputedStyle(parent).display;
+    const pp = proxy.getParent();
+    const parentDisplay = pp.readProperty("display");
     if (parentDisplay === "flex" || parentDisplay === "inline-flex") {
-      const ps = getComputedStyle(parent);
-      const direction = ps.flexDirection;
+      const direction = pp.readProperty("flex-direction");
       if (axis === flexMainAxisProp(direction)) {
-        // Single-line flex: use our flex algorithm
-        if (ps.flexWrap === "nowrap") return "flex-item-main";
+        const wrap = pp.readProperty("flex-wrap");
+        if (wrap === "nowrap") return "flex-item-main";
         // Multi-line flex (wrap): not implemented, fall through to explicit/content sizing
       }
     }
@@ -128,7 +130,10 @@ function determineKind(el: Element, axis: Axis): NodeKind {
       const explicit = getExplicitSize(el, axis);
       const otherAxis: Axis = axis === "width" ? "height" : "width";
       const otherExplicit = getExplicitSize(el, otherAxis);
-      if (!explicit && otherExplicit) return "aspect-ratio";
+      if (!explicit && otherExplicit) {
+        proxy.readProperty("aspect-ratio");
+        return "aspect-ratio";
+      }
     }
   }
 
@@ -145,6 +150,7 @@ function determineKind(el: Element, axis: Axis): NodeKind {
   }
   if (ctx.mode === "grid") return "grid-item";
   if (ctx.mode === "positioned") {
+    proxy.readProperty("position");
     const startProp = axis === "width" ? "left" : "top";
     const endProp = axis === "width" ? "right" : "bottom";
     return !isAuto(s.getPropertyValue(startProp)) && !isAuto(s.getPropertyValue(endProp))
@@ -165,7 +171,9 @@ function determineKind(el: Element, axis: Axis): NodeKind {
 function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): LayoutNode {
   if (depth <= 0) return measured(b, el, axis, "terminal", "Measured size (computation depth limit reached)");
 
-  const kind = determineKind(el, axis);
+  // Create the NodeBuilder first so determineKind reads are tracked via nb.proxy.
+  const nb = b.create(el, axis);
+  const kind = determineKind(nb.proxy, axis);
 
   const cached = b.get(kind, el, axis);
   if (cached) return cached;
@@ -178,16 +186,12 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
     const cachedContent = b.get(actualKind, el, axis);
     if (cachedContent) return cachedContent;
     if (b.isBuilding(actualKind, el, axis)) {
-      // Cycle: a child is trying to fill a parent whose content size depends
-      // on this child. Fall back to intrinsic (content-based) sizing which
-      // avoids the block-fill/stretch path that caused the cycle.
       return computeIntrinsicSize(b, el, axis, depth);
     }
     return contentSize(b, el, axis, depth);
   }
 
   if (b.isBuilding(kind, el, axis)) {
-    // Same: cycle detected — use intrinsic size instead of terminal
     return computeIntrinsicSize(b, el, axis, depth);
   }
 
@@ -196,62 +200,49 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
 
   switch (kind) {
     case "viewport": return measured(b, el, axis, "viewport");
-    case "display-none": {
-      const nb = make(b, "display-none", el, axis,
-        "Element is hidden (display: none)", constant(0, PX), {});
-      if (!nb) return b.get("display-none", el, axis)!;
-      nb.setCss("display", "none", "Element is hidden and has no size");
-      return nb.finish();
-    }
-    case "display-contents": {
-      const nb = make(b, "display-contents", el, axis,
-        "Element has no box (display: contents)", constant(0, PX), {});
-      if (!nb) return b.get("display-contents", el, axis)!;
-      nb.setCss("display", "contents", "Element has no box — children participate in parent layout");
-      return nb.finish();
-    }
+    case "display-none":
+      return nb.setKind(kind).describe("Element is hidden (display: none)")
+        .calc(constant(0, PX)).finish();
+    case "display-contents":
+      return nb.setKind(kind).describe("Element has no box (display: contents)")
+        .calc(constant(0, PX)).finish();
     case "aspect-ratio": {
       const node = aspectRatio(fns, b, el, axis, ctx(), depth);
       return node ? maybeClamp(b, el, axis, node) : measured(b, el, axis, "terminal");
     }
     case "percentage": {
+      nb.setKind(kind);
       const c = ctx();
       const cbNode = computeSize(b, c.containingBlock, axis, depth - 1);
-      const nb = make(b, "percentage", el, axis,
-        `${axis} is a percentage of the containing block`,
-        borderBoxCalc(el, axis), { containingBlock: cbNode });
-      if (!nb) return b.get("percentage", el, axis)!;
-      nb.css("box-sizing", "Determines whether padding/border are included");
-      return maybeClamp(b, el, axis, nb.finish());
+      nb.css("box-sizing");
+      return maybeClamp(b, el, axis, nb
+        .describe(`${axis} is a percentage of the containing block`)
+        .calc(borderBoxCalc(el, axis))
+        .input("containingBlock", cbNode).finish());
     }
     case "explicit": {
-      const nb = make(b, "explicit", el, axis,
-        `${axis} is set explicitly in CSS`,
-        borderBoxCalc(el, axis), {});
-      if (!nb) return b.get("explicit", el, axis)!;
-      nb.css("box-sizing", "Determines whether padding/border are included");
-      return maybeClamp(b, el, axis, nb.finish());
+      nb.setKind(kind);
+      nb.css("box-sizing");
+      return maybeClamp(b, el, axis, nb
+        .describe(`${axis} is set explicitly in CSS`)
+        .calc(borderBoxCalc(el, axis)).finish());
     }
-    case "intrinsic": {
-      const nb = make(b, "intrinsic", el, axis,
-        `${axis} uses an intrinsic sizing keyword`,
-        borderBoxCalc(el, axis), {});
-      if (!nb) return b.get("intrinsic", el, axis)!;
-      return nb.finish();
-    }
+    case "intrinsic":
+      return nb.setKind(kind).describe(`${axis} uses an intrinsic sizing keyword`)
+        .calc(borderBoxCalc(el, axis)).finish();
     case "flex-item-main":
-      return maybeClamp(b, el, axis, flexItemMain(fns, b, el, axis, ctx(), depth));
+      return maybeClamp(b, el, axis, flexItemMain(fns, nb, axis, ctx(), depth));
     case "flex-cross-stretch":
     case "flex-cross-content":
-      return maybeClamp(b, el, axis, flexItemCross(fns, b, el, axis, ctx(), depth));
+      return maybeClamp(b, el, axis, flexItemCross(fns, nb, axis, ctx(), depth));
     case "grid-item":
-      return maybeClamp(b, el, axis, gridItem(fns, b, el, axis, ctx(), depth));
+      return maybeClamp(b, el, axis, gridItem(fns, nb, axis, ctx(), depth));
     case "positioned-offset":
     case "positioned-shrink-to-fit":
-      return maybeClamp(b, el, axis, positioned(fns, b, el, axis, ctx(), depth));
+      return maybeClamp(b, el, axis, positioned(fns, nb, axis, ctx(), depth));
     case "table-cell": return measured(b, el, axis, "table-cell");
     case "block-fill":
-      return maybeClamp(b, el, axis, blockFill(fns, b, el, axis, ctx(), depth));
+      return maybeClamp(b, el, axis, blockFill(fns, nb, axis, ctx(), depth));
     default: return measured(b, el, axis, "terminal");
   }
 }
@@ -263,13 +254,14 @@ function buildSizeFns(b: DagBuilder): SizeFns {
     computeIntrinsicSize: (el, axis, depth) => computeIntrinsicSize(b, el, axis, depth),
     contentSize: (el, axis, depth, intrinsic) => contentSize(b, el, axis, depth, intrinsic),
     containerContentArea: (container, axis, borderBoxNode) =>
-      containerContentArea(fns, b, container, axis, borderBoxNode),
+      containerContentArea(fns, container, axis, borderBoxNode),
     borderBoxCalc,
     measured: (el, axis, kind) => measured(b, el, axis, kind),
-    begin: (kind, el, axis) => {
-      const existing = b.get(kind, el, axis);
+    get: (kind, element, axis) => b.get(kind, element, axis),
+    begin: (kind, element, axis) => {
+      const existing = b.get(kind, element, axis);
       if (existing) return undefined;
-      return b.begin(kind, el, axis);
+      return b.begin(kind, element, axis);
     },
   };
   return fns;
@@ -347,8 +339,8 @@ function computeIntrinsicSize(
     `Intrinsic ${axis} from content`,
     ref(contentNode), { content: contentNode });
   if (!nb) return b.get("intrinsic-content", el, axis)!;
-  nb.css("display", "Determines how children are laid out");
-  nb.setCss(axis, "auto", "Not set explicitly — sized by content");
+  nb.css("display");
+  nb.setCss(axis, "auto");
   return nb.finish();
 }
 
@@ -397,7 +389,7 @@ function maybeClamp(b: DagBuilder, el: Element, axis: Axis, input: LayoutNode): 
 
   const nb = make(b, "clamped", el, axis, "Constrained by min/max", calc, { input });
   if (!nb) return b.get("clamped", el, axis)!;
-  nb.css("box-sizing", "Determines how min/max constraints are interpreted");
+  nb.css("box-sizing");
   if (maxPx !== Infinity && input.result > maxPx) {
     nb.setCss(maxPropName, maxVal);
   } else {
@@ -429,8 +421,8 @@ function contentSize(
   const nb = b.begin(kind, el, axis);
 
   // Record contextual CSS properties
-  nb.setCss(axis, "auto", "Not set explicitly — sized by content");
-  nb.css("overflow", "Affects minimum size calculation");
+  nb.setCss(axis, "auto");
+  nb.css("overflow");
 
   const isFlexCross = isFlex && !isFlexMain;
   const isGrid = display === "grid" || display === "inline-grid";

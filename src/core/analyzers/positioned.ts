@@ -6,8 +6,7 @@
  * - CSS2 §10.6.4  Absolutely positioned, non-replaced elements (height)
  * - CSS Sizing 3 §4.6  Shrink-to-fit
  */
-import type { Axis, LayoutNode, SizeFns } from "../dag";
-import type { DagBuilder } from "../dag";
+import type { Axis, LayoutNode, SizeFns, NodeBuilder } from "../dag";
 import { ref, prop, sub, add, cmax } from "../dag";
 import type { LayoutContext } from "../types";
 import { isAuto } from "../utils";
@@ -16,19 +15,20 @@ import { isAuto } from "../utils";
  * Size of an absolutely/fixed positioned element.
  */
 export function positioned(
-  fns: SizeFns, b: DagBuilder, el: Element, axis: Axis,
+  fns: SizeFns, nb: NodeBuilder, axis: Axis,
   ctx: LayoutContext, depth: number,
 ): LayoutNode {
-  const s = getComputedStyle(el);
-
+  const el = nb.element;
   const startProp = axis === "width" ? "left" : "top";
   const endProp = axis === "width" ? "right" : "bottom";
-  const startVal = s.getPropertyValue(startProp);
-  const endVal = s.getPropertyValue(endProp);
+  const startVal = nb.css(startProp);
+  const endVal = nb.css(endProp);
+
+  nb.css("position");
 
   if (!isAuto(startVal) && !isAuto(endVal)) {
+    nb.setKind("positioned-offset");
     const cbNode = fns.computeSize(ctx.containingBlock, axis, depth - 1);
-    // For abs positioning, the CB is the PADDING box (border-box - borders).
     const cb = ctx.containingBlock;
     const cbBorderProps = axis === "width"
       ? ["border-left-width", "border-right-width"] as const
@@ -40,13 +40,8 @@ export function positioned(
         .calc(sub(ref(cbNode), add(...cbBorderProps.map(p => prop(cb, p)))))
         .input("borderBox", cbNode)
         .finish()
-      : b.get("content-area", cb, axis)!;
+      : nb.get("content-area", cb, axis)!;
 
-    // border-box = max(padding+border, CB_padding_box - left - right - margins)
-    const nb = fns.begin("positioned-offset", el, axis);
-    if (!nb) return b.get("positioned-offset", el, axis)!;
-
-    nb.css("position", "Taken out of normal flow — sized by offsets");
     const [mStartName, mEndName] = axis === "width"
       ? ["margin-left", "margin-right"] : ["margin-top", "margin-bottom"];
     const pbProps = axis === "width"
@@ -63,10 +58,7 @@ export function positioned(
       .finish();
   }
 
-  const nb = fns.begin("positioned-shrink-to-fit", el, axis);
-  if (!nb) return b.get("positioned-shrink-to-fit", el, axis)!;
-
-  nb.css("position", "Taken out of normal flow — sized by content");
+  nb.setKind("positioned-shrink-to-fit");
   const contentNode = fns.contentSize(el, axis, depth);
   return nb
     .describe(`Absolutely positioned \u2014 ${axis} shrinks to fit content`)
