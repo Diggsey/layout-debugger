@@ -109,7 +109,8 @@ export function serializeDag(dag: DagResult): SerializedDag {
   function assignId(node: LayoutNode): string {
     const existing = ids.get(node);
     if (existing) return existing;
-    const id = `${node.axis[0]}${nextId++}`;
+    const axis = node.kind.split(":")[1];
+    const id = `${axis[0]}${nextId++}`;
     ids.set(node, id);
     return id;
   }
@@ -129,7 +130,7 @@ export function serializeDag(dag: DagResult): SerializedDag {
       kind: node.kind,
       elementPath: getElementPath(node.element),
       elementDesc: describeElement(node.element),
-      axis: node.axis,
+      axis: node.kind.split(":")[1] as Axis,
       result: node.result,
       inputs: serializedInputs,
       description: node.description,
@@ -238,7 +239,7 @@ export function verifyDag(dag: DagResult): VerifyResult {
     if (node.kind === "terminal") {
       errors.push({
         nodeId, kind: "terminal", elementPath: node.elementPath,
-        axis: node.axis, dagResult: node.result, actual: node.result, delta: 0,
+        axis: node.kind.split(":")[1] as Axis, dagResult: node.result, actual: node.result, delta: 0,
         message: node.description,
       });
     }
@@ -253,7 +254,7 @@ export function verifyDag(dag: DagResult): VerifyResult {
           if (!isRoot) {
             errors.push({
               nodeId, kind: node.kind, elementPath: node.elementPath,
-              axis: node.axis, dagResult: node.result, actual, delta: round(delta),
+              axis: node.kind.split(":")[1] as Axis, dagResult: node.result, actual, delta: round(delta),
             });
           }
         }

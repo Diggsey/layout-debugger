@@ -6,7 +6,7 @@
  * - CSS2 §10.6.4  Absolutely positioned, non-replaced elements (height)
  * - CSS Sizing 3 §4.6  Shrink-to-fit
  */
-import type { Axis, LayoutNode, SizeFns, NodeBuilder } from "../dag";
+import type { Axis, NodeKind, SizeFns, NodeBuilder } from "../dag";
 import { ref, prop, sub, add, cmax } from "../dag";
 import type { LayoutContext } from "../types";
 import { isAuto } from "../utils";
@@ -17,7 +17,7 @@ import { isAuto } from "../utils";
 export function positioned(
   fns: SizeFns, nb: NodeBuilder, axis: Axis,
   ctx: LayoutContext, depth: number,
-): LayoutNode {
+): void {
   const el = nb.element;
   const startProp = axis === "width" ? "left" : "top";
   const endProp = axis === "width" ? "right" : "bottom";
@@ -27,20 +27,19 @@ export function positioned(
   nb.css("position");
 
   if (!isAuto(startVal) && !isAuto(endVal)) {
-    nb.setKind("positioned-offset");
     const cbNode = fns.computeSize(ctx.containingBlock, axis, depth - 1);
     const cb = ctx.containingBlock;
     const cbBorderProps = axis === "width"
       ? ["border-left-width", "border-right-width"] as const
       : ["border-top-width", "border-bottom-width"] as const;
 
-    const cbNb = fns.begin("content-area", cb, axis);
-    const cbPaddingBox = cbNb
-      ? cbNb.describe("Containing block padding box (for positioned descendants)")
+    const cbPaddingBoxKind: NodeKind = `content-area:${axis}`;
+    const cbPaddingBox = nb.create(cbPaddingBoxKind, cb, (cnb) => {
+      cnb.setMode("content-area")
+        .describe("Containing block padding box (for positioned descendants)")
         .calc(sub(ref(cbNode), add(...cbBorderProps.map(p => prop(cb, p)))))
-        .input("borderBox", cbNode)
-        .finish()
-      : nb.get("content-area", cb, axis)!;
+        .input("borderBox", cbNode);
+    });
 
     const [mStartName, mEndName] = axis === "width"
       ? ["margin-left", "margin-right"] : ["margin-top", "margin-bottom"];
@@ -51,18 +50,14 @@ export function positioned(
       nb.prop(startProp), nb.prop(endProp),
       nb.prop(mStartName), nb.prop(mEndName),
     );
-    return nb
-      .describe(`Absolutely positioned \u2014 ${axis} derived from opposing offsets`)
+    nb.describe(`Absolutely positioned \u2014 ${axis} derived from opposing offsets`)
       .calc(cmax(add(...pbProps.map(p => nb.prop(p))), sub(ref(cbPaddingBox), spacing)))
-      .input("containingBlock", cbNode)
-      .finish();
+      .input("containingBlock", cbNode);
+    return;
   }
 
-  nb.setKind("positioned-shrink-to-fit");
   const contentNode = fns.contentSize(el, axis, depth);
-  return nb
-    .describe(`Absolutely positioned \u2014 ${axis} shrinks to fit content`)
+  nb.describe(`Absolutely positioned \u2014 ${axis} shrinks to fit content`)
     .calc(ref(contentNode))
-    .input("content", contentNode)
-    .finish();
+    .input("content", contentNode);
 }

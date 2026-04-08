@@ -2,7 +2,7 @@
 
 import { layoutDag, renderAscii, type DagInput, type LayoutResult, type VisualEdge } from "../core/dag-layout";
 import type { DagRender, AxisRender, AxisState, RenderNode } from "./panel-types";
-import { COL_W, DOT_R, LINE_COLOR, LINE_W, cx, esc, formatKind } from "./panel-types";
+import { COL_W, DOT_R, LINE_COLOR, LINE_W, cx, esc, formatMode } from "./panel-types";
 import { type RowInfo, buildRowInfos, colsBelow, renderRowSvg } from "./panel-gutter";
 import {
   highlightGraph, clearGraphHighlight,
@@ -506,7 +506,7 @@ function buildRefSegment(
 
   const labelEl = document.createElement("span");
   labelEl.className = "calc-label";
-  labelEl.textContent = refNode ? formatKind(refNode.kind) : seg.refId!;
+  labelEl.textContent = refNode ? formatMode(refNode.mode) : seg.refId!;
   span.appendChild(labelEl);
 
   return span;

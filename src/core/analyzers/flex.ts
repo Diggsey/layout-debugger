@@ -9,7 +9,7 @@
  * - CSS Flexbox §9.4  Cross Size Determination
  * - CSS Flexbox §4.5  Automatic Minimum Size of Flex Items
  */
-import type { Axis, LayoutNode, SizeFns, CalcExpr, NodeBuilder } from "../dag";
+import type { Axis, LayoutNode, NodeKind, NodeMode, SizeFns, CalcExpr, NodeBuilder } from "../dag";
 import { ref, constant, prop, propVal, measured, add, sub, mul, div, cmax, cmin } from "../dag";
 import { PX } from "../units";
 import type { LayoutContext } from "../types";
@@ -23,9 +23,8 @@ import { px, round, measureMinContentSize } from "../utils";
 export function flexItemMain(
   fns: SizeFns, nb: NodeBuilder, axis: Axis,
   ctx: LayoutContext, depth: number,
-): LayoutNode {
+): void {
   const el = nb.element;
-  nb.setKind("flex-item-main");
 
   nb.css("flex-basis");
   nb.css("flex-grow");
@@ -48,12 +47,11 @@ export function flexItemMain(
   const target = idx >= 0 ? siblings[idx] : null;
 
   // Use the target's own basis/min-content/base-size nodes if available
-  const baseSizeNode = target?.hypoNode ?? (
-    fns.begin("flex-base-size", el, axis)
-      ?.describe("Effective starting size")
-      .calc(fns.borderBoxCalc(el, axis))
-      .finish() ?? nb.get("flex-base-size", el, axis)!
-  );
+  const baseSizeNode = target?.hypoNode ?? nb.create(`flex-base-size:${axis}`, el, (n) => {
+    n.setMode("flex-base-size")
+      .describe("Effective starting size")
+      .calc(fns.borderBoxCalc(el, axis));
+  });
 
   // Free space: containerContent - Σ(sibling outer hypotheticals) - gaps
   const gapPropName = axis === "width" ? "column-gap" : "row-gap";
@@ -69,11 +67,12 @@ export function flexItemMain(
   const totalGap = gap * Math.max(0, siblings.length - 1);
   const freeSpace = containerContent.result - totalBases - totalGap;
 
-  const freeSpaceNode = fns.begin("flex-free-space", container, axis)
-    ?.describe("Space remaining after all items are placed at their base size")
-    .calc(sub(ref(containerContent), add(...siblingTerms)))
-    .inputs(freeSpaceInputs)
-    .finish() ?? nb.get("flex-free-space", container, axis)!;
+  const freeSpaceNode = nb.create(`flex-free-space:${axis}`, container, (n) => {
+    n.setMode("flex-free-space")
+      .describe("Space remaining after all items are placed at their base size")
+      .calc(sub(ref(containerContent), add(...siblingTerms)))
+      .inputs(freeSpaceInputs);
+  });
 
   // Resolve flex lengths (iterative algorithm)
   const allItems = siblings.map(s => ({
@@ -94,36 +93,38 @@ export function flexItemMain(
     const shareInputs: LayoutNode["inputs"] = { freeSpace: freeSpaceNode };
     activeGrowNodes.forEach((n, i) => { shareInputs[`grow${i}`] = n; });
 
-    shareNode = fns.begin("flex-grow-share", el, axis)
-      ?.describe("Portion of free space allocated to this item by flex-grow")
-      .calc(mul(div(prop(el, "flex-grow"), add(...activeGrowNodes.map(ref))), ref(freeSpaceNode)))
-      .inputs(shareInputs)
-      .finish() ?? nb.get("flex-grow-share", el, axis)!;
+    shareNode = nb.create(`flex-share:${axis}`, el, (n) => {
+      n.setMode("flex-grow-share")
+        .describe("Portion of free space allocated to this item by flex-grow")
+        .calc(mul(div(prop(el, "flex-grow"), add(...activeGrowNodes.map(ref))), ref(freeSpaceNode)))
+        .inputs(shareInputs);
+    });
   } else if (freeSpace < 0 && shrink > 0) {
     const activeShrinkNodes = siblings.filter(s => s.shrink > 0).map(s => s.scaledShrinkNode!);
     const shareInputs: LayoutNode["inputs"] = { freeSpace: freeSpaceNode };
     activeShrinkNodes.forEach((n, i) => { shareInputs[`shrink${i}`] = n; });
 
     const myScaledShrink = target?.scaledShrinkNode;
-    shareNode = fns.begin("flex-shrink-share", el, axis)
-      ?.describe("Amount this item shrinks to fit in the container")
-      .calc(myScaledShrink
-        ? mul(div(ref(myScaledShrink), add(...activeShrinkNodes.map(ref))), ref(freeSpaceNode))
-        : constant(0, PX))
-      .inputs(shareInputs)
-      .finish() ?? nb.get("flex-shrink-share", el, axis)!;
+    shareNode = nb.create(`flex-share:${axis}`, el, (n) => {
+      n.setMode("flex-shrink-share")
+        .describe("Amount this item shrinks to fit in the container")
+        .calc(myScaledShrink
+          ? mul(div(ref(myScaledShrink), add(...activeShrinkNodes.map(ref))), ref(freeSpaceNode))
+          : constant(0, PX))
+        .inputs(shareInputs);
+    });
   } else {
-    shareNode = fns.begin("flex-no-change", el, axis)
-      ?.describe(grow === 0 ? "This item does not grow or shrink" : "No free space to distribute")
-      .calc(constant(0, PX))
-      .finish() ?? nb.get("flex-no-change", el, axis)!;
+    shareNode = nb.create(`flex-share:${axis}`, el, (n) => {
+      n.setMode("flex-no-change")
+        .describe(grow === 0 ? "This item does not grow or shrink" : "No free space to distribute")
+        .calc(constant(0, PX));
+    });
   }
 
-  return nb
-    .describe(`Flex item \u2014 ${axis} determined by the flex layout algorithm`)
+  nb.describe(`Flex item \u2014 ${axis} determined by the flex layout algorithm`)
     .calc(add(ref(baseSizeNode), ref(shareNode)))
     .inputs({ baseSize: baseSizeNode, growShare: shareNode })
-    .finishWithResult(round(distributedSize));
+    .overrideResult(round(distributedSize));
 }
 
 // ---------------------------------------------------------------------------
@@ -150,49 +151,44 @@ export function determineFlexCrossKind(
 export function flexItemCross(
   fns: SizeFns, nb: NodeBuilder, axis: Axis,
   ctx: LayoutContext, depth: number,
-): LayoutNode {
+): void {
   const el = nb.element;
   const crossKind = determineFlexCrossKind(el, axis, ctx);
-
-  const cached = nb.get(crossKind, el, axis);
-  if (cached) return cached;
-  if (nb.isBuilding(crossKind, el, axis)) return fns.measured(el, axis, "terminal");
 
   const explicit = getExplicitSize(el, axis);
   if (explicit) {
     if (explicit.kind === "percentage") {
       const cbNode = fns.computeSize(ctx.containingBlock, axis, depth - 1);
-      const pnb = fns.begin("percentage", el, axis);
-      if (!pnb) return nb.get("percentage", el, axis)!;
-      return pnb.describe(`${axis} is a percentage of the containing block`)
+      nb.setMode("percentage");
+      nb.describe(`${axis} is a percentage of the containing block`)
         .calc(fns.borderBoxCalc(el, axis))
-        .input("containingBlock", cbNode).finish();
+        .input("containingBlock", cbNode);
+      return;
     }
-    const enb = fns.begin("explicit", el, axis);
-    if (!enb) return nb.get("explicit", el, axis)!;
-    return enb.describe(`${axis} is set explicitly in CSS`)
-      .calc(fns.borderBoxCalc(el, axis)).finish();
+    nb.setMode("explicit");
+    nb.describe(`${axis} is set explicitly in CSS`)
+      .calc(fns.borderBoxCalc(el, axis));
+    return;
   }
 
   const pp = nb.proxy.getParent();
 
   if (crossKind === "flex-cross-stretch") {
-    nb.setKind("flex-cross-stretch");
     nb.css("align-self");
     pp.readProperty("align-items");
     const containerCross = fns.computeSize(ctx.parent, axis, depth - 1);
-    return nb.describe("Flex item stretches on the cross axis to fill the container")
+    nb.describe("Flex item stretches on the cross axis to fill the container")
       .calc(fns.borderBoxCalc(el, axis))
-      .input("containerCross", containerCross).finish();
+      .input("containerCross", containerCross);
+    return;
   }
 
-  nb.setKind("flex-cross-content");
   nb.css("align-self");
   pp.readProperty("align-items");
   const contentNode = fns.contentSize(el, axis, depth);
-  return nb.describe("Flex item cross-axis size is determined by its content")
+  nb.describe("Flex item cross-axis size is determined by its content")
     .calc(ref(contentNode))
-    .input("content", contentNode).finish();
+    .input("content", contentNode);
 }
 
 // ---------------------------------------------------------------------------
@@ -267,8 +263,6 @@ function collectFlexSiblings(
       if (specified && specified.endsWith("px")) {
         const raw = parseFloat(specified);
         basis = isBorderBox ? raw : raw + pb;
-        // Can't use prop(child, axis) — getComputedStyle returns the post-flex
-        // used value, not the specified value. Use propVal with the specified value.
         basisCalc = propVal(axis, raw);
       } else if (specified && specified.endsWith("%")) {
         const raw = (parseFloat(specified) / 100) * containerContent;
@@ -284,9 +278,11 @@ function collectFlexSiblings(
     }
     basis = Math.max(basis, pb);
 
-    const basisNode = fns.begin("flex-basis", child, axis)
-      ?.describe("Starting size before flex grow/shrink")
-      .calc(basisCalc).finish() ?? nb.get("flex-basis", child, axis)!;
+    const basisNode = nb.create(`flex-basis:${axis}`, child, (n) => {
+      n.setMode("flex-basis")
+        .describe("Starting size before flex grow/shrink")
+        .calc(basisCalc);
+    });
 
     // --- Max main ---
     const maxV = cs.getPropertyValue(maxPropName);
@@ -304,14 +300,12 @@ function collectFlexSiblings(
     const isScroll = ov !== "visible" && ov !== "clip";
     let minMain: number;
     let minCalc: CalcExpr;
+    let minMode: NodeMode = "min-content-auto";
     if (minV === "auto") {
       if (isScroll) {
         minMain = 0;
         minCalc = constant(0, PX);
       } else {
-        // CSS Flexbox §4.5: automatic minimum size =
-        //   min(content minimum, specified size, max main size)
-        // For aspect-ratio elements, the transferred size contributes to min-content.
         const arVal = cs.getPropertyValue("aspect-ratio");
         const otherAxis: "width" | "height" = axis === "width" ? "height" : "width";
         const otherVal = cs.getPropertyValue(otherAxis);
@@ -331,7 +325,6 @@ function collectFlexSiblings(
           minMain = measureMinContentSize(child, axis);
           minCalc = measured("min-content", minMain);
         }
-        // Cap by specified size if present
         const specified = getSpecifiedValue(child, axis);
         if (specified) {
           const specPx = parseFloat(specified);
@@ -343,7 +336,6 @@ function collectFlexSiblings(
             }
           }
         }
-        // Cap by max main size (§4.5: "clamped by the max main size property")
         if (maxMain !== Infinity && maxMain < minMain) {
           minMain = maxMain;
         }
@@ -351,6 +343,7 @@ function collectFlexSiblings(
     } else {
       const raw = px(minV);
       minMain = isBorderBox ? raw : raw + pb;
+      minMode = "min-content-explicit";
       if (isBorderBox) {
         minCalc = prop(child, minPropName);
       } else {
@@ -361,9 +354,11 @@ function collectFlexSiblings(
       }
     }
     minMain = Math.max(minMain, pb);
-    const minNode = fns.begin("min-content", child, axis)
-      ?.describe(minV === "auto" ? `Minimum ${axis} from content` : `${minPropName} constraint`)
-      .calc(minCalc).finish() ?? nb.get("min-content", child, axis)!;
+    const minNode = nb.create(`min-content:${axis}`, child, (n) => {
+      n.setMode(minMode)
+        .describe(minV === "auto" ? `Minimum ${axis} from content` : `${minPropName} constraint`)
+        .calc(minCalc);
+    });
 
     // --- Hypothetical: max(min, min(max, basis)) ---
     const hypothetical = Math.max(minMain, Math.min(maxMain, basis));
@@ -371,7 +366,6 @@ function collectFlexSiblings(
     if (maxMain === Infinity) {
       hypoCalc = cmax(ref(minNode), ref(basisNode));
     } else {
-      // For content-box, max-width/height is content-box — add padding+border
       let maxCalc: CalcExpr;
       if (isBorderBox) {
         maxCalc = prop(child, maxPropName);
@@ -381,15 +375,18 @@ function collectFlexSiblings(
           : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
         maxCalc = add(prop(child, maxPropName), ...pbNames.map(p => prop(child, p)));
       }
-      const maxNode = fns.begin("clamped", child, axis)
-        ?.describe(`${maxPropName} constraint`).calc(maxCalc).finish()
-        ?? nb.get("clamped", child, axis)!;
+      // The max node is a clamped sub-node
+      const maxNode = nb.create(`max-constraint:${axis}`, child, (n) => {
+        n.setMode("clamped")
+          .describe(`${maxPropName} constraint`).calc(maxCalc);
+      });
       hypoCalc = cmax(ref(minNode), cmin(ref(maxNode), ref(basisNode)));
     }
-    const hypoNode = fns.begin("flex-base-size", child, axis)
-      ?.describe("Hypothetical main size (basis clamped by min/max)")
-      .calc(hypoCalc).inputs({ basis: basisNode, minContent: minNode })
-      .finish() ?? nb.get("flex-base-size", child, axis)!;
+    const hypoNode = nb.create(`flex-base-size:${axis}`, child, (n) => {
+      n.setMode("flex-base-size")
+        .describe("Hypothetical main size (basis clamped by min/max)")
+        .calc(hypoCalc).inputs({ basis: basisNode, minContent: minNode });
+    });
 
     // --- Margin + outer hypothetical ---
     const [mStartName, mEndName] = axis === "width"
@@ -402,32 +399,34 @@ function collectFlexSiblings(
     const outerCalc = margin > 0
       ? add(ref(hypoNode), prop(child, mStartName), prop(child, mEndName))
       : ref(hypoNode);
-    const outerNode = fns.begin("flex-outer-hypo", child, axis)
-      ?.describe("Outer hypothetical size (including margins)")
-      .calc(outerCalc).input("hypothetical", hypoNode)
-      .finish() ?? nb.get("flex-outer-hypo", child, axis)!;
+    const outerNode = nb.create(`flex-outer-hypo:${axis}`, child, (n) => {
+      n.setMode("flex-outer-hypo")
+        .describe("Outer hypothetical size (including margins)")
+        .calc(outerCalc).input("hypothetical", hypoNode);
+    });
 
     // --- Grow factor node ---
     const growVal = parseFloat(cs.flexGrow) || 0;
     const growNode = growVal > 0
-      ? (fns.begin("flex-grow-factor", child, axis)
-          ?.describe("flex-grow factor").calc(prop(child, "flex-grow")).finish()
-          ?? nb.get("flex-grow-factor", child, axis)!)
+      ? nb.create(`flex-grow-factor:${axis}`, child, (n) => {
+          n.setMode("flex-grow-factor")
+            .describe("flex-grow factor").calc(prop(child, "flex-grow"));
+        })
       : null;
 
     // --- Scaled shrink factor: flex-shrink × inner-basis ---
-    // Inner basis = basis - padding+border (content-box basis per §9.7 step 3b)
     const shrinkVal = parseFloat(cs.flexShrink);
     const pbProps = axis === "width"
       ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
       : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
     const innerBasisCalc = cmax(constant(0, PX), sub(ref(basisNode), add(...pbProps.map(p => prop(child, p)))));
     const scaledShrinkNode = shrinkVal > 0
-      ? (fns.begin("flex-scaled-shrink", child, axis)
-          ?.describe("Scaled shrink factor (flex-shrink \u00d7 inner basis)")
-          .calc(mul(prop(child, "flex-shrink"), innerBasisCalc))
-          .input("basis", basisNode).finish()
-          ?? nb.get("flex-scaled-shrink", child, axis)!)
+      ? nb.create(`flex-shrink-factor:${axis}`, child, (n) => {
+          n.setMode("flex-scaled-shrink")
+            .describe("Scaled shrink factor (flex-shrink \u00d7 inner basis)")
+            .calc(mul(prop(child, "flex-shrink"), innerBasisCalc))
+            .input("basis", basisNode);
+        })
       : null;
 
     items.push({

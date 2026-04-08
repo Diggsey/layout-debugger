@@ -23,6 +23,7 @@ export interface RenderNode {
   element: Element;
   elementDesc: string;
   kind: string;
+  mode: string;
   axis: "width" | "height";
   result: number;
   /** Formatted unit suffix for the result (e.g. "px", "", "px²"). */
@@ -116,12 +117,16 @@ function renderAxis(root: LayoutNode, axis: "width" | "height"): AxisRender {
     const calculation = calcToSegments(node.calc, nodeIds);
     const expression = calculation.map((s) => s.text).join("");
 
+    // Extract axis from kind (e.g. "size:width" → "width")
+    const nodeAxis = node.kind.split(":")[1] as "width" | "height";
+
     return {
       id,
       element: node.element,
       elementDesc: describeElement(node.element),
       kind: node.kind,
-      axis: node.axis,
+      mode: node.mode,
+      axis: nodeAxis,
       result: node.result,
       resultUnit: formatUnits(node.calc.unit),
       description: node.description,
@@ -271,7 +276,7 @@ export function renderDagToConsole(dag: DagResult): void {
 function logNode(node: RenderNode): void {
   const deps = node.dependsOn.length > 0 ? ` ← ${node.dependsOn.join(", ")}` : "";
   console.groupCollapsed(
-    `%c[${node.id}]%c ${node.kind} %c${node.result}${node.resultUnit}%c ${node.elementDesc}%c${deps}`,
+    `%c[${node.id}]%c ${node.mode} %c${node.result}${node.resultUnit}%c ${node.elementDesc}%c${deps}`,
     "color: #9aa0a6",
     "color: #d2a8ff",
     "color: #7ee787; font-weight: bold",

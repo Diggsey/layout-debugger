@@ -6,7 +6,7 @@
  * - CSS Grid §7.2.1 Track Sizing Algorithm
  * - CSS Grid §8.3   Track Sizing Properties
  */
-import type { Axis, LayoutNode, SizeFns, NodeBuilder } from "../dag";
+import type { Axis, SizeFns, NodeBuilder } from "../dag";
 import type { LayoutContext } from "../types";
 import { getExplicitSize } from "../sizing";
 
@@ -16,9 +16,8 @@ import { getExplicitSize } from "../sizing";
 export function gridItem(
   fns: SizeFns, nb: NodeBuilder, axis: Axis,
   ctx: LayoutContext, depth: number,
-): LayoutNode {
+): void {
   const el = nb.element;
-  nb.setKind("grid-item");
 
   const containerExplicit = getExplicitSize(ctx.parent, axis);
   if (containerExplicit) {
@@ -28,8 +27,6 @@ export function gridItem(
   const trackProp = `grid-${axis === "width" ? "column" : "row"}`;
   nb.css(trackProp);
 
-  return nb
-    .describe(`Grid item \u2014 ${axis} determined by the grid track it occupies`)
-    .calc(fns.borderBoxCalc(el, axis))
-    .finish();
+  nb.describe(`Grid item \u2014 ${axis} determined by the grid track it occupies`)
+    .calc(fns.borderBoxCalc(el, axis));
 }

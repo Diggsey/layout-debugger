@@ -4,7 +4,8 @@ import type { DagInput, LayoutResult } from "../core/dag-layout";
 
 export interface CalcSegment { text: string; refId?: string; label?: string; }
 export interface RenderNode {
-  id: string; elementPath: string; elementDesc: string; kind: string;
+  id: string; elementPath: string; elementDesc: string;
+  kind: string; mode: string;
   axis: string; result: number; resultUnit: string; description: string;
   calculation: CalcSegment[];
   expression: string; cssProperties: Record<string, string>;
@@ -49,9 +50,9 @@ export function edgeId(fromId: string, toId: string): string {
   return `${fromId}>${toId}`;
 }
 
-/** Format a node kind as a human-readable label. */
-export function formatKind(kind: string): string {
-  return kind.replace(/-/g, " ");
+/** Format a node mode as a human-readable label. */
+export function formatMode(mode: string): string {
+  return mode.replace(/-/g, " ");
 }
 
 /** HTML-escape a string. */

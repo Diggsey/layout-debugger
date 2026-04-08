@@ -185,6 +185,7 @@ export function expectSize(
 /** Serialized DAG node. */
 export interface SerializedNode {
   kind: string;
+  mode: string;
   element: string;
   axis: string;
   result: number;
@@ -209,7 +210,7 @@ export async function analyzeDag(page: Page, testId: string): Promise<Serialized
 
     // Browser-side types for the DAG nodes (live DOM, no TS module types)
     interface BrowserNode {
-      kind: string; element: Element; axis: string; result: number;
+      kind: string; mode: string; element: Element; axis: string; result: number;
       inputs: Record<string, BrowserNode>; description: string;
       cssProperties: Record<string, string>;
     }
@@ -228,7 +229,7 @@ export async function analyzeDag(page: Page, testId: string): Promise<Serialized
 
     function serializeNode(node: BrowserNode, visited = new Set<BrowserNode>()): SerializedNode {
       if (!node) return null as unknown as SerializedNode;
-      if (visited.has(node)) return { kind: node.kind, element: describeEl(node.element), axis: node.axis, result: node.result, inputs: {}, description: "", cssProperties: {}, ref: true };
+      if (visited.has(node)) return { kind: node.kind, mode: node.mode, element: describeEl(node.element), axis: node.axis, result: node.result, inputs: {}, description: "", cssProperties: {}, ref: true };
       visited.add(node);
 
       const inputs: Record<string, SerializedNode> = {};
@@ -238,6 +239,7 @@ export async function analyzeDag(page: Page, testId: string): Promise<Serialized
 
       return {
         kind: node.kind,
+        mode: node.mode,
         element: describeEl(node.element),
         axis: node.axis,
         result: node.result,
@@ -259,6 +261,7 @@ export async function analyzeDag(page: Page, testId: string): Promise<Serialized
 export interface SerializedRenderNode {
   id: string;
   kind: string;
+  mode: string;
   element: string;
   result: number;
   dependsOn: string[];
@@ -274,7 +277,7 @@ export async function renderDagAxis(
     if (!el) throw new Error(`Element with data-testid="${tid}" not found`);
 
     interface BrowserRenderNode {
-      id: string; kind: string; element: Element; result: number;
+      id: string; kind: string; mode: string; element: Element; result: number;
       dependsOn: string[]; expression: string;
     }
     interface BrowserAxisRender { axis: string; result: number; nodes: BrowserRenderNode[] }
@@ -299,6 +302,7 @@ export async function renderDagAxis(
     return axisRender.nodes.map((n) => ({
       id: n.id,
       kind: n.kind,
+      mode: n.mode,
       element: describeEl(n.element),
       result: n.result,
       dependsOn: n.dependsOn,

@@ -1,5 +1,5 @@
 /**
- * Layout Computation DAG — v4
+ * Layout Computation DAG — v5
  *
  * Every meaningful value is a node. Each node's result is computed from
  * a CalcExpr tree — the same tree is used for both the actual computation
@@ -9,53 +9,46 @@
 import { type Units, UNITLESS, PX, unitsMul, unitsDiv, unitsAssertEqual, formatUnits } from "./units";
 
 // ---------------------------------------------------------------------------
-// Node kinds — exhaustive union
+// Node identity
 // ---------------------------------------------------------------------------
 
-export type NodeKind =
-  // Terminals
-  | "viewport"
-  | "explicit"
-  | "display-none"
-  | "display-contents"
-  | "terminal"
-  | "intrinsic"
-  // Block
-  | "content-area"
-  | "block-fill"
-  // Content-driven
-  | "content-sum"
-  | "content-max"
-  | "intrinsic-content"
-  // Flex
-  | "flex-basis"
-  | "min-content"
-  | "flex-base-size"
-  | "flex-free-space"
-  | "flex-grow-share"
-  | "flex-grow-factor"
-  | "flex-shrink-share"
-  | "flex-scaled-shrink"
-  | "flex-no-change"
-  | "flex-outer-hypo"
-  | "flex-item-main"
-  | "flex-cross-stretch"
-  | "flex-cross-content"
-  // Grid
-  | "grid-item"
-  // Positioned
-  | "positioned-offset"
-  | "positioned-shrink-to-fit"
-  // Percentage
-  | "percentage"
-  // Aspect ratio
-  | "aspect-ratio"
-  // Constraints
-  | "clamped"
-  // Table
-  | "table-cell";
+/** Base kind — what the node represents, independent of axis. */
+export type BaseKind =
+  | "size"             // top-level element size
+  | "content-area"     // container padding-box content area
+  | "content-sum"      // content-driven size (stacked children)
+  | "content-max"      // content-driven size (tallest/widest child)
+  | "intrinsic"        // intrinsic/content-based size
+  | "flex-basis"       // flex starting size
+  | "flex-base-size"   // hypothetical main size (clamped basis)
+  | "flex-free-space"  // remaining space in flex container
+  | "flex-share"       // grow or shrink share
+  | "flex-outer-hypo"  // outer hypothetical (+ margins)
+  | "flex-grow-factor"  // flex-grow factor
+  | "flex-shrink-factor" // scaled shrink factor
+  | "min-content"      // minimum content size
+  | "max-constraint"   // max-width/height constraint node
+  | "measured";        // browser-measured terminal node
 
 export type Axis = "width" | "height";
+
+/** Dedup key — one node per (NodeKind, Element). Axis is baked in. */
+export type NodeKind = `${BaseKind}:${Axis}`;
+
+/** Describes the calculation approach. Purely descriptive metadata. */
+export type NodeMode =
+  | "viewport" | "display-none" | "display-contents"
+  | "explicit" | "percentage" | "intrinsic-keyword" | "aspect-ratio"
+  | "block-fill" | "flex-item-main" | "flex-cross-stretch" | "flex-cross-content"
+  | "grid-item" | "positioned-offset" | "positioned-shrink-to-fit"
+  | "table-cell" | "content-sum" | "content-max" | "clamped"
+  | "terminal" | "intrinsic-content"
+  | "flex-basis" | "flex-grow-share" | "flex-shrink-share" | "flex-no-change"
+  | "min-content-auto" | "min-content-explicit"
+  | "flex-base-size" | "flex-free-space" | "flex-outer-hypo"
+  | "flex-grow-factor" | "flex-scaled-shrink"
+  | "content-area"
+  | "content-driven";
 
 // ---------------------------------------------------------------------------
 // CalcExpr — the computation tree
@@ -212,14 +205,13 @@ export function cmin(...args: CalcExpr[]): CalcExpr {
 
 export interface LayoutNode {
   kind: NodeKind;
+  mode: NodeMode;
   element: Element;
-  axis: Axis;
   result: number;
   description: string;
   calc: CalcExpr;
   inputs: Partial<Record<string, LayoutNode>>;
   cssProperties: Partial<Record<string, string>>;
-  /** Reason why each contextual CSS property was read (not part of the calculation). */
   cssReasons: Partial<Record<string, string>>;
 }
 
@@ -239,71 +231,7 @@ export interface SizeFns {
   contentSize(el: Element, axis: Axis, depth: number, intrinsic?: boolean): LayoutNode;
   containerContentArea(container: Element, axis: Axis, borderBoxNode: LayoutNode): LayoutNode;
   borderBoxCalc(el: Element, axis: Axis): CalcExpr;
-  measured(el: Element, axis: Axis, kind: NodeKind): LayoutNode;
-  get(kind: NodeKind, element: Element, axis: Axis): LayoutNode | undefined;
-  begin(kind: NodeKind, element: Element, axis: Axis): NodeBuilder | undefined;
-}
-
-// ---------------------------------------------------------------------------
-// Builder with deduplication + recursion guard
-// ---------------------------------------------------------------------------
-
-type NodeKey = `${number}:${NodeKind}:${Axis}`;
-
-export class DagBuilder {
-  private nodes = new Map<NodeKey, LayoutNode>();
-  private building = new Set<NodeKey>();
-  private elIds = new WeakMap<Element, number>();
-  private nextElId = 0;
-
-  get(kind: NodeKind, element: Element, axis: Axis): LayoutNode | undefined {
-    return this.nodes.get(this.key(kind, element, axis));
-  }
-
-  isBuilding(kind: NodeKind, element: Element, axis: Axis): boolean {
-    return this.building.has(this.key(kind, element, axis));
-  }
-
-  /** Create a NodeBuilder without registering a kind (set lazily via setKind). */
-  create(element: Element, axis: Axis): NodeBuilder {
-    return new NodeBuilder(this, element, axis);
-  }
-
-  /** Create a NodeBuilder with a known kind (registers for cycle detection). */
-  begin(kind: NodeKind, element: Element, axis: Axis): NodeBuilder {
-    const nb = this.create(element, axis);
-    nb.setKind(kind);
-    return nb;
-  }
-
-  /** Register a kind as building (cycle guard). */
-  markBuilding(kind: NodeKind, element: Element, axis: Axis): void {
-    this.building.add(this.key(kind, element, axis));
-  }
-
-  /** Register a completed node. Prefer NodeBuilder.finish() instead. */
-  finish(node: LayoutNode): LayoutNode {
-    // Auto-collect CSS properties from all prop() nodes in the CalcExpr.
-    // Manual cssProperties entries take precedence (spread order).
-    node.cssProperties = { ...collectProperties(node.calc), ...node.cssProperties };
-    const key = this.key(node.kind, node.element, node.axis);
-    this.building.delete(key);
-    this.nodes.set(key, node);
-    return node;
-  }
-
-  private elementId(element: Element): number {
-    let id = this.elIds.get(element);
-    if (id === undefined) {
-      id = this.nextElId++;
-      this.elIds.set(element, id);
-    }
-    return id;
-  }
-
-  private key(kind: NodeKind, element: Element, axis: Axis): NodeKey {
-    return `${this.elementId(element)}:${kind}:${axis}`;
-  }
+  create(kind: NodeKind, element: Element, cb: (nb: NodeBuilder) => void): LayoutNode;
 }
 
 // ---------------------------------------------------------------------------
@@ -374,7 +302,7 @@ export class ElementProxy {
     return new ElementProxy(this.element.parentElement!, this._records, "parent");
   }
 
-  /** Record a synthetic CSS property (e.g. "auto" when computed style differs). */
+  /** Record a synthetic CSS property value. */
   record(name: string, value: string): void {
     const key = this._prefix ? `${this._prefix}.${name}` : name;
     this._records.push([key, value]);
@@ -394,37 +322,111 @@ export class ElementProxy {
 }
 
 // ---------------------------------------------------------------------------
-// NodeBuilder — builds a LayoutNode with automatic CSS property tracking
+// DagBuilder — node cache with deduplication
 // ---------------------------------------------------------------------------
 
 function round(n: number): number { return Math.round(n * 100) / 100; }
 
+export class CycleError extends Error {
+  constructor(public kind: NodeKind, public element: Element) {
+    super(`Cycle detected for ${kind}`);
+  }
+}
+
+type NodeKey = `${number}:${NodeKind}`;
+
+export class DagBuilder {
+  private nodes = new Map<NodeKey, LayoutNode>();
+  private building = new Set<NodeKey>();
+  private elIds = new WeakMap<Element, number>();
+  private nextElId = 0;
+
+  /**
+   * The single node creation path. Returns cached node if it exists,
+   * otherwise calls cb to build it.
+   *
+   * cb receives a NodeBuilder to populate (describe, calc, inputs, etc.)
+   * and returns nothing. The node is finished automatically after cb returns.
+   */
+  create(kind: NodeKind, element: Element, cb: (nb: NodeBuilder) => void): LayoutNode {
+    const key = this.key(kind, element);
+    const cached = this.nodes.get(key);
+    if (cached) return cached;
+
+    if (this.building.has(key)) {
+      throw new CycleError(kind, element);
+    }
+    this.building.add(key);
+    const nb = new NodeBuilder(this, kind, element);
+    try {
+      cb(nb);
+      return nb._finish();
+    } catch (e) {
+      // Clean up building state if cb throws (e.g. CycleError from a sub-node)
+      this.building.delete(key);
+      throw e;
+    }
+  }
+
+  /** Check if a node is currently being built (cycle detection). */
+  isBuilding(kind: NodeKind, element: Element): boolean {
+    return this.building.has(this.key(kind, element));
+  }
+
+  /** Register a completed node (called by NodeBuilder._finish). */
+  _register(kind: NodeKind, node: LayoutNode): void {
+    node.cssProperties = { ...collectProperties(node.calc), ...node.cssProperties };
+    const key = this.key(node.kind, node.element);
+    this.building.delete(key);
+    this.nodes.set(key, node);
+  }
+
+  private elementId(element: Element): number {
+    let id = this.elIds.get(element);
+    if (id === undefined) {
+      id = this.nextElId++;
+      this.elIds.set(element, id);
+    }
+    return id;
+  }
+
+  private key(kind: NodeKind, element: Element): NodeKey {
+    return `${this.elementId(element)}:${kind}`;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// NodeBuilder — fluent builder populated inside DagBuilder.create() callbacks
+// ---------------------------------------------------------------------------
+
 /**
  * Fluent builder for a LayoutNode. CSS reads delegate to the internal
  * ElementProxy for automatic tracking with generated reasons.
- * Kind can be set lazily via setKind() after construction.
+ *
+ * Created by DagBuilder.create() — populated inside the callback,
+ * then finished automatically.
  */
 export class NodeBuilder {
   readonly element: Element;
-  readonly axis: Axis;
   readonly proxy: ElementProxy;
-  private _kind: NodeKind | null = null;
+  private _kind: NodeKind;
+  private _mode: NodeMode = "terminal";
   private _builder: DagBuilder;
   private _inputs: LayoutNode["inputs"] = {};
   private _description = "";
   private _calc: CalcExpr | null = null;
+  private _resultOverride: number | null = null;
 
-  constructor(builder: DagBuilder, element: Element, axis: Axis) {
+  constructor(builder: DagBuilder, kind: NodeKind, element: Element, proxy?: ElementProxy) {
     this._builder = builder;
+    this._kind = kind;
     this.element = element;
-    this.axis = axis;
-    this.proxy = new ElementProxy(element);
+    this.proxy = proxy ?? new ElementProxy(element);
   }
 
-  /** Set the node kind (registers with DagBuilder for cycle detection). */
-  setKind(kind: NodeKind): this {
-    this._kind = kind;
-    this._builder.markBuilding(kind, this.element, this.axis);
+  /** Set the mode (calculation approach). */
+  setMode(mode: NodeMode): this {
+    this._mode = mode;
     return this;
   }
 
@@ -443,36 +445,21 @@ export class NodeBuilder {
     return prop(this.element, name);
   }
 
-  /** Record a CSS property with a synthetic value (e.g. "auto" when computed style differs). */
-  setCss(name: string, value: string): this {
-    this.proxy.record(name, value);
-    return this;
-  }
-
   /** Set the human-readable description. */
   describe(description: string): this {
     this._description = description;
     return this;
   }
 
-  /** Look up a cached node. */
-  get(kind: NodeKind, element: Element, axis: Axis): LayoutNode | undefined {
-    return this._builder.get(kind, element, axis);
-  }
-
-  /** Check if a node is currently being built (cycle detection). */
-  isBuilding(kind: NodeKind, element: Element, axis: Axis): boolean {
-    return this._builder.isBuilding(kind, element, axis);
-  }
-
-  /** Create a sub-node builder with a known kind. */
-  begin(kind: NodeKind, element: Element, axis: Axis): NodeBuilder {
-    return this._builder.begin(kind, element, axis);
-  }
-
   /** Set the CalcExpr for the node. */
   calc(calc: CalcExpr): this {
     this._calc = calc;
+    return this;
+  }
+
+  /** Override the computed result (when calc doesn't exactly match the measured value). */
+  overrideResult(result: number): this {
+    this._resultOverride = result;
     return this;
   }
 
@@ -488,27 +475,80 @@ export class NodeBuilder {
     return this;
   }
 
-  private _build(result: number): LayoutNode {
-    if (!this._kind) throw new Error("NodeBuilder: kind must be set before finish()");
-    if (!this._calc) throw new Error("NodeBuilder: calc must be set before finish()");
+  /** Create a sub-node (delegates to DagBuilder). */
+  create(kind: NodeKind, element: Element, cb: (nb: NodeBuilder) => void): LayoutNode {
+    return this._builder.create(kind, element, cb);
+  }
+
+  /** Check if a node is currently being built (cycle detection). */
+  isBuilding(kind: NodeKind, element: Element): boolean {
+    return this._builder.isBuilding(kind, element);
+  }
+
+  /** Apply min/max constraints as a post-processing step. */
+  maybeClamp(axis: Axis): void {
+    if (!this._calc) return;
+    const el = this.element;
+    const s = getComputedStyle(el);
+    const minPropName = axis === "width" ? "min-width" : "min-height";
+    const maxPropName = axis === "width" ? "max-width" : "max-height";
+    const minVal = s.getPropertyValue(minPropName);
+    const maxVal = s.getPropertyValue(maxPropName);
+
+    const padBorder = s.boxSizing !== "border-box"
+      ? (axis === "width"
+        ? px(s.paddingLeft) + px(s.paddingRight) + px(s.borderLeftWidth) + px(s.borderRightWidth)
+        : px(s.paddingTop) + px(s.paddingBottom) + px(s.borderTopWidth) + px(s.borderBottomWidth))
+      : 0;
+
+    const result = this._resultOverride ?? round(evaluate(this._calc));
+    const minPx = minVal === "auto" || minVal === "0px" ? 0 : px(minVal) + padBorder;
+    const maxPx = maxVal === "none" ? Infinity : px(maxVal) + padBorder;
+
+    if (result >= minPx && (maxPx === Infinity || result <= maxPx)) return;
+
+    // Wrap calc with clamp
+    if (maxPx !== Infinity && result > maxPx) {
+      this._calc = cmin(constraintCalc(el, axis, maxPropName), this._calc);
+      this._mode = "clamped";
+    } else {
+      this._calc = cmax(constraintCalc(el, axis, minPropName), this._calc);
+      this._mode = "clamped";
+    }
+  }
+
+  /** Finish building the node and register it. Called by DagBuilder.create(). */
+  _finish(): LayoutNode {
+    if (!this._calc) throw new Error("NodeBuilder: calc must be set before finish");
     const cssProperties: Record<string, string> = {};
     const cssReasons: Record<string, string> = {};
     this.proxy.drainInto(cssProperties, cssReasons);
-    return this._builder.finish({
-      kind: this._kind, element: this.element, axis: this.axis,
+    const result = this._resultOverride ?? round(evaluate(this._calc));
+    const node: LayoutNode = {
+      kind: this._kind, mode: this._mode, element: this.element,
       result,
       description: this._description, calc: this._calc,
       inputs: this._inputs, cssProperties, cssReasons,
-    });
+    };
+    this._builder._register(this._kind, node);
+    return node;
   }
+}
 
-  /** Build the LayoutNode. Result is computed from the CalcExpr. */
-  finish(): LayoutNode {
-    return this._build(round(evaluate(this._calc!)));
-  }
+// ---------------------------------------------------------------------------
+// Helpers for maybeClamp
+// ---------------------------------------------------------------------------
 
-  /** Build the LayoutNode with an explicit result (when calc doesn't exactly match the measured value). */
-  finishWithResult(result: number): LayoutNode {
-    return this._build(result);
+function px(v: string): number { return parseFloat(v) || 0; }
+
+function constraintCalc(el: Element, axis: Axis, constraintProp: string): CalcExpr {
+  const s = getComputedStyle(el);
+  const base = prop(el, constraintProp);
+  if (s.boxSizing === "border-box") return base;
+  if (axis === "width") {
+    return add(base, prop(el, "padding-left"), prop(el, "padding-right"),
+      prop(el, "border-left-width"), prop(el, "border-right-width"));
   }
+  return add(base, prop(el, "padding-top"), prop(el, "padding-bottom"),
+    prop(el, "border-top-width"), prop(el, "border-bottom-width"));
 }

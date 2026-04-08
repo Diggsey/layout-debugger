@@ -15,6 +15,7 @@ function serializeNode(node: RenderNode) {
     elementPath: getElementPath(node.element),
     elementDesc: node.elementDesc,
     kind: node.kind,
+    mode: node.mode,
     axis: node.axis,
     result: node.result,
     resultUnit: node.resultUnit,
