@@ -122,9 +122,16 @@ body {
   cursor: pointer;
 }
 .graph-row.collapsed .collapse-badge { display: inline-block; }
-.detail-props { display: grid; grid-template-columns: auto 1fr; gap: 1px 12px; font-size: 10px; }
-.pk { color: #8b949e; transition: color 0.15s; }
-.pv { color: #7ee787; transition: color 0.15s; }
+.detail-props {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 2px 12px; font-size: 10px;
+}
+.detail-prop {
+  display: flex; gap: 4px; min-width: 0; overflow: hidden;
+}
+.pk { color: #8b949e; transition: color 0.15s; white-space: nowrap; flex-shrink: 0; }
+.pv { color: #7ee787; transition: color 0.15s; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pk-hl { color: #d2a8ff; }
 .pv-hl { color: #f0883e; }
 .pr { display: block; font-size: 9px; color: #6e7681; font-weight: normal; }

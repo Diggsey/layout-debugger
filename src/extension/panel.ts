@@ -438,18 +438,13 @@ function buildDetail(
     const grid = document.createElement("div");
     grid.className = "detail-props";
     for (const [k, v] of props) {
-      const ke = document.createElement("span"); ke.className = "pk"; ke.textContent = k;
+      const cell = document.createElement("div"); cell.className = "detail-prop";
+      const ke = document.createElement("span"); ke.className = "pk"; ke.textContent = k + ":";
       ke.dataset.prop = k;
       const ve = document.createElement("span"); ve.className = "pv";
       ve.textContent = v;
-      const reason = node.cssReasons[k];
-      if (reason) {
-        const re = document.createElement("span");
-        re.className = "pr";
-        re.textContent = reason;
-        ve.appendChild(re);
-      }
-      grid.appendChild(ke); grid.appendChild(ve);
+      cell.appendChild(ke); cell.appendChild(ve);
+      grid.appendChild(cell);
     }
     content.appendChild(grid);
   }
