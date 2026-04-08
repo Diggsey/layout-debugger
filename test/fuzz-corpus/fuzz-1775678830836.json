@@ -1,0 +1,120 @@
+{
+  "seed": 1775678830836,
+  "spec": {
+    "style": {
+      "overflow": "hidden",
+      "padding": "15px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "102px",
+          "height": "90px",
+          "box-sizing": "border-box",
+          "margin": "4px",
+          "display": "contents",
+          "min-width": "13px",
+          "margin-right": "2px",
+          "margin-bottom": "7px",
+          "float": "left"
+        }
+      },
+      {
+        "style": {
+          "width": "47px",
+          "height": "91px",
+          "padding": "3px",
+          "box-sizing": "border-box",
+          "margin": "2px",
+          "display": "contents",
+          "min-height": "97px"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h1",
+      "kind": "size:height",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "axis": "height",
+      "dagResult": 97,
+      "actual": 0,
+      "delta": 97
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "size:width",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 0,
+        "inputs": {},
+        "description": "Element has no box (display: contents)",
+        "calc": {
+          "op": "constant",
+          "value": 0,
+          "unit": "px"
+        },
+        "expr": "0px",
+        "cssProperties": {
+          "display": "contents",
+          "min-width": "0px",
+          "max-width": "none",
+          "box-sizing": "border-box"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "size:height",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 97,
+        "inputs": {},
+        "description": "Element has no box (display: contents)",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "property",
+              "name": "min-height",
+              "value": 97,
+              "unit": "px"
+            },
+            {
+              "op": "constant",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "max(97px (min-height), 0px)",
+        "cssProperties": {
+          "display": "contents",
+          "min-height": "97px",
+          "max-height": "none",
+          "box-sizing": "border-box"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>",
+      "width": 0,
+      "height": 0
+    }
+  }
+}

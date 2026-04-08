@@ -1,0 +1,147 @@
+{
+  "seed": 1775678821804,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "455px",
+      "overflow": "hidden",
+      "border": "1px solid black"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "82px",
+          "height": "61px",
+          "padding-bottom": "11px",
+          "border": "3px solid black",
+          "box-sizing": "border-box",
+          "display": "contents",
+          "flex-grow": "3",
+          "flex-shrink": "0",
+          "flex-basis": "auto",
+          "min-height": "40px",
+          "min-width": "37px",
+          "max-width": "379px"
+        },
+        "target": true
+      },
+      {
+        "style": {
+          "width": "120px",
+          "height": "73px",
+          "margin-top": "14px",
+          "margin-right": "11px",
+          "flex-shrink": "0",
+          "flex-basis": "28px",
+          "min-height": "72px",
+          "max-height": "165px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "size:width",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "width",
+      "dagResult": 37,
+      "actual": 0,
+      "delta": 37
+    },
+    {
+      "nodeId": "h1",
+      "kind": "size:height",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 40,
+      "actual": 0,
+      "delta": 40
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "size:width",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 37,
+        "inputs": {},
+        "description": "Element has no box (display: contents)",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "property",
+              "name": "min-width",
+              "value": 37,
+              "unit": "px"
+            },
+            {
+              "op": "constant",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "max(37px (min-width), 0px)",
+        "cssProperties": {
+          "display": "contents",
+          "min-width": "37px",
+          "max-width": "379px",
+          "box-sizing": "border-box"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "size:height",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 40,
+        "inputs": {},
+        "description": "Element has no box (display: contents)",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "property",
+              "name": "min-height",
+              "value": 40,
+              "unit": "px"
+            },
+            {
+              "op": "constant",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "max(40px (min-height), 0px)",
+        "cssProperties": {
+          "display": "contents",
+          "min-height": "40px",
+          "max-height": "none",
+          "box-sizing": "border-box"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 0,
+      "height": 0
+    }
+  }
+}

@@ -1,0 +1,208 @@
+{
+  "seed": 1775678830847,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "582px",
+      "overflow": "hidden",
+      "box-sizing": "border-box"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "flex",
+          "flex-direction": "row",
+          "width": "377px",
+          "overflow": "hidden",
+          "gap": "10px",
+          "writing-mode": "vertical-lr",
+          "align-items": "flex-start",
+          "flex-grow": "1",
+          "flex-basis": "59px",
+          "max-height": "304px",
+          "margin": "0px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "33px",
+              "height": "57px",
+              "padding-top": "15px",
+              "padding-right": "6px",
+              "padding-bottom": "11px",
+              "margin": "7px",
+              "max-width": "276px",
+              "max-height": "413px",
+              "flex-grow": "1",
+              "flex-shrink": "1",
+              "flex-basis": "81px"
+            }
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "93px",
+          "height": "81px",
+          "border": "2px solid black",
+          "box-sizing": "border-box",
+          "margin": "8px",
+          "max-width": "352px",
+          "flex-grow": "3",
+          "flex-shrink": "2",
+          "flex-basis": "auto",
+          "min-height": "18px"
+        }
+      },
+      {
+        "style": {
+          "display": "flex",
+          "flex-direction": "row",
+          "flex-wrap": "wrap",
+          "width": "263px",
+          "height": "499px",
+          "overflow": "hidden",
+          "flex-basis": "164px",
+          "min-width": "57px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "40px",
+              "height": "62px",
+              "padding-right": "2px",
+              "padding-left": "6px",
+              "display": "none",
+              "min-height": "83px",
+              "flex-basis": "148px",
+              "flex-grow": "1"
+            },
+            "target": true
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h1",
+      "kind": "size:height",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 83,
+      "actual": 0,
+      "delta": 83
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "size:width",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 0,
+        "inputs": {},
+        "description": "Element is hidden (display: none)",
+        "calc": {
+          "op": "constant",
+          "value": 0,
+          "unit": "px"
+        },
+        "expr": "0px",
+        "cssProperties": {
+          "display": "none",
+          "min-width": "0px",
+          "max-width": "none",
+          "box-sizing": "content-box",
+          "padding-left": "6px",
+          "padding-right": "2px",
+          "border-left-width": "0px",
+          "border-right-width": "0px"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "size:height",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 83,
+        "inputs": {},
+        "description": "Element is hidden (display: none)",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "add",
+              "args": [
+                {
+                  "op": "property",
+                  "name": "min-height",
+                  "value": 83,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "padding-top",
+                  "value": 0,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "padding-bottom",
+                  "value": 0,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "border-top-width",
+                  "value": 0,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "border-bottom-width",
+                  "value": 0,
+                  "unit": "px"
+                }
+              ]
+            },
+            {
+              "op": "constant",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "max(83px (min-height) + 0px (padding-top) + 0px (padding-bottom) + 0px (border-top-width) + 0px (border-bottom-width), 0px)",
+        "cssProperties": {
+          "display": "none",
+          "min-height": "83px",
+          "max-height": "none",
+          "box-sizing": "content-box",
+          "padding-top": "0px",
+          "padding-bottom": "0px",
+          "border-top-width": "0px",
+          "border-bottom-width": "0px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 0,
+      "height": 0
+    }
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "seed": 1775678830950,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "609px",
+      "overflow": "hidden",
+      "align-items": "stretch",
+      "width": "299px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "82px",
+          "height": "74px",
+          "border": "3px solid black",
+          "margin-right": "15px",
+          "margin-left": "9px",
+          "display": "contents",
+          "max-width": "130px",
+          "max-height": "384px",
+          "flex-grow": "0",
+          "min-width": "17px"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "size:width",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "width",
+      "dagResult": 23,
+      "actual": 0,
+      "delta": 23
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "size:width",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 23,
+        "inputs": {},
+        "description": "Element has no box (display: contents)",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "add",
+              "args": [
+                {
+                  "op": "property",
+                  "name": "min-width",
+                  "value": 17,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "padding-left",
+                  "value": 0,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "padding-right",
+                  "value": 0,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "border-left-width",
+                  "value": 3,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "border-right-width",
+                  "value": 3,
+                  "unit": "px"
+                }
+              ]
+            },
+            {
+              "op": "constant",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "max(17px (min-width) + 0px (padding-left) + 0px (padding-right) + 3px (border-left-width) + 3px (border-right-width), 0px)",
+        "cssProperties": {
+          "display": "contents",
+          "min-width": "17px",
+          "max-width": "130px",
+          "box-sizing": "content-box",
+          "padding-left": "0px",
+          "padding-right": "0px",
+          "border-left-width": "3px",
+          "border-right-width": "3px"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "size:height",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 0,
+        "inputs": {},
+        "description": "Element has no box (display: contents)",
+        "calc": {
+          "op": "constant",
+          "value": 0,
+          "unit": "px"
+        },
+        "expr": "0px",
+        "cssProperties": {
+          "display": "contents",
+          "min-height": "0px",
+          "max-height": "384px",
+          "box-sizing": "content-box",
+          "padding-top": "0px",
+          "padding-bottom": "0px",
+          "border-top-width": "3px",
+          "border-bottom-width": "3px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 0,
+      "height": 0
+    }
+  }
+}

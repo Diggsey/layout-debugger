@@ -1,0 +1,108 @@
+{
+  "seed": 1775678821829,
+  "spec": {
+    "style": {
+      "overflow": "hidden",
+      "box-sizing": "border-box",
+      "height": "513px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "101px",
+          "height": "25px",
+          "padding": "10px",
+          "box-sizing": "border-box",
+          "display": "none",
+          "min-width": "33px",
+          "max-height": "404px"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "size:width",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "width",
+      "dagResult": 33,
+      "actual": 0,
+      "delta": 33
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "size:width",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 33,
+        "inputs": {},
+        "description": "Element is hidden (display: none)",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "property",
+              "name": "min-width",
+              "value": 33,
+              "unit": "px"
+            },
+            {
+              "op": "constant",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "max(33px (min-width), 0px)",
+        "cssProperties": {
+          "display": "none",
+          "min-width": "33px",
+          "max-width": "none",
+          "box-sizing": "border-box"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "size:height",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 0,
+        "inputs": {},
+        "description": "Element is hidden (display: none)",
+        "calc": {
+          "op": "constant",
+          "value": 0,
+          "unit": "px"
+        },
+        "expr": "0px",
+        "cssProperties": {
+          "display": "none",
+          "min-height": "0px",
+          "max-height": "404px",
+          "box-sizing": "border-box"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 0,
+      "height": 0
+    }
+  }
+}

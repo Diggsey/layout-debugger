@@ -67,7 +67,8 @@ type Scenario =
   | "percentage"
   | "inline-block"
   | "aspect-ratio"
-  | "flex-wrap";
+  | "flex-wrap"
+  | "bare-css";
 
 const SCENARIO_WEIGHTS: [Scenario, number][] = [
   ["flex-row", 20],
@@ -80,18 +81,24 @@ const SCENARIO_WEIGHTS: [Scenario, number][] = [
   ["percentage", 5],
   ["inline-block", 5],
   ["aspect-ratio", 8],
+  ["bare-css", 10],
 ];
 
 // ---------------------------------------------------------------------------
 // Value generators
 // ---------------------------------------------------------------------------
 
+/** Random pixel value, sometimes "0" instead of "0px". */
 function randomPx(rng: Rng, min = 20, max = 400): string {
-  return `${rng.int(min, max)}px`;
+  const v = rng.int(min, max);
+  if (v === 0 && rng.chance(0.5)) return "0";
+  return `${v}px`;
 }
 
 function randomSmallPx(rng: Rng, min = 0, max = 20): string {
-  return `${rng.int(min, max)}px`;
+  const v = rng.int(min, max);
+  if (v === 0 && rng.chance(0.5)) return "0";
+  return `${v}px`;
 }
 
 function maybeBoxSizing(rng: Rng): Record<string, string> {
@@ -101,7 +108,6 @@ function maybeBoxSizing(rng: Rng): Record<string, string> {
 function maybePadding(rng: Rng): Record<string, string> {
   if (!rng.chance(0.4)) return {};
   if (rng.chance(0.3)) {
-    // Individual sides
     const props: Record<string, string> = {};
     for (const side of ["padding-top", "padding-right", "padding-bottom", "padding-left"]) {
       if (rng.chance(0.5)) props[side] = randomSmallPx(rng, 2, 15);
@@ -114,7 +120,6 @@ function maybePadding(rng: Rng): Record<string, string> {
 function maybeBorder(rng: Rng): Record<string, string> {
   if (!rng.chance(0.3)) return {};
   if (rng.chance(0.2)) {
-    // Individual sides
     const props: Record<string, string> = {};
     for (const side of ["border-top", "border-right", "border-bottom", "border-left"]) {
       if (rng.chance(0.5)) props[side] = `${rng.int(1, 4)}px solid black`;
@@ -127,7 +132,6 @@ function maybeBorder(rng: Rng): Record<string, string> {
 function maybeMargin(rng: Rng): Record<string, string> {
   if (!rng.chance(0.3)) return {};
   if (rng.chance(0.3)) {
-    // Individual sides
     const props: Record<string, string> = {};
     for (const side of ["margin-top", "margin-right", "margin-bottom", "margin-left"]) {
       if (rng.chance(0.5)) props[side] = randomSmallPx(rng, 0, 15);
@@ -144,9 +148,101 @@ function maybeMinMax(rng: Rng, axis: "width" | "height"): Record<string, string>
   return props;
 }
 
+function maybeMinMaxBoth(rng: Rng): Record<string, string> {
+  return { ...maybeMinMax(rng, "width"), ...maybeMinMax(rng, "height") };
+}
+
 function maybeOverflow(rng: Rng): Record<string, string> {
   if (!rng.chance(0.3)) return { overflow: "hidden" };
+  if (rng.chance(0.2)) {
+    // Per-axis overflow
+    const props: Record<string, string> = {};
+    props["overflow-x"] = rng.pick(["hidden", "visible", "auto", "scroll"]);
+    props["overflow-y"] = rng.pick(["hidden", "visible", "auto", "scroll"]);
+    return props;
+  }
   return { overflow: rng.pick(["hidden", "visible", "auto", "scroll"]) };
+}
+
+function maybeWritingMode(rng: Rng): Record<string, string> {
+  if (!rng.chance(0.05)) return {};
+  return { "writing-mode": rng.pick(["horizontal-tb", "vertical-rl", "vertical-lr"]) };
+}
+
+function maybeFloat(rng: Rng): Record<string, string> {
+  if (!rng.chance(0.1)) return {};
+  return { float: rng.pick(["left", "right"]) };
+}
+
+function maybeGap(rng: Rng): Record<string, string> {
+  if (!rng.chance(0.3)) return {};
+  if (rng.chance(0.3)) {
+    // Individual gaps
+    const props: Record<string, string> = {};
+    if (rng.chance(0.5)) props["column-gap"] = randomSmallPx(rng, 2, 20);
+    if (rng.chance(0.5)) props["row-gap"] = randomSmallPx(rng, 2, 20);
+    return props;
+  }
+  return { gap: randomSmallPx(rng, 2, 20) };
+}
+
+// ---------------------------------------------------------------------------
+// Random CSS property bag — for the "bare-css" scenario
+// ---------------------------------------------------------------------------
+
+function randomCssProps(rng: Rng): Record<string, string> {
+  const style: Record<string, string> = {};
+
+  // Size
+  if (rng.chance(0.6)) style.width = rng.chance(0.15) ? `${rng.int(20, 100)}%` : randomPx(rng, 20, 400);
+  if (rng.chance(0.6)) style.height = rng.chance(0.15) ? `${rng.int(20, 100)}%` : randomPx(rng, 20, 400);
+
+  // Box model
+  Object.assign(style, maybePadding(rng), maybeBorder(rng), maybeMargin(rng), maybeBoxSizing(rng));
+
+  // Min/max
+  Object.assign(style, maybeMinMaxBoth(rng));
+
+  // Display
+  if (rng.chance(0.3)) {
+    style.display = rng.weighted([
+      ["block", 5], ["flex", 3], ["inline-block", 3], ["inline-flex", 1],
+      ["grid", 2], ["none", 1], ["contents", 1],
+    ]);
+  }
+
+  // Flex props (even if not a flex item — should be ignored)
+  if (rng.chance(0.2)) style["flex-grow"] = String(rng.int(0, 3));
+  if (rng.chance(0.2)) style["flex-shrink"] = String(rng.int(0, 3));
+  if (rng.chance(0.2)) style["flex-basis"] = rng.pick(["auto", "0", randomPx(rng, 0, 200)]);
+
+  // Positioning
+  if (rng.chance(0.1)) {
+    style.position = rng.pick(["relative", "absolute"]);
+    if (style.position === "absolute") {
+      if (rng.chance(0.5)) style.left = randomSmallPx(rng, 0, 30);
+      if (rng.chance(0.5)) style.right = randomSmallPx(rng, 0, 30);
+      if (rng.chance(0.5)) style.top = randomSmallPx(rng, 0, 30);
+      if (rng.chance(0.5)) style.bottom = randomSmallPx(rng, 0, 30);
+    }
+  }
+
+  // Overflow
+  Object.assign(style, maybeOverflow(rng));
+
+  // Writing mode / float
+  Object.assign(style, maybeWritingMode(rng), maybeFloat(rng));
+
+  // Aspect ratio
+  if (rng.chance(0.1)) {
+    style["aspect-ratio"] = `${rng.int(1, 4)} / ${rng.int(1, 4)}`;
+  }
+
+  // Align
+  if (rng.chance(0.1)) style["align-self"] = rng.pick(["auto", "stretch", "flex-start", "flex-end", "center"]);
+  if (rng.chance(0.1)) style["align-items"] = rng.pick(["stretch", "flex-start", "flex-end", "center", "baseline"]);
+
+  return style;
 }
 
 // ---------------------------------------------------------------------------
@@ -170,6 +266,14 @@ function makeLeaf(rng: Rng): LayoutSpec {
     style.display = "contents";
   }
 
+  // Occasionally add min/max constraints
+  Object.assign(style, maybeMinMaxBoth(rng));
+
+  // Occasionally use "0" instead of "0px"
+  for (const [k, v] of Object.entries(style)) {
+    if (v === "0px" && rng.chance(0.3)) style[k] = "0";
+  }
+
   return { style };
 }
 
@@ -186,10 +290,12 @@ function buildFlexRow(rng: Rng, children: LayoutSpec[]): LayoutSpec {
     ...maybePadding(rng),
     ...maybeBorder(rng),
     ...maybeBoxSizing(rng),
+    ...maybeGap(rng),
+    ...maybeWritingMode(rng),
   };
-  if (rng.chance(0.3)) style.gap = randomSmallPx(rng, 2, 20);
   if (rng.chance(0.2)) style["align-items"] = rng.pick(["stretch", "flex-start", "flex-end", "center", "baseline"]);
   if (rng.chance(0.2)) style["justify-content"] = rng.pick(["flex-start", "flex-end", "center", "space-between", "space-around"]);
+  if (rng.chance(0.3)) style.height = randomPx(rng, 100, 500);
 
   for (const child of children) {
     if (!child.style) child.style = {};
@@ -197,7 +303,7 @@ function buildFlexRow(rng: Rng, children: LayoutSpec[]): LayoutSpec {
     if (rng.chance(0.3)) child.style["flex-shrink"] = String(rng.int(0, 3));
     if (rng.chance(0.4)) child.style["flex-basis"] = rng.pick(["auto", "0", randomPx(rng, 0, 200)]);
     if (rng.chance(0.15)) child.style["align-self"] = rng.pick(["auto", "stretch", "flex-start", "flex-end", "center"]);
-    Object.assign(child.style, maybeMinMax(rng, "width"), maybeMargin(rng));
+    Object.assign(child.style, maybeMinMax(rng, "width"), maybeMinMax(rng, "height"), maybeMargin(rng));
   }
 
   return { style, children };
@@ -212,9 +318,10 @@ function buildFlexCol(rng: Rng, children: LayoutSpec[]): LayoutSpec {
     ...maybePadding(rng),
     ...maybeBorder(rng),
     ...maybeBoxSizing(rng),
+    ...maybeGap(rng),
   };
-  if (rng.chance(0.3)) style.gap = randomSmallPx(rng, 2, 20);
   if (rng.chance(0.2)) style["align-items"] = rng.pick(["stretch", "flex-start", "flex-end", "center"]);
+  if (rng.chance(0.3)) style.width = randomPx(rng, 100, 500);
 
   for (const child of children) {
     if (!child.style) child.style = {};
@@ -222,7 +329,7 @@ function buildFlexCol(rng: Rng, children: LayoutSpec[]): LayoutSpec {
     if (rng.chance(0.3)) child.style["flex-shrink"] = String(rng.int(0, 3));
     if (rng.chance(0.4)) child.style["flex-basis"] = rng.pick(["auto", "0", randomPx(rng, 0, 200)]);
     if (rng.chance(0.15)) child.style["align-self"] = rng.pick(["auto", "stretch", "flex-start", "flex-end", "center"]);
-    Object.assign(child.style, maybeMinMax(rng, "height"), maybeMargin(rng));
+    Object.assign(child.style, maybeMinMax(rng, "height"), maybeMinMax(rng, "width"), maybeMargin(rng));
   }
 
   return { style, children };
@@ -238,8 +345,8 @@ function buildFlexWrap(rng: Rng, children: LayoutSpec[]): LayoutSpec {
     ...maybeOverflow(rng),
     ...maybePadding(rng),
     ...maybeBoxSizing(rng),
+    ...maybeGap(rng),
   };
-  if (rng.chance(0.3)) style.gap = randomSmallPx(rng, 2, 10);
   if (rng.chance(0.3)) style["align-content"] = rng.pick(["stretch", "flex-start", "flex-end", "center", "space-between"]);
 
   for (const child of children) {
@@ -263,8 +370,8 @@ function buildGrid(rng: Rng, children: LayoutSpec[]): LayoutSpec {
     ...maybePadding(rng),
     ...maybeBorder(rng),
     ...maybeBoxSizing(rng),
+    ...maybeGap(rng),
   };
-  if (rng.chance(0.3)) style.gap = randomSmallPx(rng, 2, 20);
   if (rng.chance(0.3)) style["grid-auto-rows"] = rng.pick(["auto", "min-content", randomPx(rng, 30, 150)]);
 
   return { style, children };
@@ -276,14 +383,15 @@ function buildBlockExplicit(rng: Rng, children: LayoutSpec[]): LayoutSpec {
     ...maybePadding(rng),
     ...maybeBorder(rng),
     ...maybeBoxSizing(rng),
+    ...maybeWritingMode(rng),
   };
   if (rng.chance(0.7)) style.width = randomPx(rng, 100, 600);
   if (rng.chance(0.5)) style.height = randomPx(rng, 100, 600);
+  Object.assign(style, maybeMinMaxBoth(rng));
 
-  // Some children get margins
   for (const child of children) {
     if (!child.style) child.style = {};
-    Object.assign(child.style, maybeMargin(rng));
+    Object.assign(child.style, maybeMargin(rng), maybeFloat(rng));
   }
 
   return { style, children };
@@ -294,11 +402,12 @@ function buildBlockAuto(rng: Rng, children: LayoutSpec[]): LayoutSpec {
     ...maybeOverflow(rng),
     ...maybePadding(rng),
     ...maybeBorder(rng),
+    ...maybeWritingMode(rng),
   };
 
   for (const child of children) {
     if (!child.style) child.style = {};
-    Object.assign(child.style, maybeMargin(rng));
+    Object.assign(child.style, maybeMargin(rng), maybeFloat(rng));
   }
 
   return { style, children };
@@ -319,21 +428,18 @@ function buildPositioned(rng: Rng, children: LayoutSpec[]): LayoutSpec {
   if (children.length > 0) {
     const absChild = children[rng.int(0, children.length - 1)];
     if (!absChild.style) absChild.style = {};
-    absChild.style.position = "absolute";
+    absChild.style.position = rng.chance(0.9) ? "absolute" : "fixed";
 
     if (rng.chance(0.5)) {
-      // Both horizontal offsets → width from offsets
       absChild.style.left = randomSmallPx(rng, 0, 30);
       absChild.style.right = randomSmallPx(rng, 0, 30);
       delete absChild.style.width;
     } else {
-      // Both vertical offsets → height from offsets
       absChild.style.top = randomSmallPx(rng, 0, 30);
       absChild.style.bottom = randomSmallPx(rng, 0, 30);
       delete absChild.style.height;
     }
-    // Sometimes add margins to positioned child
-    Object.assign(absChild.style, maybeMargin(rng));
+    Object.assign(absChild.style, maybeMargin(rng), maybeMinMaxBoth(rng));
   }
 
   return { style, children };
@@ -352,7 +458,7 @@ function buildPercentage(rng: Rng, children: LayoutSpec[]): LayoutSpec {
     if (!child.style) child.style = {};
     if (rng.chance(0.7)) child.style.width = `${rng.int(20, 100)}%`;
     if (rng.chance(0.5)) child.style.height = `${rng.int(20, 100)}%`;
-    Object.assign(child.style, maybeMargin(rng));
+    Object.assign(child.style, maybeMargin(rng), maybeMinMaxBoth(rng));
   }
 
   return { style, children };
@@ -385,17 +491,27 @@ function buildAspectRatio(rng: Rng, children: LayoutSpec[]): LayoutSpec {
     ...maybeBoxSizing(rng),
   };
 
-  // Set one axis explicitly, let aspect-ratio determine the other
   const ratioW = rng.int(1, 4);
   const ratioH = rng.int(1, 4);
   style["aspect-ratio"] = `${ratioW} / ${ratioH}`;
 
   if (rng.chance(0.5)) {
     style.width = randomPx(rng, 100, 400);
-    // height derived from aspect-ratio
   } else {
     style.height = randomPx(rng, 100, 400);
-    // width derived from aspect-ratio
+  }
+  Object.assign(style, maybeMinMaxBoth(rng));
+
+  return { style, children };
+}
+
+function buildBareCss(rng: Rng, children: LayoutSpec[]): LayoutSpec {
+  const style = randomCssProps(rng);
+
+  // Apply random CSS to children too
+  for (const child of children) {
+    if (!child.style) child.style = {};
+    if (rng.chance(0.5)) Object.assign(child.style, randomCssProps(rng));
   }
 
   return { style, children };
@@ -415,6 +531,7 @@ function buildScenario(
     case "percentage": return buildPercentage(rng, children);
     case "inline-block": return buildInlineBlock(rng, children);
     case "aspect-ratio": return buildAspectRatio(rng, children);
+    case "bare-css": return buildBareCss(rng, children);
   }
 }
 

@@ -1,0 +1,133 @@
+{
+  "seed": 1775678830901,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "640px",
+      "overflow": "hidden",
+      "padding-right": "10px",
+      "padding-bottom": "13px",
+      "box-sizing": "border-box",
+      "width": "461px"
+    },
+    "children": [
+      {
+        "style": {
+          "overflow": "hidden",
+          "aspect-ratio": "4 / 1",
+          "width": "335px",
+          "min-height": "43px",
+          "flex-grow": "0",
+          "flex-basis": "auto",
+          "align-self": "auto"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "130px",
+              "height": "64px",
+              "border": "4px solid black",
+              "box-sizing": "border-box",
+              "display": "none",
+              "min-height": "36px"
+            },
+            "target": true
+          },
+          {
+            "style": {
+              "width": "94px",
+              "height": "73px",
+              "margin": "5px",
+              "min-height": "72px"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h1",
+      "kind": "size:height",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 36,
+      "actual": 0,
+      "delta": 36
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "size:width",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 0,
+        "inputs": {},
+        "description": "Element is hidden (display: none)",
+        "calc": {
+          "op": "constant",
+          "value": 0,
+          "unit": "px"
+        },
+        "expr": "0px",
+        "cssProperties": {
+          "display": "none",
+          "min-width": "0px",
+          "max-width": "none",
+          "box-sizing": "border-box"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "size:height",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 36,
+        "inputs": {},
+        "description": "Element is hidden (display: none)",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "property",
+              "name": "min-height",
+              "value": 36,
+              "unit": "px"
+            },
+            {
+              "op": "constant",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "max(36px (min-height), 0px)",
+        "cssProperties": {
+          "display": "none",
+          "min-height": "36px",
+          "max-height": "none",
+          "box-sizing": "border-box"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 0,
+      "height": 0
+    }
+  }
+}

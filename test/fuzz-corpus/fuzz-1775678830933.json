@@ -1,0 +1,152 @@
+{
+  "seed": 1775678830933,
+  "spec": {
+    "style": {
+      "width": "649px",
+      "overflow": "hidden"
+    },
+    "children": [
+      {
+        "style": {
+          "box-sizing": "border-box",
+          "min-width": "71px",
+          "display": "inline-block",
+          "flex-grow": "1",
+          "overflow": "hidden",
+          "width": "84px",
+          "height": "76px"
+        },
+        "children": [
+          {
+            "style": {
+              "overflow": "hidden",
+              "padding": "3px",
+              "box-sizing": "border-box",
+              "aspect-ratio": "1 / 2",
+              "height": "236px",
+              "margin": "9px",
+              "min-height": "34px",
+              "flex-grow": "1"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "95px",
+                  "height": "44px",
+                  "box-sizing": "border-box",
+                  "min-width": "14px"
+                }
+              }
+            ]
+          },
+          {
+            "style": {
+              "width": "99px",
+              "height": "78px",
+              "box-sizing": "border-box",
+              "margin": "7px",
+              "display": "contents",
+              "min-width": "86px",
+              "max-height": "102px"
+            },
+            "target": true
+          },
+          {
+            "style": {
+              "width": "113px",
+              "height": "45px",
+              "padding": "9px",
+              "border": "2px solid black",
+              "box-sizing": "border-box",
+              "max-width": "244px"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "size:width",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+      "axis": "width",
+      "dagResult": 86,
+      "actual": 0,
+      "delta": 86
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "size:width",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 86,
+        "inputs": {},
+        "description": "Element has no box (display: contents)",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "property",
+              "name": "min-width",
+              "value": 86,
+              "unit": "px"
+            },
+            {
+              "op": "constant",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "max(86px (min-width), 0px)",
+        "cssProperties": {
+          "display": "contents",
+          "min-width": "86px",
+          "max-width": "none",
+          "box-sizing": "border-box"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "size:height",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 0,
+        "inputs": {},
+        "description": "Element has no box (display: contents)",
+        "calc": {
+          "op": "constant",
+          "value": 0,
+          "unit": "px"
+        },
+        "expr": "0px",
+        "cssProperties": {
+          "display": "contents",
+          "min-height": "0px",
+          "max-height": "102px",
+          "box-sizing": "border-box"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>",
+      "width": 0,
+      "height": 0
+    }
+  }
+}

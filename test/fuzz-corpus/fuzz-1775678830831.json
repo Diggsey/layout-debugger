@@ -1,0 +1,153 @@
+{
+  "seed": 1775678830831,
+  "spec": {
+    "style": {
+      "overflow": "auto"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "82px",
+          "height": "33px",
+          "box-sizing": "border-box",
+          "max-height": "384px"
+        }
+      },
+      {
+        "style": {
+          "display": "flex",
+          "flex-direction": "column",
+          "height": "456px",
+          "overflow": "hidden",
+          "border": "3px solid black",
+          "width": "210px"
+        },
+        "children": [
+          {
+            "style": {
+              "display": "flex",
+              "flex-direction": "column",
+              "height": "487px",
+              "overflow": "hidden",
+              "box-sizing": "border-box",
+              "align-items": "stretch",
+              "width": "174px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "38px",
+                  "height": "88px",
+                  "border": "1px solid black",
+                  "box-sizing": "border-box",
+                  "display": "contents",
+                  "min-width": "36px",
+                  "flex-grow": "2",
+                  "align-self": "auto",
+                  "max-height": "238px"
+                }
+              },
+              {
+                "style": {
+                  "width": "104px",
+                  "height": "25px",
+                  "padding": "6px",
+                  "box-sizing": "border-box",
+                  "display": "none",
+                  "flex-grow": "0",
+                  "min-width": "70px",
+                  "max-width": "356px"
+                },
+                "target": true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "size:width",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "axis": "width",
+      "dagResult": 70,
+      "actual": 0,
+      "delta": 70
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "size:width",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 70,
+        "inputs": {},
+        "description": "Element is hidden (display: none)",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "property",
+              "name": "min-width",
+              "value": 70,
+              "unit": "px"
+            },
+            {
+              "op": "constant",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "max(70px (min-width), 0px)",
+        "cssProperties": {
+          "display": "none",
+          "min-width": "70px",
+          "max-width": "356px",
+          "box-sizing": "border-box"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "size:height",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 0,
+        "inputs": {},
+        "description": "Element is hidden (display: none)",
+        "calc": {
+          "op": "constant",
+          "value": 0,
+          "unit": "px"
+        },
+        "expr": "0px",
+        "cssProperties": {
+          "display": "none",
+          "min-height": "0px",
+          "max-height": "none",
+          "box-sizing": "border-box"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>",
+      "width": 0,
+      "height": 0
+    }
+  }
+}

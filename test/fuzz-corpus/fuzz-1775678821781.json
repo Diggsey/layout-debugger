@@ -1,0 +1,146 @@
+{
+  "seed": 1775678821781,
+  "spec": {
+    "style": {
+      "width": "302px",
+      "padding": "4px",
+      "box-sizing": "border-box",
+      "max-height": "163px",
+      "display": "none",
+      "overflow": "hidden",
+      "align-self": "flex-end"
+    },
+    "children": [
+      {
+        "style": {
+          "overflow": "auto",
+          "padding": "11px",
+          "border": "3px solid black",
+          "width": "42%",
+          "height": "226px",
+          "margin-bottom": "14px",
+          "box-sizing": "border-box",
+          "min-width": "67px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "28px",
+              "height": "75px",
+              "padding": "3px",
+              "box-sizing": "border-box",
+              "margin-top": "1px",
+              "max-width": "482px",
+              "min-height": "45px"
+            },
+            "target": true
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "70%",
+          "height": "48%",
+          "padding": "15px",
+          "margin": "8px",
+          "border-top": "3px solid black",
+          "border-left": "1px solid black",
+          "display": "flex",
+          "overflow": "hidden"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "size:width",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "width",
+      "dagResult": 28,
+      "actual": 0,
+      "delta": 28
+    },
+    {
+      "nodeId": "h1",
+      "kind": "size:height",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 75,
+      "actual": 0,
+      "delta": 75
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "size:width",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 28,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "width",
+          "value": 28,
+          "unit": "px"
+        },
+        "expr": "28px (width)",
+        "cssProperties": {
+          "display": "block",
+          "position": "static",
+          "parent.display": "block",
+          "aspect-ratio": "auto",
+          "width": "28px",
+          "box-sizing": "border-box",
+          "min-width": "0px",
+          "max-width": "482px"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "size:height",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 75,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 75,
+          "unit": "px"
+        },
+        "expr": "75px (height)",
+        "cssProperties": {
+          "display": "block",
+          "position": "static",
+          "parent.display": "block",
+          "aspect-ratio": "auto",
+          "height": "75px",
+          "box-sizing": "border-box",
+          "min-height": "45px",
+          "max-height": "none"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 0,
+      "height": 0
+    }
+  }
+}

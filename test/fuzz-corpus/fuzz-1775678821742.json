@@ -1,0 +1,156 @@
+{
+  "seed": 1775678821742,
+  "spec": {
+    "style": {
+      "width": "451px",
+      "height": "338px",
+      "overflow": "hidden",
+      "padding": "10px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "53px",
+          "height": "98%",
+          "padding": "5px",
+          "margin": "7px",
+          "display": "none",
+          "max-width": "241px",
+          "min-height": "38px",
+          "margin-top": "15px",
+          "margin-right": "1px"
+        },
+        "target": true
+      },
+      {
+        "style": {
+          "width": "50%",
+          "height": "59%",
+          "border": "2px solid black",
+          "margin": "9px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h1",
+      "kind": "size:height",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "height",
+      "dagResult": 48,
+      "actual": 0,
+      "delta": 48
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "size:width",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 0,
+        "inputs": {},
+        "description": "Element is hidden (display: none)",
+        "calc": {
+          "op": "constant",
+          "value": 0,
+          "unit": "px"
+        },
+        "expr": "0px",
+        "cssProperties": {
+          "display": "none",
+          "min-width": "0px",
+          "max-width": "241px",
+          "box-sizing": "content-box",
+          "padding-left": "5px",
+          "padding-right": "5px",
+          "border-left-width": "0px",
+          "border-right-width": "0px"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "size:height",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 48,
+        "inputs": {},
+        "description": "Element is hidden (display: none)",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "add",
+              "args": [
+                {
+                  "op": "property",
+                  "name": "min-height",
+                  "value": 38,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "padding-top",
+                  "value": 5,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "padding-bottom",
+                  "value": 5,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "border-top-width",
+                  "value": 0,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "border-bottom-width",
+                  "value": 0,
+                  "unit": "px"
+                }
+              ]
+            },
+            {
+              "op": "constant",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "max(38px (min-height) + 5px (padding-top) + 5px (padding-bottom) + 0px (border-top-width) + 0px (border-bottom-width), 0px)",
+        "cssProperties": {
+          "display": "none",
+          "min-height": "38px",
+          "max-height": "none",
+          "box-sizing": "content-box",
+          "padding-top": "5px",
+          "padding-bottom": "5px",
+          "border-top-width": "0px",
+          "border-bottom-width": "0px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 0,
+      "height": 0
+    }
+  }
+}
