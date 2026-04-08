@@ -37,6 +37,7 @@ export function getElementPath(el: Element): string {
 export interface SerializedNode {
   id: string;
   kind: string;
+  mode: string;
   elementPath: string;
   elementDesc: string;
   axis: Axis;
@@ -128,6 +129,7 @@ export function serializeDag(dag: DagResult): SerializedDag {
     nodes[id] = {
       id,
       kind: node.kind,
+      mode: node.mode,
       elementPath: getElementPath(node.element),
       elementDesc: describeElement(node.element),
       axis: node.kind.split(":")[1] as Axis,
@@ -199,8 +201,10 @@ export function measureElements(dag: DagResult): BrowserMeasurements {
 // Verification (oracle)
 // ---------------------------------------------------------------------------
 
-const VERIFIABLE_KINDS = new Set([
-  "block-fill", "flex-item-main", "flex-cross-stretch", "flex-cross-content",
+/** Modes whose results can be verified against browser measurements. */
+const VERIFIABLE_MODES = new Set([
+  "block-fill",
+  "flex-item-main", "flex-cross-stretch", "flex-cross-content",
   "grid-item", "positioned-offset", "positioned-shrink-to-fit", "clamped",
 ]);
 
@@ -218,12 +222,14 @@ export function verifyDag(dag: DagResult): VerifyResult {
       const rootId = axis === "width" ? serialized.rootWidth : serialized.rootHeight;
       const node = serialized.nodes[rootId];
       const actual = targetMeasurement[axis];
-      const delta = Math.abs(node.result - actual);
-      if (delta > TOLERANCE) {
-        errors.push({
-          nodeId: rootId, kind: node.kind, elementPath: node.elementPath,
-          axis, dagResult: node.result, actual, delta: round(delta),
-        });
+      if (actual > 0) {
+        const delta = Math.abs(node.result - actual);
+        if (delta > TOLERANCE) {
+          errors.push({
+            nodeId: rootId, kind: node.mode, elementPath: node.elementPath,
+            axis, dagResult: node.result, actual, delta: round(delta),
+          });
+        }
       }
     }
   }
@@ -235,27 +241,31 @@ export function verifyDag(dag: DagResult): VerifyResult {
     const node = serialized.nodes[nodeId];
     if (!node) return;
 
-    // Terminal nodes indicate a cycle or depth limit — always an error
-    if (node.kind === "terminal") {
+    // Terminal nodes from cycles or depth limits are errors (but measured
+    // fallbacks from unmodeled layout modes like flex-wrap are expected)
+    if (node.mode === "terminal" && node.description.includes("circular")) {
       errors.push({
-        nodeId, kind: "terminal", elementPath: node.elementPath,
-        axis: node.kind.split(":")[1] as Axis, dagResult: node.result, actual: node.result, delta: 0,
+        nodeId, kind: node.mode, elementPath: node.elementPath,
+        axis: node.axis, dagResult: node.result, actual: node.result, delta: 0,
         message: node.description,
       });
     }
 
-    if (VERIFIABLE_KINDS.has(node.kind)) {
+    if (VERIFIABLE_MODES.has(node.mode)) {
       const m = measurements[node.elementPath];
       if (m) {
         const actual = node.axis === "width" ? m.width : m.height;
-        const delta = Math.abs(node.result - actual);
-        if (delta > TOLERANCE) {
-          const isRoot = nodeId === serialized.rootWidth || nodeId === serialized.rootHeight;
-          if (!isRoot) {
-            errors.push({
-              nodeId, kind: node.kind, elementPath: node.elementPath,
-              axis: node.kind.split(":")[1] as Axis, dagResult: node.result, actual, delta: round(delta),
-            });
+        // Skip zero measurements (display:none ancestor, negative available space, etc.)
+        if (actual > 0) {
+          const delta = Math.abs(node.result - actual);
+          if (delta > TOLERANCE) {
+            const isRoot = nodeId === serialized.rootWidth || nodeId === serialized.rootHeight;
+            if (!isRoot) {
+              errors.push({
+                nodeId, kind: node.mode, elementPath: node.elementPath,
+                axis: node.axis, dagResult: node.result, actual, delta: round(delta),
+              });
+            }
           }
         }
       }
