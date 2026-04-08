@@ -7,6 +7,10 @@
  */
 
 import { type Units, UNITLESS, PX, unitsMul, unitsDiv, unitsAssertEqual, formatUnits } from "./units";
+import { ElementProxy } from "./element-proxy";
+
+export { ElementProxy } from "./element-proxy";
+export type { ExplicitSize } from "./element-proxy";
 
 // ---------------------------------------------------------------------------
 // Node identity
@@ -16,8 +20,7 @@ import { type Units, UNITLESS, PX, unitsMul, unitsDiv, unitsAssertEqual, formatU
 export type BaseKind =
   | "size"             // top-level element size
   | "content-area"     // container padding-box content area
-  | "content-sum"      // content-driven size (stacked children)
-  | "content-max"      // content-driven size (tallest/widest child)
+  | "content"          // content-driven size (mode distinguishes sum vs max)
   | "intrinsic"        // intrinsic/content-based size
   | "flex-basis"       // flex starting size
   | "flex-base-size"   // hypothetical main size (clamped basis)
@@ -131,20 +134,15 @@ export function constant<T extends number>(n: LiteralNumber<T>, unit: Units = UN
   return { op: "constant", value: n, unit };
 }
 
-/** Create a property CalcExpr with an explicit value (when getComputedStyle returns the wrong value). */
-export function propVal(name: string, value: number, unit: Units = PX): CalcExpr {
-  return { op: "property", name, value, unit };
-}
-
-export function prop(el: Element, name: string): CalcExpr {
-  const raw = getComputedStyle(el).getPropertyValue(name);
+/** Create a CalcExpr property node by reading a CSS property via an ElementProxy. */
+export function prop(proxy: ElementProxy, name: string): CalcExpr {
+  const raw = proxy.readProperty(name);
   let value: number;
   let unit: Units;
   if (raw.endsWith("px")) {
     value = parseFloat(raw);
     unit = PX;
   } else if (raw.includes("/")) {
-    // Ratio value like "16 / 9" → unitless
     const parts = raw.split("/").map(s => parseFloat(s.trim()));
     value = parts.length === 2 && parts[1] !== 0 ? parts[0] / parts[1] : parseFloat(raw) || 0;
     unit = UNITLESS;
@@ -154,6 +152,12 @@ export function prop(el: Element, name: string): CalcExpr {
   }
   return { op: "property", name, value, unit };
 }
+
+/** Create a property CalcExpr with an explicit value (when computed style returns the wrong value). */
+export function propVal(name: string, value: number, unit: Units = PX): CalcExpr {
+  return { op: "property", name, value, unit };
+}
+
 
 export function measured(label: string, value: number, unit: Units = PX): CalcExpr {
   return { op: "measured", label, value, unit };
@@ -230,95 +234,8 @@ export interface SizeFns {
   computeIntrinsicSize(el: Element, axis: Axis, depth: number): LayoutNode;
   contentSize(el: Element, axis: Axis, depth: number, intrinsic?: boolean): LayoutNode;
   containerContentArea(container: Element, axis: Axis, borderBoxNode: LayoutNode): LayoutNode;
-  borderBoxCalc(el: Element, axis: Axis): CalcExpr;
+  borderBoxCalc(proxy: ElementProxy, axis: Axis): CalcExpr;
   create(kind: NodeKind, element: Element, cb: (nb: NodeBuilder) => void): LayoutNode;
-}
-
-// ---------------------------------------------------------------------------
-// Auto-reason generation for CSS property reads
-// ---------------------------------------------------------------------------
-
-const REASON_TABLE: Record<string, string> = {
-  "display":          "Determines box generation and layout mode",
-  "position":         "Determines positioning scheme",
-  "flex-basis":       "Starting size before flex distribution",
-  "flex-grow":        "Growth factor relative to siblings",
-  "flex-shrink":      "Shrink factor relative to siblings",
-  "flex-direction":   "Determines main vs cross axis",
-  "flex-wrap":        "Single-line vs multi-line flex",
-  "align-self":       "Cross-axis alignment of this item",
-  "align-items":      "Container default for cross-axis alignment",
-  "box-sizing":       "Whether padding/border are included in size",
-  "overflow":         "Affects minimum size calculation",
-  "aspect-ratio":     "Ratio between width and height",
-  "writing-mode":     "Determines inline vs block axis direction",
-  "min-width":        "Minimum width constraint",
-  "max-width":        "Maximum width constraint",
-  "min-height":       "Minimum height constraint",
-  "max-height":       "Maximum height constraint",
-  "left":             "Left offset from containing block",
-  "right":            "Right offset from containing block",
-  "top":              "Top offset from containing block",
-  "bottom":           "Bottom offset from containing block",
-};
-
-function autoReason(key: string): string {
-  const prop = key.startsWith("parent.") ? key.slice(7) : key;
-  return REASON_TABLE[prop] ?? "";
-}
-
-// ---------------------------------------------------------------------------
-// ElementProxy — tracks CSS property reads on an element
-// ---------------------------------------------------------------------------
-
-/**
- * Wraps an element for tracked CSS reads. Every `readProperty()` call
- * records the property name + value. Use `getParent()` to create a
- * proxy for the parent element whose reads are prefixed with "parent.".
- */
-export class ElementProxy {
-  readonly element: Element;
-  private _style: CSSStyleDeclaration;
-  private _prefix: string;
-  private _records: [key: string, value: string][];
-
-  constructor(element: Element, records?: [string, string][], prefix = "") {
-    this.element = element;
-    this._style = getComputedStyle(element);
-    this._prefix = prefix;
-    this._records = records ?? [];
-  }
-
-  /** Read a CSS property, record it, and return the value. */
-  readProperty(name: string): string {
-    const val = this._style.getPropertyValue(name);
-    const key = this._prefix ? `${this._prefix}.${name}` : name;
-    this._records.push([key, val]);
-    return val;
-  }
-
-  /** Create a proxy for the parent element. Reads are prefixed with "parent.". */
-  getParent(): ElementProxy {
-    return new ElementProxy(this.element.parentElement!, this._records, "parent");
-  }
-
-  /** Record a synthetic CSS property value. */
-  record(name: string, value: string): void {
-    const key = this._prefix ? `${this._prefix}.${name}` : name;
-    this._records.push([key, value]);
-  }
-
-  /** Drain recorded reads into target maps. Existing keys are not overwritten. */
-  drainInto(props: Record<string, string>, reasons: Record<string, string>): void {
-    for (const [key, value] of this._records) {
-      if (!(key in props)) {
-        props[key] = value;
-        const reason = autoReason(key);
-        if (reason) reasons[key] = reason;
-      }
-    }
-    this._records = [];
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -442,7 +359,7 @@ export class NodeBuilder {
 
   /** Create a CalcExpr property node for this element's CSS property. */
   prop(name: string): CalcExpr {
-    return prop(this.element, name);
+    return prop(this.proxy, name);
   }
 
   /** Set the human-readable description. */
@@ -488,17 +405,17 @@ export class NodeBuilder {
   /** Apply min/max constraints as a post-processing step. */
   maybeClamp(axis: Axis): void {
     if (!this._calc) return;
-    const el = this.element;
-    const s = getComputedStyle(el);
+    const p = this.proxy;
     const minPropName = axis === "width" ? "min-width" : "min-height";
     const maxPropName = axis === "width" ? "max-width" : "max-height";
-    const minVal = s.getPropertyValue(minPropName);
-    const maxVal = s.getPropertyValue(maxPropName);
+    const minVal = p.readProperty(minPropName);
+    const maxVal = p.readProperty(maxPropName);
 
-    const padBorder = s.boxSizing !== "border-box"
+    const boxSizing = p.readProperty("box-sizing");
+    const padBorder = boxSizing !== "border-box"
       ? (axis === "width"
-        ? px(s.paddingLeft) + px(s.paddingRight) + px(s.borderLeftWidth) + px(s.borderRightWidth)
-        : px(s.paddingTop) + px(s.paddingBottom) + px(s.borderTopWidth) + px(s.borderBottomWidth))
+        ? p.readPx("padding-left") + p.readPx("padding-right") + p.readPx("border-left-width") + p.readPx("border-right-width")
+        : p.readPx("padding-top") + p.readPx("padding-bottom") + p.readPx("border-top-width") + p.readPx("border-bottom-width"))
       : 0;
 
     const result = this._resultOverride ?? round(evaluate(this._calc));
@@ -509,10 +426,10 @@ export class NodeBuilder {
 
     // Wrap calc with clamp
     if (maxPx !== Infinity && result > maxPx) {
-      this._calc = cmin(constraintCalc(el, axis, maxPropName), this._calc);
+      this._calc = cmin(constraintCalc(p, axis, maxPropName, boxSizing), this._calc);
       this._mode = "clamped";
     } else {
-      this._calc = cmax(constraintCalc(el, axis, minPropName), this._calc);
+      this._calc = cmax(constraintCalc(p, axis, minPropName, boxSizing), this._calc);
       this._mode = "clamped";
     }
   }
@@ -541,14 +458,13 @@ export class NodeBuilder {
 
 function px(v: string): number { return parseFloat(v) || 0; }
 
-function constraintCalc(el: Element, axis: Axis, constraintProp: string): CalcExpr {
-  const s = getComputedStyle(el);
-  const base = prop(el, constraintProp);
-  if (s.boxSizing === "border-box") return base;
+function constraintCalc(proxy: ElementProxy, axis: Axis, constraintProp: string, boxSizing: string): CalcExpr {
+  const base = prop(proxy, constraintProp);
+  if (boxSizing === "border-box") return base;
   if (axis === "width") {
-    return add(base, prop(el, "padding-left"), prop(el, "padding-right"),
-      prop(el, "border-left-width"), prop(el, "border-right-width"));
+    return add(base, prop(proxy, "padding-left"), prop(proxy, "padding-right"),
+      prop(proxy, "border-left-width"), prop(proxy, "border-right-width"));
   }
-  return add(base, prop(el, "padding-top"), prop(el, "padding-bottom"),
-    prop(el, "border-top-width"), prop(el, "border-bottom-width"));
+  return add(base, prop(proxy, "padding-top"), prop(proxy, "padding-bottom"),
+    prop(proxy, "border-top-width"), prop(proxy, "border-bottom-width"));
 }

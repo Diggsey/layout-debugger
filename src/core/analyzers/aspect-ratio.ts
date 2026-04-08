@@ -1,49 +1,35 @@
 /**
  * Aspect ratio analyzer.
- *
- * Spec references:
- * - CSS Sizing 4 §5.1  Aspect Ratio
- * - CSS Sizing 4 §5.1.1  Resolving Aspect Ratios
  */
 import type { Axis, CalcExpr, SizeFns, NodeBuilder } from "../dag";
 import { ref, prop, mul, div, add, sub } from "../dag";
-import type { LayoutContext } from "../types";
-import { getExplicitSize } from "../sizing";
 
-/**
- * Populate the node builder for aspect-ratio sizing.
- * Derives one axis from the other via aspect-ratio.
- */
 export function aspectRatio(
-  fns: SizeFns, nb: NodeBuilder, axis: Axis,
-  ctx: LayoutContext, depth: number,
+  fns: SizeFns, nb: NodeBuilder, axis: Axis, depth: number,
 ): void {
   const el = nb.element;
-  const s = getComputedStyle(el);
-  const ar = s.aspectRatio;
+  const ar = nb.css("aspect-ratio");
   if (!ar || ar === "auto") {
-    nb.describe("Measured size").calc(fns.borderBoxCalc(el, axis));
+    nb.describe("Measured size").calc(fns.borderBoxCalc(nb.proxy, axis));
     return;
   }
 
   const match = ar.match(/^([\d.]+)\s*(?:\/\s*([\d.]+))?$/);
   if (!match) {
-    nb.describe("Measured size").calc(fns.borderBoxCalc(el, axis));
+    nb.describe("Measured size").calc(fns.borderBoxCalc(nb.proxy, axis));
     return;
   }
 
   const otherAxis: Axis = axis === "width" ? "height" : "width";
-  const thisExplicit = getExplicitSize(el, axis);
-  const otherExplicit = getExplicitSize(el, otherAxis);
-  if (thisExplicit || !otherExplicit) {
-    nb.describe("Measured size").calc(fns.borderBoxCalc(el, axis));
+  if (nb.proxy.getExplicitSize(axis) || !nb.proxy.getExplicitSize(otherAxis)) {
+    nb.describe("Measured size").calc(fns.borderBoxCalc(nb.proxy, axis));
     return;
   }
 
   const otherNode = fns.computeSize(el, otherAxis, depth);
 
   const ratioProp = nb.prop("aspect-ratio");
-  const isBorderBox = s.boxSizing === "border-box";
+  const isBorderBox = nb.css("box-sizing") === "border-box";
   let calc: CalcExpr;
 
   if (isBorderBox) {
@@ -57,7 +43,7 @@ export function aspectRatio(
     const thisPb = axis === "width"
       ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
       : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
-    const otherContent = sub(ref(otherNode), add(...otherPb.map(p => prop(el, p))));
+    const otherContent = sub(ref(otherNode), add(...otherPb.map(p => prop(nb.proxy, p))));
     const thisContent = axis === "width"
       ? mul(otherContent, ratioProp)
       : div(otherContent, ratioProp);
@@ -68,7 +54,6 @@ export function aspectRatio(
     .calc(calc)
     .input("otherAxis", otherNode);
 
-  // Use browser's measured result for edge cases (scrollbars, overflow, etc.)
   const rect = el.getBoundingClientRect();
   const measured = axis === "width" ? rect.width : rect.height;
   nb.overrideResult(Math.round(measured * 100) / 100);

@@ -6,21 +6,17 @@
  * - CSS2 §8.1     Box model content area
  */
 import type { Axis, LayoutNode, NodeKind, SizeFns, NodeBuilder } from "../dag";
-import type { DagBuilder } from "../dag";
 import { ref, add, sub, cmax } from "../dag";
-import type { LayoutContext } from "../types";
 
 /**
  * Block-fill: auto-width block fills containing block content area minus margins.
  */
 export function blockFill(
-  fns: SizeFns, nb: NodeBuilder, axis: Axis,
-  ctx: LayoutContext, depth: number,
+  fns: SizeFns, nb: NodeBuilder, axis: Axis, depth: number,
 ): void {
-  const el = nb.element;
-
-  const cbNode = fns.computeSize(ctx.containingBlock, axis, depth - 1);
-  const contentAreaNode = containerContentArea(fns, ctx.containingBlock, axis, cbNode);
+  const cb = nb.proxy.getContainingBlock();
+  const cbNode = fns.computeSize(cb.element, axis, depth - 1);
+  const contentAreaNode = containerContentArea(fns, cb.element, axis, cbNode);
 
   const [mStartName, mEndName] = axis === "width"
     ? ["margin-left", "margin-right"] : ["margin-top", "margin-bottom"];

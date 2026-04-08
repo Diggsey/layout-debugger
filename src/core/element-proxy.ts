@@ -131,33 +131,32 @@ export class ElementProxy {
 
   /**
    * Check if this element has an explicitly set size on the given axis.
+   * Records the property read if an explicit size is found.
    * Returns null if the size is auto/content-driven.
    */
   getExplicitSize(axis: Axis): ExplicitSize | null {
     const el = this.element;
-    const s = this._style;
-    const prop = axis;
 
     // Check inline style first
     if (el instanceof HTMLElement) {
-      const inlineVal = el.style.getPropertyValue(prop);
+      const inlineVal = el.style.getPropertyValue(axis);
       if (inlineVal) {
-        if (inlineVal.endsWith("%")) return { kind: "percentage", resolvedPx: px(s.getPropertyValue(prop)) };
-        if (isExplicitLength(inlineVal)) return { kind: "fixed", resolvedPx: px(s.getPropertyValue(prop)) };
+        if (inlineVal.endsWith("%")) return { kind: "percentage", resolvedPx: this.readPx(axis) };
+        if (isExplicitLength(inlineVal)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
       }
     }
 
     // Check stylesheet rules
     const rules = getMatchedCSSRules(el);
     for (let i = rules.length - 1; i >= 0; i--) {
-      const val = rules[i].style.getPropertyValue(prop);
+      const val = rules[i].style.getPropertyValue(axis);
       if (!val) continue;
-      if (val.endsWith("%")) return { kind: "percentage", resolvedPx: px(s.getPropertyValue(prop)) };
-      if (isExplicitLength(val)) return { kind: "fixed", resolvedPx: px(s.getPropertyValue(prop)) };
+      if (val.endsWith("%")) return { kind: "percentage", resolvedPx: this.readPx(axis) };
+      if (isExplicitLength(val)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
       if (val === "auto" || val === "none") return null;
       // CSS variable or calc — resolve
       if (val.startsWith("var(") || val.startsWith("calc(") || val.startsWith("min(") || val.startsWith("max(") || val.startsWith("clamp(")) {
-        return { kind: "fixed", resolvedPx: px(s.getPropertyValue(prop)) };
+        return { kind: "fixed", resolvedPx: this.readPx(axis) };
       }
     }
 
@@ -167,21 +166,24 @@ export class ElementProxy {
   /**
    * Get the specified (authored) value of a CSS property, before layout resolution.
    * Unlike computed style, this returns the pre-layout value (e.g. "200px" not the
-   * post-flex used value).
+   * post-flex used value). Records the specified value if found.
    */
   getSpecifiedValue(axis: Axis): string | null {
     const el = this.element;
-    const prop = axis;
 
     if (el instanceof HTMLElement) {
-      const inlineVal = el.style.getPropertyValue(prop);
-      if (inlineVal && inlineVal !== "auto") return inlineVal;
+      const inlineVal = el.style.getPropertyValue(axis);
+      if (inlineVal && inlineVal !== "auto") {
+        this.record(axis, inlineVal);
+        return inlineVal;
+      }
     }
 
     const rules = getMatchedCSSRules(el);
     for (let i = rules.length - 1; i >= 0; i--) {
-      const val = rules[i].style.getPropertyValue(prop);
+      const val = rules[i].style.getPropertyValue(axis);
       if (val && val !== "auto" && val !== "initial" && val !== "inherit" && val !== "unset" && val !== "revert") {
+        this.record(axis, val);
         return val;
       }
     }
@@ -192,21 +194,27 @@ export class ElementProxy {
   /**
    * Check if this element has a specified intrinsic sizing keyword
    * (min-content, max-content, fit-content) on the given axis.
+   * Records the keyword if found.
    */
   getIntrinsicKeyword(axis: Axis): string | null {
     const el = this.element;
-    const prop = axis;
 
     if (el instanceof HTMLElement) {
-      const val = el.style.getPropertyValue(prop);
-      if (isIntrinsicKeyword(val)) return val;
+      const val = el.style.getPropertyValue(axis);
+      if (isIntrinsicKeyword(val)) {
+        this.record(axis, val);
+        return val;
+      }
     }
 
     const rules = getMatchedCSSRules(el);
     for (let i = rules.length - 1; i >= 0; i--) {
-      const val = rules[i].style.getPropertyValue(prop);
+      const val = rules[i].style.getPropertyValue(axis);
       if (!val) continue;
-      if (isIntrinsicKeyword(val)) return val;
+      if (isIntrinsicKeyword(val)) {
+        this.record(axis, val);
+        return val;
+      }
       return null; // non-intrinsic value found, stop
     }
 
@@ -272,8 +280,6 @@ function resolveCssVariable(el: Element, varName: string): string | null {
   return val || null;
 }
 
-// Exported for use by sizing.ts until it's fully migrated
-export { resolveCssVariable };
 
 /**
  * Walk up the DOM to find the containing block for an element.

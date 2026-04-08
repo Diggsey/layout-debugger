@@ -4,18 +4,14 @@
  * Entry point: buildDag(el) → DagResult with width and height root nodes.
  */
 import type { LayoutNode, DagResult, Axis, NodeKind, NodeMode, SizeFns, CalcExpr } from "./dag";
-import { DagBuilder, NodeBuilder, ref, constant, prop, add, cmax, cmin } from "./dag";
+import { DagBuilder, NodeBuilder, ElementProxy, ref, constant, prop, add, cmax } from "./dag";
 import { PX } from "./units";
-import { identifyContext } from "./context";
-import { getExplicitSize } from "./sizing";
-import { getSpecifiedIntrinsicKeyword } from "./analyzers/properties";
 import { blockFill, containerContentArea } from "./analyzers/block";
-import { flexItemMain, flexItemCross, determineFlexCrossKind } from "./analyzers/flex";
+import { flexItemMain, flexItemCross } from "./analyzers/flex";
 import { gridItem } from "./analyzers/grid";
 import { positioned } from "./analyzers/positioned";
 import { aspectRatio } from "./analyzers/aspect-ratio";
 import {
-  px,
   round,
   flexMainAxisProp,
   measureIntrinsicSize,
@@ -36,25 +32,23 @@ export function buildDag(el: Element): DagResult {
 // ---------------------------------------------------------------------------
 
 /** Build a CalcExpr for an element's border-box size from its CSS properties. */
-function borderBoxCalc(el: Element, axis: Axis): CalcExpr {
-  const s = getComputedStyle(el);
-  if (s.boxSizing === "border-box") {
-    return prop(el, axis);
+function borderBoxCalc(proxy: ElementProxy, axis: Axis): CalcExpr {
+  if (proxy.readProperty("box-sizing") === "border-box") {
+    return prop(proxy, axis);
   }
-  // content-box: border-box = width + padding + border
   if (axis === "width") {
-    return add(prop(el, "width"), prop(el, "padding-left"), prop(el, "padding-right"),
-      prop(el, "border-left-width"), prop(el, "border-right-width"));
+    return add(prop(proxy, "width"), prop(proxy, "padding-left"), prop(proxy, "padding-right"),
+      prop(proxy, "border-left-width"), prop(proxy, "border-right-width"));
   }
-  return add(prop(el, "height"), prop(el, "padding-top"), prop(el, "padding-bottom"),
-    prop(el, "border-top-width"), prop(el, "border-bottom-width"));
+  return add(prop(proxy, "height"), prop(proxy, "padding-top"), prop(proxy, "padding-bottom"),
+    prop(proxy, "border-top-width"), prop(proxy, "border-bottom-width"));
 }
 
 function measuredNode(b: DagBuilder, el: Element, axis: Axis, mode: NodeMode, description?: string): LayoutNode {
   const kind: NodeKind = `measured:${axis}`;
   const desc = description ?? `Size of the browser ${mode === "viewport" ? "viewport" : mode}`;
   return b.create(kind, el, (nb) => {
-    nb.setMode(mode).describe(desc).calc(borderBoxCalc(el, axis));
+    nb.setMode(mode).describe(desc).calc(borderBoxCalc(nb.proxy, axis));
   });
 }
 
@@ -62,17 +56,18 @@ function measuredNode(b: DagBuilder, el: Element, axis: Axis, mode: NodeMode, de
 // Determine the calculation mode for an element+axis
 // ---------------------------------------------------------------------------
 
-function determineMode(proxy: { readProperty(name: string): string; getParent(): { readProperty(name: string): string } }, el: Element, axis: Axis): NodeMode {
+function determineMode(proxy: ElementProxy, axis: Axis): NodeMode {
+  const el = proxy.element;
   if (el === document.documentElement) return "viewport";
 
   const display = proxy.readProperty("display");
   if (display === "none") return "display-none";
   if (display === "contents") return "display-contents";
 
-  const s = getComputedStyle(el);
+  const position = proxy.readProperty("position");
   const parent = el.parentElement;
   let isGridItem = false;
-  if (parent && s.position !== "absolute" && s.position !== "fixed") {
+  if (parent && position !== "absolute" && position !== "fixed") {
     const pp = proxy.getParent();
     const parentDisplay = pp.readProperty("display");
     if (parentDisplay === "flex" || parentDisplay === "inline-flex") {
@@ -87,45 +82,55 @@ function determineMode(proxy: { readProperty(name: string): string; getParent():
     }
   }
 
-  const ar = s.aspectRatio;
+  // Aspect-ratio: derive one axis from the other
+  const ar = proxy.readProperty("aspect-ratio");
   if (!isGridItem && ar && ar !== "auto") {
     const match = ar.match(/^([\d.]+)\s*(?:\/\s*([\d.]+))?$/);
     if (match) {
-      const explicit = getExplicitSize(el, axis);
+      const explicit = proxy.getExplicitSize(axis);
       const otherAxis: Axis = axis === "width" ? "height" : "width";
-      const otherExplicit = getExplicitSize(el, otherAxis);
-      if (!explicit && otherExplicit) {
-        proxy.readProperty("aspect-ratio");
-        return "aspect-ratio";
-      }
+      const otherExplicit = proxy.getExplicitSize(otherAxis);
+      if (!explicit && otherExplicit) return "aspect-ratio";
     }
   }
 
-  const explicit = getExplicitSize(el, axis);
+  const explicit = proxy.getExplicitSize(axis);
   if (explicit) return explicit.kind === "percentage" ? "percentage" : "explicit";
 
-  const intrinsic = getSpecifiedIntrinsicKeyword(el, axis);
+  const intrinsic = proxy.getIntrinsicKeyword(axis);
   if (intrinsic) return "intrinsic-keyword";
 
-  const ctx = identifyContext(el);
-
-  if (ctx.mode === "flex") {
-    return determineFlexCrossKind(el, axis, ctx);
+  // Flex cross axis
+  if (parent && position !== "absolute" && position !== "fixed") {
+    const pp = proxy.getParent();
+    const parentDisplay = pp.readProperty("display");
+    if (parentDisplay === "flex" || parentDisplay === "inline-flex") {
+      // This is the cross axis (main axis was handled above)
+      const alignSelf = proxy.readProperty("align-self");
+      const alignItems = pp.readProperty("align-items");
+      const effectiveAlign = (alignSelf === "auto" || alignSelf === "normal") ? alignItems : alignSelf;
+      return (effectiveAlign === "stretch" || effectiveAlign === "normal")
+        ? "flex-cross-stretch" : "flex-cross-content";
+    }
+    if (parentDisplay === "grid" || parentDisplay === "inline-grid") return "grid-item";
   }
-  if (ctx.mode === "grid") return "grid-item";
-  if (ctx.mode === "positioned") {
-    proxy.readProperty("position");
+
+  if (position === "absolute" || position === "fixed") {
     const startProp = axis === "width" ? "left" : "top";
     const endProp = axis === "width" ? "right" : "bottom";
-    return !isAuto(s.getPropertyValue(startProp)) && !isAuto(s.getPropertyValue(endProp))
+    return !isAuto(proxy.readProperty(startProp)) && !isAuto(proxy.readProperty(endProp))
       ? "positioned-offset" : "positioned-shrink-to-fit";
   }
-  if (ctx.mode === "table-cell") return "table-cell";
-  if (ctx.mode === "inline-block" || ctx.mode === "inline") return "content-driven";
 
-  const isFloat = ctx.float !== "none";
-  const fillsAvailable = axis === ctx.inlineAxis && !isFloat;
-  return fillsAvailable ? "block-fill" : "content-driven";
+  if (display === "table-cell") return "table-cell";
+
+  const cssFloat = proxy.readProperty("float");
+  const writingMode = proxy.readProperty("writing-mode");
+  const inlineAxis = (writingMode === "vertical-rl" || writingMode === "vertical-lr") ? "height" : "width";
+  const isFloat = cssFloat !== "none";
+  const isInline = display.startsWith("inline");
+  if (isInline || isFloat) return "content-driven";
+  return axis === inlineAxis ? "block-fill" : "content-driven";
 }
 
 // ---------------------------------------------------------------------------
@@ -138,16 +143,15 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
   const kind: NodeKind = `size:${axis}`;
 
   return b.create(kind, el, (nb) => {
-    const mode = determineMode(nb.proxy, el, axis);
+    const mode = determineMode(nb.proxy, axis);
     nb.setMode(mode);
 
-    const fns = buildSizeFns(b, axis);
-    const ctx = () => identifyContext(el);
+    const fns = buildSizeFns(b);
 
     switch (mode) {
       case "viewport":
         nb.describe("Size of the browser viewport")
-          .calc(borderBoxCalc(el, axis));
+          .calc(borderBoxCalc(nb.proxy, axis));
         break;
       case "display-none":
         nb.describe("Element is hidden (display: none)")
@@ -158,53 +162,53 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
           .calc(constant(0, PX));
         break;
       case "aspect-ratio":
-        aspectRatio(fns, nb, axis, ctx(), depth);
+        aspectRatio(fns, nb, axis, depth);
         break;
       case "percentage": {
-        const c = ctx();
-        const cbNode = computeSize(b, c.containingBlock, axis, depth - 1);
+        const cb = nb.proxy.getContainingBlock();
+        const cbNode = computeSize(b, cb.element, axis, depth - 1);
         nb.css("box-sizing");
         nb.describe(`${axis} is a percentage of the containing block`)
-          .calc(borderBoxCalc(el, axis))
+          .calc(borderBoxCalc(nb.proxy, axis))
           .input("containingBlock", cbNode);
         break;
       }
       case "explicit":
         nb.css("box-sizing");
         nb.describe(`${axis} is set explicitly in CSS`)
-          .calc(borderBoxCalc(el, axis));
+          .calc(borderBoxCalc(nb.proxy, axis));
         break;
       case "intrinsic-keyword":
         nb.describe(`${axis} uses an intrinsic sizing keyword`)
-          .calc(borderBoxCalc(el, axis));
+          .calc(borderBoxCalc(nb.proxy, axis));
         break;
       case "flex-item-main":
-        flexItemMain(fns, nb, axis, ctx(), depth);
+        flexItemMain(fns, nb, axis, depth);
         break;
       case "flex-cross-stretch":
       case "flex-cross-content":
-        flexItemCross(fns, nb, axis, ctx(), depth);
+        flexItemCross(fns, nb, axis, depth);
         break;
       case "grid-item":
-        gridItem(fns, nb, axis, ctx(), depth);
+        gridItem(fns, nb, axis, depth);
         break;
       case "positioned-offset":
       case "positioned-shrink-to-fit":
-        positioned(fns, nb, axis, ctx(), depth);
+        positioned(fns, nb, axis, depth);
         break;
       case "table-cell":
         nb.describe("Table cell — sized by browser table algorithm")
-          .calc(borderBoxCalc(el, axis));
+          .calc(borderBoxCalc(nb.proxy, axis));
         break;
       case "block-fill":
-        blockFill(fns, nb, axis, ctx(), depth);
+        blockFill(fns, nb, axis, depth);
         break;
       case "content-driven":
-        contentSize(b, nb, el, axis, depth);
+        contentSize(b, nb, axis, depth);
         break;
       default:
         nb.describe("Measured size")
-          .calc(borderBoxCalc(el, axis));
+          .calc(borderBoxCalc(nb.proxy, axis));
         break;
     }
 
@@ -213,20 +217,15 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
 }
 
 /** Build the SizeFns callback interface for a given DagBuilder. */
-function buildSizeFns(b: DagBuilder, defaultAxis: Axis): SizeFns {
+function buildSizeFns(b: DagBuilder): SizeFns {
   const fns: SizeFns = {
     computeSize: (el, axis, depth) => computeSize(b, el, axis, depth),
     computeIntrinsicSize: (el, axis, depth) => computeIntrinsicSize(b, el, axis, depth),
     contentSize: (el, axis, depth, intrinsic) => {
-      // Intrinsic content sizing goes through computeIntrinsicSize which
-      // checks explicit size/aspect-ratio first, then falls back to content.
       if (intrinsic) return computeIntrinsicSize(b, el, axis, depth);
-      const s = getComputedStyle(el);
-      const d = s.display;
-      const isFlex = d === "flex" || d === "inline-flex";
-      const isFlexCross = isFlex && axis !== flexMainAxisProp(s.flexDirection);
-      const base = isFlexCross ? "content-max" : "content-sum";
-      return b.create(`${base}:${axis}`, el, (nb) => contentSize(b, nb, el, axis, depth));
+      // Determine content mode inside the create callback where we have a proxy
+      // Try content-sum first (more common); contentSize will set the correct mode
+      return b.create(`content:${axis}`, el, (nb) => contentSize(b, nb, axis, depth));
     },
     containerContentArea: (container, axis, borderBoxNode) =>
       containerContentArea(fns, container, axis, borderBoxNode),
@@ -255,27 +254,25 @@ function computeIntrinsicSize(
     nb.setMode("intrinsic-content");
 
     // If the element has an explicit size, that IS the intrinsic size.
-    const explicit = getExplicitSize(el, axis);
-    if (explicit) {
+    if (nb.proxy.getExplicitSize(axis)) {
       nb.describe(`Intrinsic ${axis}: set explicitly in CSS`)
-        .calc(borderBoxCalc(el, axis));
+        .calc(borderBoxCalc(nb.proxy, axis));
       return;
     }
 
     // If aspect-ratio can derive this axis from an explicit other axis, compute it.
-    const arStyle = getComputedStyle(el);
-    const arVal = arStyle.aspectRatio;
-    if (arVal && arVal !== "auto" && arStyle.overflow !== "scroll" && arStyle.overflow !== "auto") {
+    const arVal = nb.css("aspect-ratio");
+    const overflow = nb.css("overflow");
+    if (arVal && arVal !== "auto" && overflow !== "scroll" && overflow !== "auto") {
       const otherAxis: Axis = axis === "width" ? "height" : "width";
-      const otherExplicit = getExplicitSize(el, otherAxis);
-      if (otherExplicit) {
+      if (nb.proxy.getExplicitSize(otherAxis)) {
         const otherBB = computeIntrinsicSize(b, el, otherAxis, depth);
         const arMatch = arVal.match(/^([\d.]+)\s*(?:\/\s*([\d.]+))?$/);
         if (arMatch) {
           const ratioW = parseFloat(arMatch[1]);
           const ratioH = arMatch[2] ? parseFloat(arMatch[2]) : 1;
           const ratio = ratioW / ratioH;
-          const isBorderBox = arStyle.boxSizing === "border-box";
+          const isBorderBox = nb.css("box-sizing") === "border-box";
 
           let result: number;
           if (isBorderBox) {
@@ -287,14 +284,14 @@ function computeIntrinsicSize(
             const thisPbNames = axis === "width"
               ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
               : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
-            const otherPb = otherPbNames.reduce((s, p) => s + (parseFloat(arStyle.getPropertyValue(p)) || 0), 0);
-            const thisPb = thisPbNames.reduce((s, p) => s + (parseFloat(arStyle.getPropertyValue(p)) || 0), 0);
+            const otherPb = otherPbNames.reduce((s, p) => s + nb.cssPx(p), 0);
+            const thisPb = thisPbNames.reduce((s, p) => s + nb.cssPx(p), 0);
             const otherContent = otherBB.result - otherPb;
             const thisContent = axis === "width" ? otherContent * ratio : otherContent / ratio;
             result = thisContent + thisPb;
           }
           nb.describe(`Intrinsic ${axis}: derived from aspect-ratio`)
-            .calc(borderBoxCalc(el, axis))
+            .calc(borderBoxCalc(nb.proxy, axis))
             .input("otherAxis", otherBB)
             .overrideResult(round(result));
           return;
@@ -304,13 +301,8 @@ function computeIntrinsicSize(
 
     // Create a content sub-node for the intrinsic measurement.
     // Can't use fns.contentSize(intrinsic=true) because it recurses back here.
-    const s2 = getComputedStyle(el);
-    const d2 = s2.display;
-    const isFlex2 = d2 === "flex" || d2 === "inline-flex";
-    const isFlexCross2 = isFlex2 && axis !== flexMainAxisProp(s2.flexDirection);
-    const base = isFlexCross2 ? "content-max" : "content-sum";
-    const contentNode = b.create(`${base}:${axis}`, el, (cnb) => {
-      contentSize(b, cnb, el, axis, depth, true);
+    const contentNode = b.create(`content:${axis}`, el, (cnb) => {
+      contentSize(b, cnb, axis, depth, true);
     });
 
     nb.css("display");
@@ -325,16 +317,16 @@ function computeIntrinsicSize(
 // ---------------------------------------------------------------------------
 
 function contentSize(
-  b: DagBuilder, nb: NodeBuilder, el: Element, axis: Axis, depth: number, intrinsic = false,
+  b: DagBuilder, nb: NodeBuilder, axis: Axis, depth: number, intrinsic = false,
 ): void {
-  const s = getComputedStyle(el);
-  const display = s.display;
+  const el = nb.element;
+  const display = nb.css("display");
   const size = intrinsic
     ? round(measureIntrinsicSize(el, axis))
     : round(axis === "width" ? el.getBoundingClientRect().width : el.getBoundingClientRect().height);
 
   const isFlex = display === "flex" || display === "inline-flex";
-  const isFlexMain = isFlex && axis === flexMainAxisProp(s.flexDirection);
+  const isFlexMain = isFlex && axis === flexMainAxisProp(nb.css("flex-direction"));
   const mode: "content-sum" | "content-max" = isFlex && !isFlexMain ? "content-max" : "content-sum";
 
   nb.setMode(mode);
@@ -343,14 +335,11 @@ function contentSize(
   // Content-driven sizing: children are measured intrinsically to avoid
   // cycles (a child can't fill a parent whose size depends on that child).
   // Per CSS2 §10.6.3 / CSS Sizing §4.1.
-  const fns = buildSizeFns(b, axis);
+  const children = nb.proxy.getChildren();
   const childNodes: LayoutNode[] = [];
-  for (const child of Array.from(el.children)) {
-    const cs = getComputedStyle(child);
-    if (cs.position === "absolute" || cs.position === "fixed") continue;
-    if (cs.display === "none" || cs.display === "contents") continue;
+  for (const child of children) {
     if (depth > 1) {
-      childNodes.push(computeIntrinsicSize(b, child, axis, depth - 1));
+      childNodes.push(computeIntrinsicSize(b, child.element, axis, depth - 1));
     }
   }
 
@@ -361,7 +350,7 @@ function contentSize(
   let calc: CalcExpr;
   const gapPropName = axis === "width" ? "column-gap" : "row-gap";
   if (childNodes.length === 0) {
-    calc = borderBoxCalc(el, axis);
+    calc = borderBoxCalc(nb.proxy, axis);
   } else {
     const childRefs = childNodes.map(n => ref(n));
     const pbProps = axis === "width"

@@ -1,22 +1,12 @@
 /**
  * Positioned layout analyzer.
- *
- * Spec references:
- * - CSS2 §10.3.7  Absolutely positioned, non-replaced elements
- * - CSS2 §10.6.4  Absolutely positioned, non-replaced elements (height)
- * - CSS Sizing 3 §4.6  Shrink-to-fit
  */
 import type { Axis, NodeKind, SizeFns, NodeBuilder } from "../dag";
 import { ref, prop, sub, add, cmax } from "../dag";
-import type { LayoutContext } from "../types";
 import { isAuto } from "../utils";
 
-/**
- * Size of an absolutely/fixed positioned element.
- */
 export function positioned(
-  fns: SizeFns, nb: NodeBuilder, axis: Axis,
-  ctx: LayoutContext, depth: number,
+  fns: SizeFns, nb: NodeBuilder, axis: Axis, depth: number,
 ): void {
   const el = nb.element;
   const startProp = axis === "width" ? "left" : "top";
@@ -27,17 +17,17 @@ export function positioned(
   nb.css("position");
 
   if (!isAuto(startVal) && !isAuto(endVal)) {
-    const cbNode = fns.computeSize(ctx.containingBlock, axis, depth - 1);
-    const cb = ctx.containingBlock;
+    const cb = nb.proxy.getContainingBlock();
+    const cbNode = fns.computeSize(cb.element, axis, depth - 1);
     const cbBorderProps = axis === "width"
       ? ["border-left-width", "border-right-width"] as const
       : ["border-top-width", "border-bottom-width"] as const;
 
     const cbPaddingBoxKind: NodeKind = `content-area:${axis}`;
-    const cbPaddingBox = nb.create(cbPaddingBoxKind, cb, (cnb) => {
+    const cbPaddingBox = nb.create(cbPaddingBoxKind, cb.element, (cnb) => {
       cnb.setMode("content-area")
         .describe("Containing block padding box (for positioned descendants)")
-        .calc(sub(ref(cbNode), add(...cbBorderProps.map(p => prop(cb, p)))))
+        .calc(sub(ref(cbNode), add(...cbBorderProps.map(p => prop(cnb.proxy, p)))))
         .input("borderBox", cbNode);
     });
 
