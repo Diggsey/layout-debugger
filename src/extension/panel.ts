@@ -314,17 +314,15 @@ function toggleCollapse(state: AxisState, nodeId: string): void {
   const isCollapsing = !state.collapsedSet.has(nodeId);
 
   if (isCollapsing) {
-    // Collapsing: animate disappearing rows + connected edges out, then rebuild
+    // Collapsing: animate disappearing rows + badge-in simultaneously, then rebuild
     state.collapsedSet.add(nodeId);
     const futureVisible = getVisibleNodes(state);
 
     // Identify disappearing nodes
-    const disappearingIds = new Set<string>();
     const disappearing: HTMLElement[] = [];
     for (const row of state.rowContainer.querySelectorAll<HTMLElement>(".graph-row")) {
       const id = row.dataset.nodeId!;
       if (!futureVisible.has(id)) {
-        disappearingIds.add(id);
         disappearing.push(row);
         const detail = row.nextElementSibling as HTMLElement | null;
         if (detail?.classList.contains("node-detail")) disappearing.push(detail);
@@ -336,6 +334,38 @@ function toggleCollapse(state: AxisState, nodeId: string): void {
       return;
     }
 
+    // Show badge on the collapsing row and animate it in from zero width.
+    // We must add .collapsed (which sets display:inline-block), measure the
+    // natural width, then immediately set width:0 before the browser paints.
+    const collapsingRow = state.rowContainer.querySelector<HTMLElement>(`.graph-row[data-node-id="${nodeId}"]`);
+    const badge = collapsingRow?.querySelector<HTMLElement>(".collapse-badge");
+    if (collapsingRow) collapsingRow.classList.add("collapsed");
+    if (badge) {
+      const hidden = countHiddenDescendants(state, nodeId, futureVisible);
+      badge.textContent = `+${hidden}`;
+      // Badge is now display:inline-block — measure natural size
+      const natural = badge.offsetWidth;
+      // Immediately collapse to zero size (no paint has happened yet)
+      badge.style.width = "0";
+      badge.style.padding = "0";
+      badge.style.marginRight = "0";
+      badge.style.opacity = "0";
+      badge.style.overflow = "hidden";
+      badge.offsetHeight; // force reflow with zero size
+      // Transition to natural size
+      const t = `width ${ANIM_DURATION}ms ease-out, padding ${ANIM_DURATION}ms ease-out, margin ${ANIM_DURATION}ms ease-out, opacity ${ANIM_DURATION}ms ease-out`;
+      badge.style.transition = t;
+      badge.style.width = natural + "px";
+      badge.style.padding = "";
+      badge.style.marginRight = "";
+      badge.style.opacity = "1";
+      setTimeout(() => {
+        badge.style.transition = "";
+        badge.style.width = "";
+        badge.style.overflow = "";
+      }, ANIM_DURATION);
+    }
+
     // Fade out all edge elements whose endpoints won't both be visible
     fadeEdges(state.rowContainer, futureVisible, "0");
 
@@ -345,12 +375,10 @@ function toggleCollapse(state: AxisState, nodeId: string): void {
       el.style.height = h + "px";
       el.style.overflow = "hidden";
       if (el.classList.contains("graph-row")) {
-        // Fade dot in the SVG
         const dot = el.querySelector<SVGElement>(".gutter-svg [data-dot]");
         if (dot) { dot.style.transition = `opacity 0.15s ease-out`; dot.style.opacity = "0"; }
         el.classList.add("row-exit");
       } else {
-        // Detail panels fade entirely
         el.classList.add("row-exit");
         el.style.opacity = "1";
         el.offsetHeight; // force reflow
@@ -368,7 +396,12 @@ function toggleCollapse(state: AxisState, nodeId: string): void {
     }, ANIM_DURATION);
 
   } else {
-    // Expanding: rebuild with new rows hidden, then animate everything in
+    // Expanding: rebuild with new rows hidden, then animate rows in + badge out simultaneously.
+    // Measure the badge on the OLD DOM before rebuild so we can set it
+    // at exactly that width on the new DOM without a full-width flash.
+    const oldBadge = state.rowContainer.querySelector<HTMLElement>(`.graph-row[data-node-id="${nodeId}"] .collapse-badge`);
+    const badgeWidth = oldBadge ? oldBadge.offsetWidth : 0;
+
     state.collapsedSet.delete(nodeId);
     const prevVisible = getVisibleNodes({ ...state, collapsedSet: new Set([...state.collapsedSet, nodeId]) });
 
@@ -376,12 +409,10 @@ function toggleCollapse(state: AxisState, nodeId: string): void {
     renderRows(state);
 
     // Identify newly appearing nodes and rows
-    const appearingIds = new Set<string>();
     const appearing: HTMLElement[] = [];
     for (const row of state.rowContainer.querySelectorAll<HTMLElement>(".graph-row")) {
       const id = row.dataset.nodeId!;
       if (!prevVisible.has(id)) {
-        appearingIds.add(id);
         appearing.push(row);
         const detail = row.nextElementSibling as HTMLElement | null;
         if (detail?.classList.contains("node-detail") && detail.classList.contains("open")) {
@@ -390,34 +421,49 @@ function toggleCollapse(state: AxisState, nodeId: string): void {
       }
     }
 
-    // Set initial hidden state WITHOUT transitions:
-    // - Rows: zero height (gutter lines stay visible during expand)
-    // - Row content (summary, dot, badge): invisible
-    // - Edge elements where either endpoint wasn't previously visible: invisible
+    // Force-show the badge at its pre-rebuild width (no flash)
+    const expandedRow = state.rowContainer.querySelector<HTMLElement>(`.graph-row[data-node-id="${nodeId}"]`);
+    const badge = expandedRow?.querySelector<HTMLElement>(".collapse-badge");
+    if (badge && badgeWidth > 0) {
+      badge.style.display = "inline-block";
+      badge.style.width = badgeWidth + "px";
+      badge.style.overflow = "hidden";
+    }
+
+    // Set initial hidden state WITHOUT transitions
     setEdgeOpacity(state.rowContainer, prevVisible, "0");
     for (const el of appearing) {
       const h = el.getBoundingClientRect().height;
       el.style.height = "0";
       el.style.overflow = "hidden";
       el.dataset.naturalHeight = String(h);
-      // Fade content only, not the gutter SVG lines
       if (el.classList.contains("graph-row")) {
         const summary = el.querySelector<HTMLElement>(".node-summary");
-        const badge = el.querySelector<HTMLElement>(".collapse-badge");
+        const rowBadge = el.querySelector<HTMLElement>(".collapse-badge");
         const dot = el.querySelector<SVGElement>(".gutter-svg [data-dot]");
         if (summary) summary.style.opacity = "0";
-        if (badge) badge.style.opacity = "0";
+        if (rowBadge) rowBadge.style.opacity = "0";
         if (dot) dot.style.opacity = "0";
       } else {
-        // Detail panels fade entirely
         el.style.opacity = "0";
       }
     }
 
     // Double-rAF ensures the browser paints the hidden state before we animate.
     requestAnimationFrame(() => requestAnimationFrame(() => {
+      // Animate badge out simultaneously (width, padding, margin all to 0)
+      if (badge) {
+        const t = `width ${ANIM_DURATION}ms ease-out, padding ${ANIM_DURATION}ms ease-out, margin ${ANIM_DURATION}ms ease-out, opacity ${ANIM_DURATION}ms ease-out`;
+        badge.style.transition = t;
+        badge.style.width = "0";
+        badge.style.padding = "0";
+        badge.style.marginRight = "0";
+        badge.style.opacity = "0";
+      }
+
       // Fade in edge elements that weren't previously visible
       fadeEdges(state.rowContainer, prevVisible, "1");
+
       // Expand rows and fade in content
       for (const el of appearing) {
         el.style.transition = `height ${ANIM_DURATION}ms ease-out`;
@@ -425,10 +471,10 @@ function toggleCollapse(state: AxisState, nodeId: string): void {
         delete el.dataset.naturalHeight;
         if (el.classList.contains("graph-row")) {
           const summary = el.querySelector<HTMLElement>(".node-summary");
-          const badge = el.querySelector<HTMLElement>(".collapse-badge");
+          const rowBadge = el.querySelector<HTMLElement>(".collapse-badge");
           const dot = el.querySelector<SVGElement>(".gutter-svg [data-dot]");
           if (summary) { summary.style.transition = `opacity ${ANIM_DURATION}ms ease-out`; summary.style.opacity = "1"; }
-          if (badge) { badge.style.transition = `opacity ${ANIM_DURATION}ms ease-out`; badge.style.opacity = "1"; }
+          if (rowBadge) { rowBadge.style.transition = `opacity ${ANIM_DURATION}ms ease-out`; rowBadge.style.opacity = "1"; }
           if (dot) { dot.style.transition = `opacity ${ANIM_DURATION}ms ease-out`; dot.style.opacity = "1"; }
         } else {
           el.style.transition = `height ${ANIM_DURATION}ms ease-out, opacity ${ANIM_DURATION}ms ease-out`;
@@ -438,6 +484,15 @@ function toggleCollapse(state: AxisState, nodeId: string): void {
 
       setTimeout(() => {
         // Clean up all inline styles from animation
+        if (badge) {
+          badge.style.transition = "";
+          badge.style.display = "";
+          badge.style.width = "";
+          badge.style.padding = "";
+          badge.style.marginRight = "";
+          badge.style.opacity = "";
+          badge.style.overflow = "";
+        }
         for (const el of appearing) {
           el.style.transition = "";
           el.style.height = "";
@@ -456,6 +511,7 @@ function toggleCollapse(state: AxisState, nodeId: string): void {
     }));
   }
 }
+
 
 /** Snapshot which detail panels are open before rebuilding. */
 function snapshotOpenDetails(state: AxisState): void {
