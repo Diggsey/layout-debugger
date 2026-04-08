@@ -433,7 +433,7 @@ function buildDetail(
   content.appendChild(buildCalcDisplay(node, nodeMap, section));
 
   // CSS properties
-  const props = Object.entries(node.cssProperties).filter(([, v]) => v != null);
+  const props = Object.entries(node.cssProperties).filter(([, v]) => v != null).sort(([a], [b]) => a.localeCompare(b));
   if (props.length > 0) {
     const grid = document.createElement("div");
     grid.className = "detail-props";
