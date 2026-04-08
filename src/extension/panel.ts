@@ -114,26 +114,39 @@ function getVisibleNodes(state: AxisState): Set<string> {
   return visible;
 }
 
-/** Count descendants hidden by collapsing a node. */
-function countHiddenDescendants(
-  nodeId: string, nodeMap: Map<string, RenderNode>,
-  allNodeIds: Set<string>, visibleSet: Set<string>,
-): number {
-  const reached = new Set<string>();
-  const stack = [...(nodeMap.get(nodeId)?.dependsOn ?? []).filter(d => allNodeIds.has(d))];
-  while (stack.length > 0) {
-    const id = stack.pop()!;
-    if (reached.has(id)) continue;
-    reached.add(id);
-    const n = nodeMap.get(id);
-    if (n) {
-      for (const dep of n.dependsOn) {
-        if (allNodeIds.has(dep) && !reached.has(dep)) stack.push(dep);
+/**
+ * Count nodes that would become visible if this node were expanded.
+ * Simulates a BFS with this node uncollapsed (but other collapses intact),
+ * then counts how many of the newly reachable nodes aren't currently visible.
+ */
+function countHiddenDescendants(state: AxisState, nodeId: string, visibleSet: Set<string>): number {
+  // Compute what would be visible if only this node were uncollapsed
+  const hypothetical = new Set<string>();
+  const root = state.axis.nodes[0];
+  if (!root) return 0;
+
+  const queue = [root.id];
+  while (queue.length > 0) {
+    const id = queue.shift()!;
+    if (hypothetical.has(id)) continue;
+    hypothetical.add(id);
+
+    // Skip children of collapsed nodes, EXCEPT for the node we're testing
+    if (id !== nodeId && state.collapsedSet.has(id)) continue;
+
+    const node = state.nodeMap.get(id);
+    if (node) {
+      for (const dep of node.dependsOn) {
+        if (state.allNodeIds.has(dep) && !hypothetical.has(dep)) queue.push(dep);
       }
     }
   }
+
+  // Count nodes that would be newly visible
   let count = 0;
-  for (const id of reached) if (!visibleSet.has(id)) count++;
+  for (const id of hypothetical) {
+    if (!visibleSet.has(id)) count++;
+  }
   return count;
 }
 
@@ -621,7 +634,7 @@ function buildRow(
     const badge = document.createElement("span");
     badge.className = "collapse-badge";
     if (state.collapsedSet.has(node.id)) {
-      const hidden = countHiddenDescendants(node.id, state.nodeMap, state.allNodeIds, visibleSet);
+      const hidden = countHiddenDescendants(state, node.id, visibleSet);
       badge.textContent = `+${hidden}`;
     } else {
       badge.textContent = `+${node.dependsOn.filter(d => state.allNodeIds.has(d)).length}`;
