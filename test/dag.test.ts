@@ -53,7 +53,7 @@ test.describe("DAG: flex row", () => {
     expect(base.inputs.minContent.mode).toMatch(/^min-content/);
 
     // growShare input: references free space
-    const share = dag.width.inputs.growShare;
+    const share = dag.width.inputs.share;
     expect(share.mode).toBe("flex-grow-share");
     expect(share.result).toBeGreaterThan(0);
     // free space references container content area
@@ -74,22 +74,23 @@ test.describe("DAG: flex row", () => {
     expect(dag.width.mode).toBe("flex-item-main");
     expect(dag.width.result).toBeCloseTo(333.33, 0);
     // flex:2 gets roughly double the share of flex:1
-    expect(dag.width.inputs.growShare.result).toBeGreaterThan(0);
+    expect(dag.width.inputs.share.result).toBeGreaterThan(0);
   });
 
   test("flex: 0 0 100px stays at basis", async ({ page }) => {
     const dag = await analyzeDag(page, "fixed");
     expect(dag.width.mode).toBe("flex-item-main");
     expect(dag.width.result).toBe(100);
-    expect(dag.width.inputs.growShare.mode).toBe("flex-no-change");
+    // Frozen at hypothetical — no share node, result is the base size directly
+    expect(dag.width.inputs.baseSize).toBeDefined();
   });
 
   test("two siblings share the same container content-area node", async ({ page }) => {
     const dag1 = await analyzeDag(page, "grow1");
     const dag2 = await analyzeDag(page, "grow2");
     // Both reference the same container — verified by element and kind
-    const cc1 = dag1.width.inputs.growShare.inputs.freeSpace.inputs.containerContent;
-    const cc2 = dag2.width.inputs.growShare.inputs.freeSpace.inputs.containerContent;
+    const cc1 = dag1.width.inputs.share.inputs.freeSpace.inputs.containerContent;
+    const cc2 = dag2.width.inputs.share.inputs.freeSpace.inputs.containerContent;
     expect(cc1.element).toBe("[flex-row]");
     expect(cc2.element).toBe("[flex-row]");
     expect(cc1.mode).toBe(cc2.mode);

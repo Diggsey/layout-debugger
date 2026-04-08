@@ -52,78 +52,113 @@ export function flexItemMain(
       .calc(fns.borderBoxCalc(nb.proxy, axis));
   });
 
-  // Free space: containerContent - Σ(sibling outer hypotheticals) - gaps
-  const gapPropName = axis === "width" ? "column-gap" : "row-gap";
-  const siblingTerms: CalcExpr[] = siblings.map(s => ref(s.outerNode));
-  if (siblings.length > 1 && gap > 0) {
-    for (let gi = 0; gi < siblings.length - 1; gi++) {
-      siblingTerms.push(prop(parent, gapPropName));
-    }
-  }
-  const freeSpaceInputs: LayoutNode["inputs"] = { containerContent };
-  siblings.forEach((s, i) => { freeSpaceInputs[`item${i}`] = s.outerNode; });
+  const gapPropName = axis === "width" ? "column-gap" as const : "row-gap" as const;
   const totalBases = siblings.reduce((sum, s) => sum + s.hypothetical + s.margin, 0);
   const totalGap = gap * Math.max(0, siblings.length - 1);
   const freeSpace = containerContent.result - totalBases - totalGap;
 
-  const freeSpaceNode = nb.create(`flex-free-space:${axis}`, container, (n) => {
-    n.setMode("flex-free-space")
-      .describe("Space remaining after all items are placed at their base size")
-      .calc(sub(ref(containerContent), add(...siblingTerms)))
-      .inputs(freeSpaceInputs);
-  });
-
-  // Resolve flex lengths (iterative algorithm)
+  // Resolve flex lengths (iterative freeze-and-redistribute algorithm)
   const allItems = siblings.map(s => ({
     element: s.element, basis: s.basis, hypothetical: s.hypothetical,
     grow: s.grow, shrink: s.shrink, minMain: s.minMain, maxMain: s.maxMain,
     margin: s.margin, pb: s.pb,
   }));
   const resolved = resolveFlexLengths(allItems, containerContent.result, totalGap);
-  const distributedSize = idx >= 0 ? resolved[idx] : actualSize;
+  const myResult = idx >= 0 ? resolved[idx] : null;
 
-  const grow = target?.grow ?? 0;
-  const shrink = target?.shrink ?? 1;
+  if (!myResult || !target) {
+    // Element not found among siblings — use measured size
+    nb.describe(`Flex item \u2014 ${axis} determined by the flex layout algorithm`)
+      .calc(fns.borderBoxCalc(nb.proxy, axis));
+    return;
+  }
 
-  // Build share node with real CalcExpr
-  let shareNode: LayoutNode;
-  if (freeSpace > 0 && grow > 0) {
-    const activeGrowNodes = siblings.filter(s => s.grow > 0).map(s => s.growNode!);
-    const shareInputs: LayoutNode["inputs"] = { freeSpace: freeSpaceNode };
-    activeGrowNodes.forEach((n, i) => { shareInputs[`grow${i}`] = n; });
+  // Build CalcExpr from the final resolved state.
+  // After the iterative algorithm, some items are frozen (at hypo, min, or max)
+  // and the rest got proportional shares of the remaining space.
+  if (myResult.frozen) {
+    // This item was frozen — its size is determined by the constraint
+    switch (myResult.frozenReason) {
+      case "min":
+        nb.describe(`Flex item \u2014 ${axis} clamped at minimum`)
+          .calc(ref(target.hypoNode))
+          .input("baseSize", baseSizeNode);
+        break;
+      case "max":
+        nb.describe(`Flex item \u2014 ${axis} clamped at maximum`)
+          .calc(ref(target.hypoNode))
+          .input("baseSize", baseSizeNode);
+        break;
+      default: // "hypothetical" — factor is 0 or no distribution needed
+        nb.describe(`Flex item \u2014 ${axis} stays at base size`)
+          .calc(ref(baseSizeNode))
+          .input("baseSize", baseSizeNode);
+        break;
+    }
+    return;
+  }
 
-    shareNode = nb.create(`flex-share:${axis}`, el, (n) => {
+  // This item is unfrozen — it got a proportional share.
+  // Build CalcExpr from the final iteration: only unfrozen items participate.
+  // Final remaining = container - Σ(frozen targets + margins) - Σ(unfrozen bases + margins) - gaps
+  const growing = freeSpace > 0;
+  const unfrozenFactorNodes: LayoutNode[] = [];
+
+  // In the final iteration, "used" sums frozen targets and unfrozen bases, plus margins.
+  // We use the exact numbers from resolveFlexLengths to ensure the CalcExpr matches.
+  const finalUsedTerms: CalcExpr[] = [];
+  const finalUsedInputs: LayoutNode["inputs"] = { containerContent };
+  for (let i = 0; i < siblings.length; i++) {
+    const s = siblings[i];
+    const usedSize = resolved[i].frozen ? resolved[i].target : s.basis;
+    finalUsedTerms.push(propVal("flex-basis", usedSize + s.margin));
+    if (!resolved[i].frozen) {
+      if (growing) {
+        if (s.growNode) unfrozenFactorNodes.push(s.growNode);
+      } else {
+        if (s.scaledShrinkNode) unfrozenFactorNodes.push(s.scaledShrinkNode);
+      }
+    }
+  }
+  if (siblings.length > 1 && gap > 0) {
+    for (let gi = 0; gi < siblings.length - 1; gi++) {
+      finalUsedTerms.push(prop(parent, gapPropName));
+    }
+  }
+
+  const finalFreeNode = nb.create(`flex-free-space:${axis}`, container, (n) => {
+    n.setMode("flex-free-space")
+      .describe("Remaining space in the final flex iteration")
+      .calc(sub(ref(containerContent), add(...finalUsedTerms)))
+      .inputs(finalUsedInputs);
+  });
+
+  // Share node using only unfrozen factors
+  const shareInputs: LayoutNode["inputs"] = { freeSpace: finalFreeNode };
+  unfrozenFactorNodes.forEach((n, i) => { shareInputs[`factor${i}`] = n; });
+
+  const shareNode = nb.create(`flex-share:${axis}`, el, (n) => {
+    if (growing) {
       n.setMode("flex-grow-share")
-        .describe("Portion of free space allocated to this item by flex-grow")
-        .calc(mul(div(prop(nb.proxy, "flex-grow"), add(...activeGrowNodes.map(ref))), ref(freeSpaceNode)))
-        .inputs(shareInputs);
-    });
-  } else if (freeSpace < 0 && shrink > 0) {
-    const activeShrinkNodes = siblings.filter(s => s.shrink > 0).map(s => s.scaledShrinkNode!);
-    const shareInputs: LayoutNode["inputs"] = { freeSpace: freeSpaceNode };
-    activeShrinkNodes.forEach((n, i) => { shareInputs[`shrink${i}`] = n; });
-
-    const myScaledShrink = target?.scaledShrinkNode;
-    shareNode = nb.create(`flex-share:${axis}`, el, (n) => {
-      n.setMode("flex-shrink-share")
-        .describe("Amount this item shrinks to fit in the container")
-        .calc(myScaledShrink
-          ? mul(div(ref(myScaledShrink), add(...activeShrinkNodes.map(ref))), ref(freeSpaceNode))
+        .describe("Portion of remaining space allocated by flex-grow")
+        .calc(unfrozenFactorNodes.length > 0
+          ? mul(div(prop(nb.proxy, "flex-grow"), add(...unfrozenFactorNodes.map(ref))), ref(finalFreeNode))
           : constant(0, PX))
         .inputs(shareInputs);
-    });
-  } else {
-    shareNode = nb.create(`flex-share:${axis}`, el, (n) => {
-      n.setMode("flex-no-change")
-        .describe(grow === 0 ? "This item does not grow or shrink" : "No free space to distribute")
-        .calc(constant(0, PX));
-    });
-  }
+    } else {
+      const myScaledShrink = target.scaledShrinkNode;
+      n.setMode("flex-shrink-share")
+        .describe("Amount this item shrinks to fit in the container")
+        .calc(myScaledShrink && unfrozenFactorNodes.length > 0
+          ? mul(div(ref(myScaledShrink), add(...unfrozenFactorNodes.map(ref))), ref(finalFreeNode))
+          : constant(0, PX))
+        .inputs(shareInputs);
+    }
+  });
 
   nb.describe(`Flex item \u2014 ${axis} determined by the flex layout algorithm`)
     .calc(add(ref(baseSizeNode), ref(shareNode)))
-    .inputs({ baseSize: baseSizeNode, growShare: shareNode })
-    .overrideResult(round(distributedSize));
+    .inputs({ baseSize: baseSizeNode, share: shareNode });
 }
 
 // ---------------------------------------------------------------------------
@@ -397,10 +432,20 @@ interface FlexItem {
   pb: number;
 }
 
+type FrozenReason = "none" | "hypothetical" | "min" | "max";
+
+interface FlexResolveResult {
+  target: number;
+  frozen: boolean;
+  frozenReason: FrozenReason;
+}
+
 function resolveFlexLengths(
   items: FlexItem[], containerContent: number, totalGap: number,
-): number[] {
-  const state = items.map((item) => ({ frozen: false, target: item.basis }));
+): FlexResolveResult[] {
+  const state: FlexResolveResult[] = items.map(() => ({
+    frozen: false, target: 0, frozenReason: "none" as FrozenReason,
+  }));
   const totalHypo = items.reduce((s, i) => s + i.hypothetical + i.margin, 0);
   const growing = containerContent - totalHypo - totalGap > 0;
 
@@ -410,6 +455,7 @@ function resolveFlexLengths(
         (!growing && items[i].basis < items[i].hypothetical)) {
       state[i].target = items[i].hypothetical;
       state[i].frozen = true;
+      state[i].frozenReason = "hypothetical";
     }
   }
 
@@ -439,9 +485,11 @@ function resolveFlexLengths(
       if (state[i].target < items[i].minMain) {
         violation = items[i].minMain - state[i].target;
         state[i].target = items[i].minMain;
+        state[i].frozenReason = "min";
       } else if (state[i].target > items[i].maxMain) {
         violation = items[i].maxMain - state[i].target;
         state[i].target = items[i].maxMain;
+        state[i].frozenReason = "max";
       }
       if (violation !== 0) clamped.push(i);
       totalViolation += violation;
@@ -451,9 +499,14 @@ function resolveFlexLengths(
       const isMin = state[i].target === items[i].minMain;
       if ((totalViolation > 0 && isMin) || (totalViolation < 0 && !isMin)) {
         state[i].frozen = true;
+      } else {
+        // Not frozen this round — reset reason
+        state[i].frozenReason = "none";
       }
     }
   }
 
-  return state.map((s) => round(s.target));
+  // Round final targets
+  for (const s of state) s.target = round(s.target);
+  return state;
 }

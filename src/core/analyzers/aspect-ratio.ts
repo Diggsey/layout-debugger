@@ -54,7 +54,9 @@ export function aspectRatio(
     .calc(calc)
     .input("otherAxis", otherNode);
 
+  // Use browser-measured result for edge cases (scrollbars, overflow, etc.)
+  // TODO: handle these in the calc instead of overriding
   const rect = el.getBoundingClientRect();
-  const measured = axis === "width" ? rect.width : rect.height;
-  nb.overrideResult(Math.round(measured * 100) / 100);
+  const measuredVal = axis === "width" ? rect.width : rect.height;
+  nb.overrideResult(Math.round(measuredVal * 100) / 100);
 }
