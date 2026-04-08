@@ -1,5 +1,7 @@
 // Shared types, constants, and small utilities for the panel.
 
+import type { DagInput, LayoutResult } from "../core/dag-layout";
+
 export interface CalcSegment { text: string; refId?: string; label?: string; }
 export interface RenderNode {
   id: string; elementPath: string; elementDesc: string; kind: string;
@@ -10,6 +12,20 @@ export interface RenderNode {
 }
 export interface AxisRender { axis: string; result: number; nodes: RenderNode[]; }
 export interface DagRender { elementPath: string; elementDesc: string; width: AxisRender; height: AxisRender; }
+
+/** Per-axis persistent state shared across re-renders and the collapse system. */
+export interface AxisState {
+  axis: AxisRender;
+  nodeMap: Map<string, RenderNode>;
+  allNodeIds: Set<string>;
+  fullDagInput: DagInput[];
+  fullLayout: LayoutResult;
+  collapsedSet: Set<string>;
+  openDetails: Set<string>;
+  section: HTMLElement;
+  rowContainer: HTMLElement;
+  asciiPre: HTMLElement;
+}
 
 // --- SVG gutter constants ---
 

@@ -9,8 +9,8 @@ import {
 // Graph hover highlighting (SVG overlay + detail rails)
 // ---------------------------------------------------------------------------
 
-/** Set a highlight overlay element's color. */
-function hlOn(el: SVGElement, color: string): void {
+/** Set or clear a highlight overlay element's color based on its tag. */
+function setHlColor(el: SVGElement, color: string): void {
   if (el.tagName === "g") {
     el.setAttribute("color", color);
   } else if (el.tagName === "circle") {
@@ -31,7 +31,7 @@ export function highlightGraph(section: HTMLElement, nodeId: string, deps: strin
   // Outgoing edges (this node → its deps): purple
   for (const dep of deps) {
     highlightEdge(edgeId(nodeId, dep), HOVER_OUT_COLOR);
-    section.querySelectorAll(`.hl[data-dot="${dep}"]`).forEach((el) => hlOn(el as SVGElement, HOVER_OUT_COLOR));
+    section.querySelectorAll(`.hl[data-dot="${dep}"]`).forEach((el) => setHlColor(el as SVGElement, HOVER_OUT_COLOR));
   }
 
   // Incoming edges (parents → this node): blue
@@ -40,26 +40,17 @@ export function highlightGraph(section: HTMLElement, nodeId: string, deps: strin
     const parentDeps = (row.dataset.deps ?? "").split(",");
     if (parentDeps.includes(nodeId)) {
       highlightEdge(edgeId(parentId, nodeId), HOVER_IN_COLOR);
-      section.querySelectorAll(`.hl[data-dot="${parentId}"]`).forEach((el) => hlOn(el as SVGElement, HOVER_IN_COLOR));
+      section.querySelectorAll(`.hl[data-dot="${parentId}"]`).forEach((el) => setHlColor(el as SVGElement, HOVER_IN_COLOR));
     }
   });
 
   // Hovered node's dot
-  section.querySelectorAll(`.hl[data-dot="${nodeId}"]`).forEach((el) => hlOn(el as SVGElement, HOVER_DOT_COLOR));
+  section.querySelectorAll(`.hl[data-dot="${nodeId}"]`).forEach((el) => setHlColor(el as SVGElement, HOVER_DOT_COLOR));
 }
 
 /** Clear all graph hover highlights. */
 export function clearGraphHighlight(section: HTMLElement): void {
-  section.querySelectorAll(".hl").forEach((el) => {
-    const svg = el as SVGElement;
-    if (svg.tagName === "g") {
-      svg.setAttribute("color", "transparent");
-    } else if (svg.tagName === "circle") {
-      svg.setAttribute("fill", "transparent");
-    } else {
-      svg.setAttribute("stroke", "transparent");
-    }
-  });
+  section.querySelectorAll(".hl").forEach((el) => setHlColor(el as SVGElement, "transparent"));
   section.querySelectorAll(".detail-rail[data-edges]").forEach((el) => {
     (el as SVGElement).setAttribute("stroke", LINE_COLOR);
   });
@@ -74,7 +65,7 @@ export function highlightRef(section: HTMLElement, fromId: string, toId: string)
   section.querySelectorAll(`.hl[data-edges~="${eid}"], .detail-rail[data-edges~="${eid}"]`).forEach((el) => {
     (el as SVGElement).setAttribute("stroke", HOVER_OUT_COLOR);
   });
-  section.querySelectorAll(`.hl[data-dot="${toId}"]`).forEach((el) => hlOn(el as SVGElement, HOVER_OUT_COLOR));
+  section.querySelectorAll(`.hl[data-dot="${toId}"]`).forEach((el) => setHlColor(el as SVGElement, HOVER_OUT_COLOR));
 }
 
 export function clearRefHighlight(section: HTMLElement): void {
