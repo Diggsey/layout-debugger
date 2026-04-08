@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "no-restricted-globals": [
+      "error",
+      {
+        "name": "getComputedStyle",
+        "message": "Use ElementProxy.readProperty() instead of getComputedStyle() for tracked CSS reads. Only ElementProxy (in dag.ts) and low-level utilities (sizing.ts, context.ts, containing-block.ts, utils.ts) may use it directly."
+      }
+    ]
+  }
+}
