@@ -72,10 +72,9 @@ function determineMode(proxy: ElementProxy, axis: Axis): NodeMode {
     const parentDisplay = pp.readProperty("display");
     if (parentDisplay === "flex" || parentDisplay === "inline-flex") {
       const direction = pp.readProperty("flex-direction");
-      if (axis === flexMainAxisProp(direction)) {
-        const wrap = pp.readProperty("flex-wrap");
-        if (wrap === "nowrap") return "flex-item-main";
-      }
+      const wrap = pp.readProperty("flex-wrap");
+      if (wrap !== "nowrap") return "terminal"; // Multi-line flex: not yet modeled
+      if (axis === flexMainAxisProp(direction)) return "flex-item-main";
     }
     if (parentDisplay === "grid" || parentDisplay === "inline-grid") {
       isGridItem = true;
@@ -100,7 +99,7 @@ function determineMode(proxy: ElementProxy, axis: Axis): NodeMode {
   const intrinsic = proxy.getIntrinsicKeyword(axis);
   if (intrinsic) return "intrinsic-keyword";
 
-  // Flex cross axis
+  // Flex cross axis (wrapped flex returned "terminal" above, so this is single-line only)
   if (parent && position !== "absolute" && position !== "fixed") {
     const pp = proxy.getParent();
     const parentDisplay = pp.readProperty("display");

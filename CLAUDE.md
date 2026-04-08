@@ -8,6 +8,12 @@ Never add `eslint-disable` or other lint suppression comments without:
 
 The only file authorized to have a lint exception is `src/core/element-proxy.ts`, which is the sole wrapper around `getComputedStyle`.
 
+## CalcExpr and Node Results
+
+Every LayoutNode's CalcExpr MUST represent the real CSS calculation that produces the node's result. Never use `propVal`, `overrideResult`, or `getBoundingClientRect` to paper over a CalcExpr that doesn't match reality. If the CalcExpr evaluates to a different number than the browser, the CalcExpr is wrong — fix the calculation, don't override the result.
+
+The whole point of this tool is to show users WHY an element is a given size. A CalcExpr that just reports a measured value explains nothing. Build the actual calculation from the spec (container size minus margins, flex algorithm shares, percentage of containing block, etc.).
+
 ## CSS Property Access
 
 All CSS property reads MUST go through `ElementProxy` (defined in `src/core/element-proxy.ts`). Direct use of `getComputedStyle` is forbidden everywhere except inside ElementProxy itself. This ensures every CSS read is tracked and visible in the UI.

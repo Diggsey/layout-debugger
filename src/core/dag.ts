@@ -6,7 +6,7 @@
  * and the UI presentation, so they can never get out of sync.
  */
 
-import { type Units, UNITLESS, PX, unitsMul, unitsDiv, unitsAssertEqual, formatUnits } from "./units";
+import { type Units, UNITLESS, PX, unitsMul, unitsDiv, unitsAssertEqual } from "./units";
 import { ElementProxy, type CssPropertyName } from "./element-proxy";
 
 export { ElementProxy } from "./element-proxy";
@@ -99,28 +99,6 @@ export function calcUnit(expr: CalcExpr): Units {
   return expr.unit;
 }
 
-/** Collect all CSS property names referenced in a CalcExpr tree. */
-export function collectProperties(expr: CalcExpr): Record<string, string> {
-  const props: Record<string, string> = {};
-  function walk(e: CalcExpr): void {
-    switch (e.op) {
-      case "property": {
-        const suffix = formatUnits(e.unit);
-        props[e.name] = suffix ? `${e.value}${suffix}` : String(e.value);
-        break;
-      }
-      case "measured": break;
-      case "ref": break;
-      case "constant": break;
-      case "add": case "max": case "min": e.args.forEach(walk); break;
-      case "sub": walk(e.left); walk(e.right); break;
-      case "mul": walk(e.left); walk(e.right); break;
-      case "div": walk(e.left); walk(e.right); break;
-    }
-  }
-  walk(expr);
-  return props;
-}
 
 // ---------------------------------------------------------------------------
 // Builder helpers — each computes and stores the unit at construction time
@@ -292,7 +270,6 @@ export class DagBuilder {
 
   /** Register a completed node (called by NodeBuilder._finish). */
   _register(kind: NodeKind, node: LayoutNode): void {
-    node.cssProperties = { ...collectProperties(node.calc), ...node.cssProperties };
     const key = this.key(node.kind, node.element);
     this.building.delete(key);
     this.nodes.set(key, node);

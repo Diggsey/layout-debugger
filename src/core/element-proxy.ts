@@ -133,6 +133,14 @@ export class ElementProxy {
     return parseFloat(this.readProperty(name)) || 0;
   }
 
+  /**
+   * Read a CSS property value WITHOUT recording it.
+   * Used by prop() which has its own tracking via CalcExpr auto-collection.
+   */
+  readRaw(name: CssPropertyName): string {
+    return this._style.getPropertyValue(name);
+  }
+
   /** Record a synthetic CSS property value (e.g. "auto" when computed differs). */
   record(name: CssPropertyName, value: string): void {
     const key = this._prefix ? `${this._prefix}.${name}` : name;

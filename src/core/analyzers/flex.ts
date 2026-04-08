@@ -166,10 +166,15 @@ export function flexItemCross(
   nb.css("align-self");
   parent.readProperty("align-items");
 
+  // Per CSS Flexbox §9.4: stretched cross size = container content area - item margins
   const containerCross = fns.computeSize(parent.element, axis, depth - 1);
+  const containerContent = fns.containerContentArea(parent.element, axis, containerCross);
+  const [mStart, mEnd] = axis === "width"
+    ? ["margin-left", "margin-right"] as const
+    : ["margin-top", "margin-bottom"] as const;
   nb.describe("Flex item stretches on the cross axis to fill the container")
-    .calc(fns.borderBoxCalc(nb.proxy, axis))
-    .input("containerCross", containerCross);
+    .calc(sub(ref(containerContent), add(nb.prop(mStart), nb.prop(mEnd))))
+    .input("containerContent", containerContent);
 }
 
 // ---------------------------------------------------------------------------
