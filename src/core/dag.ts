@@ -7,10 +7,10 @@
  */
 
 import { type Units, UNITLESS, PX, unitsMul, unitsDiv, unitsAssertEqual, formatUnits } from "./units";
-import { ElementProxy } from "./element-proxy";
+import { ElementProxy, type CssPropertyName } from "./element-proxy";
 
 export { ElementProxy } from "./element-proxy";
-export type { ExplicitSize } from "./element-proxy";
+export type { ExplicitSize, CssPropertyName } from "./element-proxy";
 
 // ---------------------------------------------------------------------------
 // Node identity
@@ -135,7 +135,7 @@ export function constant<T extends number>(n: LiteralNumber<T>, unit: Units = UN
 }
 
 /** Create a CalcExpr property node by reading a CSS property via an ElementProxy. */
-export function prop(proxy: ElementProxy, name: string): CalcExpr {
+export function prop(proxy: ElementProxy, name: CssPropertyName): CalcExpr {
   const raw = proxy.readProperty(name);
   let value: number;
   let unit: Units;
@@ -154,7 +154,7 @@ export function prop(proxy: ElementProxy, name: string): CalcExpr {
 }
 
 /** Create a property CalcExpr with an explicit value (when computed style returns the wrong value). */
-export function propVal(name: string, value: number, unit: Units = PX): CalcExpr {
+export function propVal(name: CssPropertyName, value: number, unit: Units = PX): CalcExpr {
   return { op: "property", name, value, unit };
 }
 
@@ -348,17 +348,17 @@ export class NodeBuilder {
   }
 
   /** Read a CSS property value (string) on this element, auto-recorded. */
-  css(name: string): string {
+  css(name: CssPropertyName): string {
     return this.proxy.readProperty(name);
   }
 
   /** Read a CSS property as a pixel number on this element, auto-recorded. */
-  cssPx(name: string): number {
+  cssPx(name: CssPropertyName): number {
     return parseFloat(this.css(name)) || 0;
   }
 
   /** Create a CalcExpr property node for this element's CSS property. */
-  prop(name: string): CalcExpr {
+  prop(name: CssPropertyName): CalcExpr {
     return prop(this.proxy, name);
   }
 
@@ -458,7 +458,7 @@ export class NodeBuilder {
 
 function px(v: string): number { return parseFloat(v) || 0; }
 
-function constraintCalc(proxy: ElementProxy, axis: Axis, constraintProp: string, boxSizing: string): CalcExpr {
+function constraintCalc(proxy: ElementProxy, axis: Axis, constraintProp: CssPropertyName, boxSizing: string): CalcExpr {
   const base = prop(proxy, constraintProp);
   if (boxSizing === "border-box") return base;
   if (axis === "width") {

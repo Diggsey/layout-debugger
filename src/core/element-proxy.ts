@@ -11,36 +11,84 @@
 import type { Axis } from "./dag";
 
 // ---------------------------------------------------------------------------
-// Auto-reason generation
+// CSS property name type — every tracked property must be listed here
 // ---------------------------------------------------------------------------
 
-const REASON_TABLE: Record<string, string> = {
-  "display":          "Determines box generation and layout mode",
-  "position":         "Determines positioning scheme",
-  "flex-basis":       "Starting size before flex distribution",
-  "flex-grow":        "Growth factor relative to siblings",
-  "flex-shrink":      "Shrink factor relative to siblings",
-  "flex-direction":   "Determines main vs cross axis",
-  "flex-wrap":        "Single-line vs multi-line flex",
-  "align-self":       "Cross-axis alignment of this item",
-  "align-items":      "Container default for cross-axis alignment",
-  "box-sizing":       "Whether padding/border are included in size",
-  "overflow":         "Affects minimum size calculation",
-  "aspect-ratio":     "Ratio between width and height",
-  "writing-mode":     "Determines inline vs block axis direction",
-  "min-width":        "Minimum width constraint",
-  "max-width":        "Maximum width constraint",
-  "min-height":       "Minimum height constraint",
-  "max-height":       "Maximum height constraint",
-  "left":             "Left offset from containing block",
-  "right":            "Right offset from containing block",
-  "top":              "Top offset from containing block",
-  "bottom":           "Bottom offset from containing block",
+export type CssPropertyName =
+  // Box model
+  | "width" | "height"
+  | "min-width" | "min-height" | "max-width" | "max-height"
+  | "padding-left" | "padding-right" | "padding-top" | "padding-bottom"
+  | "border-left-width" | "border-right-width" | "border-top-width" | "border-bottom-width"
+  | "margin-left" | "margin-right" | "margin-top" | "margin-bottom"
+  | "box-sizing"
+  // Layout mode
+  | "display" | "position" | "float" | "writing-mode"
+  // Flex
+  | "flex-basis" | "flex-grow" | "flex-shrink" | "flex-direction" | "flex-wrap"
+  | "align-self" | "align-items"
+  | "column-gap" | "row-gap"
+  // Grid
+  | "grid-column" | "grid-row"
+  // Positioning
+  | "left" | "right" | "top" | "bottom"
+  // Overflow
+  | "overflow" | "overflow-x" | "overflow-y"
+  // Sizing
+  | "aspect-ratio";
+
+// ---------------------------------------------------------------------------
+// Auto-reason generation — every CssPropertyName must have an entry
+// ---------------------------------------------------------------------------
+
+const REASON_TABLE: Record<CssPropertyName, string> = {
+  "width":              "Computed width",
+  "height":             "Computed height",
+  "min-width":          "Minimum width constraint",
+  "min-height":         "Minimum height constraint",
+  "max-width":          "Maximum width constraint",
+  "max-height":         "Maximum height constraint",
+  "padding-left":       "Left padding",
+  "padding-right":      "Right padding",
+  "padding-top":        "Top padding",
+  "padding-bottom":     "Bottom padding",
+  "border-left-width":  "Left border width",
+  "border-right-width": "Right border width",
+  "border-top-width":   "Top border width",
+  "border-bottom-width": "Bottom border width",
+  "margin-left":        "Left margin",
+  "margin-right":       "Right margin",
+  "margin-top":         "Top margin",
+  "margin-bottom":      "Bottom margin",
+  "box-sizing":         "Whether padding/border are included in size",
+  "display":            "Determines box generation and layout mode",
+  "position":           "Determines positioning scheme",
+  "float":              "Float direction",
+  "writing-mode":       "Determines inline vs block axis direction",
+  "flex-basis":         "Starting size before flex distribution",
+  "flex-grow":          "Growth factor relative to siblings",
+  "flex-shrink":        "Shrink factor relative to siblings",
+  "flex-direction":     "Determines main vs cross axis",
+  "flex-wrap":          "Single-line vs multi-line flex",
+  "align-self":         "Cross-axis alignment of this item",
+  "align-items":        "Container default for cross-axis alignment",
+  "column-gap":         "Gap between columns",
+  "row-gap":            "Gap between rows",
+  "grid-column":        "Grid column placement",
+  "grid-row":           "Grid row placement",
+  "left":               "Left offset from containing block",
+  "right":              "Right offset from containing block",
+  "top":                "Top offset from containing block",
+  "bottom":             "Bottom offset from containing block",
+  "overflow":           "Affects minimum size calculation",
+  "overflow-x":         "Horizontal overflow behavior",
+  "overflow-y":         "Vertical overflow behavior",
+  "aspect-ratio":       "Ratio between width and height",
 };
 
 function autoReason(key: string): string {
   // Strip all prefixes (parent., containingBlock., etc.) for lookup
-  const bare = key.replace(/^[^.]+\./g, "");
+  const bare = key.replace(/^.+\./, "") as CssPropertyName;
   return REASON_TABLE[bare] ?? "";
 }
 
@@ -73,7 +121,7 @@ export class ElementProxy {
   // --- CSS property reads ---
 
   /** Read a CSS property, record it, and return the value. */
-  readProperty(name: string): string {
+  readProperty(name: CssPropertyName): string {
     const val = this._style.getPropertyValue(name);
     const key = this._prefix ? `${this._prefix}.${name}` : name;
     this._records.push([key, val]);
@@ -81,12 +129,12 @@ export class ElementProxy {
   }
 
   /** Read a CSS property as a pixel number. */
-  readPx(name: string): number {
+  readPx(name: CssPropertyName): number {
     return parseFloat(this.readProperty(name)) || 0;
   }
 
   /** Record a synthetic CSS property value (e.g. "auto" when computed differs). */
-  record(name: string, value: string): void {
+  record(name: CssPropertyName, value: string): void {
     const key = this._prefix ? `${this._prefix}.${name}` : name;
     this._records.push([key, value]);
   }

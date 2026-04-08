@@ -12,7 +12,7 @@ export function gridItem(
     nb.input("container", fns.computeSize(parent.element, axis, depth - 1));
   }
 
-  const trackProp = `grid-${axis === "width" ? "column" : "row"}`;
+  const trackProp = axis === "width" ? "grid-column" as const : "grid-row" as const;
   nb.css(trackProp);
 
   nb.describe(`Grid item \u2014 ${axis} determined by the grid track it occupies`)

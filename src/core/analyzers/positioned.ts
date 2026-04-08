@@ -9,8 +9,8 @@ export function positioned(
   fns: SizeFns, nb: NodeBuilder, axis: Axis, depth: number,
 ): void {
   const el = nb.element;
-  const startProp = axis === "width" ? "left" : "top";
-  const endProp = axis === "width" ? "right" : "bottom";
+  const startProp = axis === "width" ? "left" as const : "top" as const;
+  const endProp = axis === "width" ? "right" as const : "bottom" as const;
   const startVal = nb.css(startProp);
   const endVal = nb.css(endProp);
 
@@ -32,7 +32,7 @@ export function positioned(
     });
 
     const [mStartName, mEndName] = axis === "width"
-      ? ["margin-left", "margin-right"] : ["margin-top", "margin-bottom"];
+      ? ["margin-left", "margin-right"] as const : ["margin-top", "margin-bottom"] as const;
     const pbProps = axis === "width"
       ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
       : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;

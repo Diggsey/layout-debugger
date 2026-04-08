@@ -19,7 +19,7 @@ export function blockFill(
   const contentAreaNode = containerContentArea(fns, cb.element, axis, cbNode);
 
   const [mStartName, mEndName] = axis === "width"
-    ? ["margin-left", "margin-right"] : ["margin-top", "margin-bottom"];
+    ? ["margin-left", "margin-right"] as const : ["margin-top", "margin-bottom"] as const;
   const pbProps = axis === "width"
     ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
     : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
