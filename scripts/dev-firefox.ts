@@ -6,8 +6,15 @@ const root = resolve(import.meta.dirname, "..");
 const extPath = resolve(root, "dist/extension");
 const testPage = pathToFileURL(resolve(root, "test-extension.html")).href;
 
+// Initial build so the extension exists before launching
 console.log("Building...");
 execSync("npm run build:all", { cwd: root, stdio: "inherit" });
+
+// Watch extension build for changes — web-ext reloads automatically
+console.log("Watching for changes...");
+spawn("npx", ["vite", "build", "--config", "vite.config.extension.ts", "--watch"], {
+  cwd: root, stdio: "inherit", shell: true,
+});
 
 console.log("Launching Firefox with extension...");
 const child = spawn(
