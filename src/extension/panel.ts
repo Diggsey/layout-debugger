@@ -18,13 +18,12 @@ import { bfsVisible, countHiddenDescendants, toggleCollapse } from "./panel-coll
 const resultEl = document.getElementById("result")!;
 const emptyEl = document.getElementById("empty-state")!;
 const errorEl = document.getElementById("error")!;
-const analyzeBtn = document.getElementById("analyze-btn")!;
+const statusEl = document.getElementById("status")!;
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 function runAnalysis(): void {
-  analyzeBtn.textContent = "Analyzing\u2026";
-  analyzeBtn.setAttribute("disabled", "");
+  statusEl.textContent = "Analyzing\u2026";
   chrome.devtools.inspectedWindow.eval(
     `(function() {
       if (!window.__layoutDebugger) return { error: "Layout Debugger engine not loaded. Refresh the page." };
@@ -33,8 +32,7 @@ function runAnalysis(): void {
       catch (e) { return { error: e instanceof Error ? (e.stack || e.message) : String(e) }; }
     })()`,
     (result: DagRender & { error?: string }, error: chrome.devtools.inspectedWindow.EvaluationExceptionInfo) => {
-      analyzeBtn.textContent = "Analyze $0";
-      analyzeBtn.removeAttribute("disabled");
+      statusEl.textContent = "";
       if (error && error.isException) return showError(error.value || "Unknown error");
       if (result && result.error) return showError(result.error);
       showResult(result);
@@ -42,7 +40,8 @@ function runAnalysis(): void {
   );
 }
 
-analyzeBtn.addEventListener("click", runAnalysis);
+// Auto-analyze on panel load and whenever the selected element changes
+runAnalysis();
 chrome.devtools.panels.elements.onSelectionChanged.addListener(() => {
   if (debounceTimer) clearTimeout(debounceTimer);
   debounceTimer = setTimeout(runAnalysis, 150);

@@ -11,13 +11,7 @@ body {
   padding: 6px 12px; background: #161b22; border-bottom: 1px solid #30363d;
 }
 #title { font-weight: 600; font-size: 13px; color: #8b949e; }
-#analyze-btn {
-  padding: 4px 12px; font-size: 11px; font-family: inherit;
-  background: #238636; color: #fff; border: none;
-  border-radius: 6px; cursor: pointer; font-weight: 500;
-}
-#analyze-btn:hover { background: #2ea043; }
-#analyze-btn[disabled] { opacity: 0.5; cursor: default; }
+#status { font-size: 11px; color: #8b949e; }
 
 #content { padding: 12px; padding-bottom: 100vh; overflow: auto; height: calc(100vh - 40px); }
 #empty-state { color: #8b949e; padding: 24px; text-align: center; }

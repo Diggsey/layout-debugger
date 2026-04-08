@@ -7,15 +7,10 @@
   <body>
     <div id="toolbar">
       <span id="title">Layout Debugger</span>
-      <button id="analyze-btn" title="Analyze selected element (or select one in Elements panel)">
-        Analyze $0
-      </button>
+      <span id="status"></span>
     </div>
     <div id="content">
-      <div id="empty-state">
-        Select an element in the Elements panel, then click "Analyze $0"
-        or it will analyze automatically when you select a new element.
-      </div>
+      <div id="empty-state">Select an element in the Elements panel to analyze its layout.</div>
       <div id="result" style="display: none"></div>
       <div id="error" style="display: none"></div>
     </div>
