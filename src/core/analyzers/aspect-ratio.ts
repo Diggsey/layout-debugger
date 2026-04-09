@@ -3,6 +3,7 @@
  */
 import type { Axis, CalcExpr, SizeFns, NodeBuilder } from "../dag";
 import { ref, prop, mul, div, add, sub } from "../dag";
+import { measureElementSize, round } from "../utils";
 
 export function aspectRatio(
   fns: SizeFns, nb: NodeBuilder, axis: Axis, depth: number,
@@ -56,7 +57,5 @@ export function aspectRatio(
 
   // Use browser-measured result for edge cases (scrollbars, overflow, etc.)
   // TODO: handle these in the calc instead of overriding
-  const rect = el.getBoundingClientRect();
-  const measuredVal = axis === "width" ? rect.width : rect.height;
-  nb.overrideResult(Math.round(measuredVal * 100) / 100);
+  nb.overrideResult(round(measureElementSize(el, axis)));
 }

@@ -1,3 +1,10 @@
+/* eslint-disable eslint-js/no-restricted-syntax -- Measurement utility: authorized to use getBoundingClientRect */
+
+/** Measure an element's border-box size on the given axis. */
+export function measureElementSize(el: Element, axis: "width" | "height"): number {
+  return el.getBoundingClientRect()[axis];
+}
+
 /** Parse a CSS pixel value like "123.45px" to a number. Returns 0 for non-pixel values. */
 export function px(value: string): number {
   if (value.endsWith("px")) {

@@ -18,6 +18,10 @@ The whole point of this tool is to show users WHY an element is a given size. A 
 
 All CSS property reads MUST go through `ElementProxy` (defined in `src/core/element-proxy.ts`). Direct use of `getComputedStyle` is forbidden everywhere except inside ElementProxy itself. This ensures every CSS read is tracked and visible in the UI.
 
+## No getBoundingClientRect in Core Layout Code
+
+`getBoundingClientRect()` is banned in core layout code (`src/core/`) because it replaces a calculation with a measurement, losing the "why" explanation. The only authorized measurement functions are in `src/core/utils.ts` (`measureElementSize`, `measureIntrinsicSize`, `measureMinContentSize`). UI code in `src/extension/` and the oracle in `src/core/serialize.ts` may use it directly. Enforced by `eslint-js/no-restricted-syntax` lint rule.
+
 ## Test Runner
 
 Tests use Playwright, not Vitest. Run with `npx playwright test --project default`.

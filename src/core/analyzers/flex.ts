@@ -42,9 +42,6 @@ export function flexItemMain(
   const gapPropName = direction.startsWith("column") ? "row-gap" as const : "column-gap" as const;
   const gap = parent.readPx(gapPropName);
 
-  const rect = el.getBoundingClientRect();
-  const actualSize = round(axis === "width" ? rect.width : rect.height);
-
   // Find the target in siblings
   const idx = siblings.findIndex(s => s.element === el);
   const target = idx >= 0 ? siblings[idx] : null;
@@ -266,8 +263,17 @@ function buildFlexChildData(
 
   // --- Max main ---
   const maxV = childProxy.readProperty(maxPropName);
-  // Percentage constraints that haven't resolved to px (indefinite CB) → treat as unconstrained
-  const maxMain = maxV === "none" || !maxV.endsWith("px") ? Infinity : (isBorderBox ? px(maxV) : px(maxV) + pb);
+  let maxMain: number;
+  if (maxV === "none") {
+    maxMain = Infinity;
+  } else if (maxV.endsWith("px")) {
+    maxMain = isBorderBox ? px(maxV) : px(maxV) + pb;
+  } else if (maxV.endsWith("%")) {
+    const resolved = (parseFloat(maxV) / 100) * containerContentPx;
+    maxMain = isBorderBox ? resolved : resolved + pb;
+  } else {
+    maxMain = Infinity;
+  }
 
   // --- Min main ---
   const minV = childProxy.readProperty(minPropName);
@@ -325,8 +331,12 @@ function buildFlexChildData(
         : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
       minCalc = add(prop(childProxy, minPropName), ...pbNames.map(p => prop(childProxy, p)));
     }
+  } else if (minV.endsWith("%")) {
+    const resolved = (parseFloat(minV) / 100) * containerContentPx;
+    minMain = isBorderBox ? resolved : resolved + pb;
+    minCalc = propVal(minPropName, round(minMain));
   } else {
-    // Percentage min that hasn't resolved to px → treat as 0
+    // Non-px, non-% min → treat as 0
     minMain = 0;
     minCalc = constant(0, PX);
   }

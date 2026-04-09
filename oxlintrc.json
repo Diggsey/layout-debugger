@@ -1,11 +1,31 @@
 {
+  "jsPlugins": [
+    {
+      "name": "eslint-js",
+      "specifier": "./node_modules/oxlint-plugin-eslint"
+    }
+  ],
   "rules": {
     "no-restricted-globals": [
       "error",
       {
         "name": "getComputedStyle",
-        "message": "Use ElementProxy.readProperty() instead of getComputedStyle() for tracked CSS reads. Only ElementProxy (in dag.ts) and low-level utilities (sizing.ts, context.ts, containing-block.ts, utils.ts) may use it directly."
+        "message": "Use ElementProxy.readProperty() instead of getComputedStyle(). Only element-proxy.ts may use it directly."
       }
     ]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/core/**/*.ts"],
+      "rules": {
+        "eslint-js/no-restricted-syntax": [
+          "error",
+          {
+            "selector": "CallExpression[callee.property.name='getBoundingClientRect']",
+            "message": "Avoid getBoundingClientRect() in core layout code. Use measureElementSize() from utils.ts, or computed styles / DAG calculations to preserve reasoning."
+          }
+        ]
+      }
+    }
+  ]
 }

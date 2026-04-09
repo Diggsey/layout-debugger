@@ -177,7 +177,7 @@ export function measureElements(dag: DagResult): BrowserMeasurements {
       visited.add(node.element);
       const path = getElementPath(node.element);
       if (!measurements[path]) {
-        const rect = node.element.getBoundingClientRect();
+        const rect = node.element.getBoundingClientRect(); // eslint-disable-line eslint-js/no-restricted-syntax -- Oracle measurement
         measurements[path] = {
           path,
           desc: describeElement(node.element),

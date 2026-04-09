@@ -15,6 +15,7 @@ import {
   round,
   flexMainAxisProp,
   measureIntrinsicSize,
+  measureElementSize,
   isAuto,
 } from "./utils";
 
@@ -238,7 +239,7 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
         break;
     }
 
-    nb.maybeClamp(axis);
+    nb.maybeClamp(axis, (cbEl, cbAxis) => computeSize(b, cbEl, cbAxis, depth - 1));
   });
 }
 
@@ -349,7 +350,7 @@ function contentSize(
   const display = nb.css("display");
   const size = intrinsic
     ? round(measureIntrinsicSize(el, axis))
-    : round(axis === "width" ? el.getBoundingClientRect().width : el.getBoundingClientRect().height);
+    : round(measureElementSize(el, axis));
 
   const isFlex = display === "flex" || display === "inline-flex";
   const wm = nb.css("writing-mode");

@@ -215,6 +215,9 @@ export class ElementProxy {
       if (inlineVal) {
         if (inlineVal.endsWith("%")) return { kind: "percentage", resolvedPx: this.readPx(axis) };
         if (isExplicitLength(inlineVal)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
+        if (isCssFunction(inlineVal)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
+        // Known non-explicit keywords — stop looking
+        if (inlineVal === "auto" || inlineVal === "none") return null;
       }
     }
 
@@ -226,10 +229,7 @@ export class ElementProxy {
       if (val.endsWith("%")) return { kind: "percentage", resolvedPx: this.readPx(axis) };
       if (isExplicitLength(val)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
       if (val === "auto" || val === "none") return null;
-      // CSS variable or calc — resolve
-      if (val.startsWith("var(") || val.startsWith("calc(") || val.startsWith("min(") || val.startsWith("max(") || val.startsWith("clamp(")) {
-        return { kind: "fixed", resolvedPx: this.readPx(axis) };
-      }
+      if (isCssFunction(val)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
     }
 
     return null;
@@ -322,6 +322,11 @@ function px(v: string): number { return parseFloat(v) || 0; }
 
 function isExplicitLength(val: string): boolean {
   return /^-?[\d.]+(?:px|em|rem|vh|vw|vmin|vmax|cm|mm|in|pt|pc|ch|ex|lh|rlh|cqi|cqb)$/.test(val);
+}
+
+function isCssFunction(val: string): boolean {
+  return val.startsWith("calc(") || val.startsWith("min(") || val.startsWith("max(") ||
+    val.startsWith("clamp(") || val.startsWith("var(");
 }
 
 function isIntrinsicKeyword(val: string): boolean {

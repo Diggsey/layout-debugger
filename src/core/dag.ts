@@ -394,8 +394,12 @@ export class NodeBuilder {
     return this._builder.isBuilding(kind, element);
   }
 
-  /** Apply min/max constraints as a post-processing step. */
-  maybeClamp(axis: Axis): void {
+  /**
+   * Apply min/max constraints as a post-processing step.
+   * @param computeCbSize — callback to compute the containing block's size as a DAG node
+   *   (needed to resolve percentage constraints like `min-width: 50%`)
+   */
+  maybeClamp(axis: Axis, computeCbSize?: (el: Element, axis: Axis) => LayoutNode): void {
     if (!this._calc) return;
     const p = this.proxy;
     const minPropName = axis === "width" ? "min-width" : "min-height";
@@ -411,22 +415,44 @@ export class NodeBuilder {
       : 0;
 
     const result = this._resultOverride ?? round(evaluate(this._calc));
-    // Percentage constraints that haven't resolved to px (indefinite containing block) can't be clamped
-    const minResolved = minVal === "auto" || minVal === "0px" || minVal === "0" || minVal.endsWith("px");
-    const maxResolved = maxVal === "none" || maxVal.endsWith("px");
-    const minPx = minVal === "auto" || minVal === "0px" || minVal === "0" ? 0
-      : minResolved ? px(minVal) + padBorder : 0;
-    const maxPx = maxVal === "none" ? Infinity
-      : maxResolved ? px(maxVal) + padBorder : Infinity;
+
+    // Resolve percentage constraints via the containing block DAG node
+    let cbNode: LayoutNode | null = null;
+    const getCbNode = (): LayoutNode | null => {
+      if (cbNode) return cbNode;
+      if (!computeCbSize) return null;
+      const cb = this.proxy.getContainingBlock();
+      cbNode = computeCbSize(cb.element, axis);
+      return cbNode;
+    };
+
+    const resolveConstraint = (val: string, fallback: number): number => {
+      if (val.endsWith("px")) return px(val) + padBorder;
+      if (val.endsWith("%")) {
+        const node = getCbNode();
+        if (!node) return fallback;
+        return (parseFloat(val) / 100) * node.result + padBorder;
+      }
+      return fallback;
+    };
+
+    const minPx = minVal === "auto" || minVal === "0px" || minVal === "0"
+      ? 0 : resolveConstraint(minVal, 0);
+    const maxPx = maxVal === "none" ? Infinity : resolveConstraint(maxVal, Infinity);
 
     if (result >= minPx && (maxPx === Infinity || result <= maxPx)) return;
 
-    // Wrap calc with clamp
+    // Record the containing block as an input if we used it
+    if (cbNode) this._inputs["constraintCB"] = cbNode;
+
+    // Wrap calc with clamp — pass resolved px for percentage constraints
+    const resolvedMax = maxVal.endsWith("%") ? round(maxPx - padBorder) : undefined;
+    const resolvedMin = minVal.endsWith("%") ? round(minPx - padBorder) : undefined;
     if (maxPx !== Infinity && result > maxPx) {
-      this._calc = cmin(constraintCalc(p, axis, maxPropName, boxSizing), this._calc);
+      this._calc = cmin(constraintCalc(p, axis, maxPropName, boxSizing, resolvedMax), this._calc);
       this._mode = "clamped";
     } else {
-      this._calc = cmax(constraintCalc(p, axis, minPropName, boxSizing), this._calc);
+      this._calc = cmax(constraintCalc(p, axis, minPropName, boxSizing, resolvedMin), this._calc);
       this._mode = "clamped";
     }
   }
@@ -455,8 +481,9 @@ export class NodeBuilder {
 
 function px(v: string): number { return parseFloat(v) || 0; }
 
-function constraintCalc(proxy: ElementProxy, axis: Axis, constraintProp: CssPropertyName, boxSizing: string): CalcExpr {
-  const base = prop(proxy, constraintProp);
+function constraintCalc(proxy: ElementProxy, axis: Axis, constraintProp: CssPropertyName, boxSizing: string, resolvedPx?: number): CalcExpr {
+  // Use resolved value when the computed style is a percentage
+  const base = resolvedPx !== undefined ? propVal(constraintProp, resolvedPx) : prop(proxy, constraintProp);
   if (boxSizing === "border-box") return base;
   if (axis === "width") {
     return add(base, prop(proxy, "padding-left"), prop(proxy, "padding-right"),
