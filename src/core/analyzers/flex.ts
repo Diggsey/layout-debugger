@@ -26,19 +26,16 @@ export function flexItemMain(
 ): void {
   const el = nb.element;
 
-  nb.css("flex-basis");
-  nb.css("flex-grow");
-  nb.css("flex-shrink");
-
   const parent = nb.proxy.getLayoutParent();
   const container = parent.element;
   const containerBorderBox = nb.computeSize(container, axis);
   const containerContent = nb.containerContentArea(container, axis, containerBorderBox);
 
-  // Build sibling data — each child's measurements are their own LayoutNodes
+  // Build sibling data — each child's measurements are their own LayoutNodes.
+  // For the target element, use nb.proxy so reads are recorded on this node.
   const flexChildren = parent.getFlexChildren();
   const siblings = flexChildren.map(childProxy =>
-    buildFlexChildData(nb, childProxy, axis, containerContent.result),
+    buildFlexChildData(nb, childProxy.element === el ? nb.proxy : childProxy, axis, containerContent.result),
   );
   // Main-axis gap: column-gap for row direction, row-gap for column direction
   const direction = parent.readProperty("flex-direction");

@@ -170,14 +170,12 @@ export function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: numbe
       case "percentage": {
         const cb = nb.proxy.getContainingBlock();
         const cbNode = nb.computeSize(cb.element, axis);
-        nb.css("box-sizing");
         nb.describe(`${axis} is a percentage of the containing block`)
           .calc(borderBoxCalc(nb.proxy, axis))
           .input("containingBlock", cbNode);
         break;
       }
       case "explicit":
-        nb.css("box-sizing");
         nb.describe(`${axis} is set explicitly in CSS`)
           .calc(borderBoxCalc(nb.proxy, axis));
         break;
