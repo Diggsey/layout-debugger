@@ -1,0 +1,220 @@
+{
+  "seed": 1775752535234,
+  "spec": {
+    "style": {
+      "width": "395px",
+      "overflow": "hidden"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "contents"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "127px",
+              "height": "27px",
+              "border": "4px solid black",
+              "max-width": "269px"
+            }
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "162px",
+          "height": "391px",
+          "padding": "12px",
+          "margin": "1px",
+          "box-sizing": "border-box",
+          "min-width": "78px",
+          "max-width": "324px",
+          "max-height": "min(365px, 172px)",
+          "display": "inline",
+          "overflow": "hidden",
+          "gap": "18px"
+        },
+        "children": [
+          {
+            "style": {
+              "overflow": "hidden",
+              "height": "333px",
+              "box-sizing": "border-box",
+              "min-width": "67px",
+              "max-width": "232px",
+              "display": "grid"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "23px",
+                  "height": "31px",
+                  "border-top": "1px solid black",
+                  "margin-top": "1px",
+                  "max-height": "52%",
+                  "margin": "8px"
+                }
+              },
+              {
+                "style": {
+                  "width": "45%",
+                  "height": "52px",
+                  "padding": "6px",
+                  "display": "none",
+                  "min-height": "76px",
+                  "max-height": "34%",
+                  "margin": "4px"
+                }
+              }
+            ]
+          },
+          {
+            "style": {
+              "width": "146px",
+              "height": "47px",
+              "padding": "3px",
+              "box-sizing": "border-box",
+              "max-width": "16%"
+            }
+          },
+          {
+            "style": {
+              "width": "103px",
+              "height": "54px"
+            }
+          },
+          {
+            "style": {
+              "width": "49px",
+              "height": "42px",
+              "margin": "0px",
+              "max-width": "111px",
+              "padding": "12px",
+              "box-sizing": "border-box",
+              "display": "block",
+              "flex-shrink": "3",
+              "overflow": "hidden",
+              "writing-mode": "horizontal-tb"
+            }
+          }
+        ],
+        "target": true
+      },
+      {
+        "style": {
+          "width": "49px",
+          "height": "81px",
+          "border-top": "3px solid black",
+          "box-sizing": "border-box",
+          "min-height": "62px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "explicit",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "axis": "width",
+      "dagResult": 162,
+      "actual": 395,
+      "delta": 233
+    },
+    {
+      "nodeId": "h1",
+      "kind": "clamped",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "axis": "height",
+      "dagResult": 172,
+      "actual": 535,
+      "delta": 363
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "size:width",
+        "mode": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 162,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "width",
+          "value": 162,
+          "unit": "px"
+        },
+        "expr": "162px (width)",
+        "cssProperties": {
+          "display": "inline",
+          "position": "static",
+          "parent.display": "block",
+          "aspect-ratio": "auto",
+          "width": "162px",
+          "box-sizing": "border-box",
+          "min-width": "78px",
+          "max-width": "324px"
+        }
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "size:height",
+        "mode": "clamped",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 172,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "min",
+          "args": [
+            {
+              "op": "property",
+              "name": "max-height",
+              "value": 172,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "height",
+              "value": 391,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "min(172px (max-height), 391px (height))",
+        "cssProperties": {
+          "display": "inline",
+          "position": "static",
+          "parent.display": "block",
+          "aspect-ratio": "auto",
+          "height": "391px",
+          "box-sizing": "border-box",
+          "min-height": "0px",
+          "max-height": "172px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>",
+      "width": 395,
+      "height": 535
+    }
+  }
+}

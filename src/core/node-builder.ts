@@ -158,20 +158,30 @@ export class NodeBuilder {
 
     const result = this._resultOverride ?? round(evaluate(this._calc));
 
-    // Resolve percentage constraints via the containing block DAG node
+    // Resolve percentage constraints via the containing block DAG node.
+    // Per CSS spec, percentage min/max constraints only resolve against a
+    // *definite* containing block size. If the CB is auto-sized, ignore them.
     let cbNode: LayoutNode | null = null;
-    const getCbNode = (): LayoutNode => {
-      if (!cbNode) {
+    let cbDefinite: boolean | null = null;
+    const getCb = () => {
+      if (cbDefinite === null) {
         const cb = this.proxy.getContainingBlock();
-        cbNode = this.computeSize(cb.element, axis);
+        // Width (inline axis) is nearly always definite — block elements fill their CB.
+        // Height is only definite if explicitly set or the element is the viewport.
+        cbDefinite = axis === "width"
+          || cb.element === document.documentElement
+          || !!cb.getExplicitSize(axis);
+        if (cbDefinite) cbNode = this.computeSize(cb.element, axis);
       }
-      return cbNode;
+      return { definite: cbDefinite, node: cbNode };
     };
 
     const resolveConstraint = (val: string, fallback: number): number => {
       if (val.endsWith("px")) return pxParse(val) + padBorder;
       if (val.endsWith("%")) {
-        return (parseFloat(val) / 100) * getCbNode().result + padBorder;
+        const cb = getCb();
+        if (!cb.definite || !cb.node) return fallback;
+        return (parseFloat(val) / 100) * cb.node.result + padBorder;
       }
       return fallback;
     };
@@ -180,21 +190,28 @@ export class NodeBuilder {
       ? 0 : resolveConstraint(minVal, 0);
     const maxPx = maxVal === "none" ? Infinity : resolveConstraint(maxVal, Infinity);
 
-    if (result >= minPx && (maxPx === Infinity || result <= maxPx)) return;
+    // CSS §10.4: clamped = max(min, min(max, value))
+    const clamped = Math.max(minPx, Math.min(maxPx, result));
+    if (Math.abs(clamped - result) <= 1) return; // Within tolerance
 
     // Record the containing block as an input if we used it
-    if (cbNode) this._inputs["constraintCB"] = cbNode;
+    if (getCb().node) this._inputs["constraintCB"] = getCb().node!;
 
-    // Wrap calc with clamp — pass resolved px for percentage constraints
+    // Wrap calc with clamp
     const resolvedMax = maxVal.endsWith("%") ? round(maxPx - padBorder) : undefined;
     const resolvedMin = minVal.endsWith("%") ? round(minPx - padBorder) : undefined;
-    if (maxPx !== Infinity && result > maxPx) {
-      this._calc = cmin(constraintCalc(p, axis, maxPropName, boxSizing, resolvedMax), this._calc);
-      this._mode = "clamped";
-    } else {
-      this._calc = cmax(constraintCalc(p, axis, minPropName, boxSizing, resolvedMin), this._calc);
-      this._mode = "clamped";
+    const minCalc = minPx > 0 ? constraintCalc(p, axis, minPropName, boxSizing, resolvedMin) : null;
+    const maxCalc = maxPx !== Infinity ? constraintCalc(p, axis, maxPropName, boxSizing, resolvedMax) : null;
+
+    if (maxCalc && minCalc) {
+      // Both constraints: max(min, min(max, value))
+      this._calc = cmax(minCalc, cmin(maxCalc, this._calc));
+    } else if (maxCalc) {
+      this._calc = cmin(maxCalc, this._calc);
+    } else if (minCalc) {
+      this._calc = cmax(minCalc, this._calc);
     }
+    this._mode = "clamped";
   }
 
   /** Finish building the node and register it. Called by DagBuilder.create(). */

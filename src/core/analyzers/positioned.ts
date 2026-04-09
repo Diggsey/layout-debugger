@@ -19,10 +19,13 @@ export function positioned(
   const pos = nb.css("position");
 
   if (!isAuto(startVal) && !isAuto(endVal)) {
+    // For fixed elements, getContainingBlock returns the viewport (documentElement)
+    // UNLESS a transform/filter/contain ancestor creates an intermediate CB.
+    const cb = nb.proxy.getContainingBlock();
     let cbNode: LayoutNode;
-    let cbElement: Element;
-    if (pos === "fixed") {
-      cbElement = document.documentElement;
+    const cbElement = cb.element;
+    if (pos === "fixed" && cbElement === document.documentElement) {
+      // True viewport — use window dimensions (html element size may differ)
       const vpSize = axis === "width" ? window.innerWidth : window.innerHeight;
       cbNode = nb.create(`measured:${axis}`, cbElement, (n) => {
         n.setMode("viewport")
@@ -30,8 +33,6 @@ export function positioned(
           .calc(measured("viewport", vpSize, PX));
       });
     } else {
-      const cb = nb.proxy.getContainingBlock();
-      cbElement = cb.element;
       cbNode = nb.computeSize(cbElement, axis);
     }
     const cbBorderProps = axis === "width"

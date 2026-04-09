@@ -1,0 +1,227 @@
+{
+  "seed": 1775752512871,
+  "spec": {
+    "style": {
+      "display": "grid",
+      "grid-template-columns": "3fr 2fr",
+      "width": "636px",
+      "overflow": "visible",
+      "row-gap": "15px",
+      "align-items": "start"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "64px",
+          "height": "25px",
+          "padding": "13px",
+          "border-right": "3px solid black",
+          "border-bottom": "1px solid black",
+          "box-sizing": "border-box",
+          "max-height": "331px"
+        }
+      },
+      {
+        "style": {
+          "width": "41px",
+          "height": "69px",
+          "border": "3px solid black",
+          "box-sizing": "border-box",
+          "margin-top": "14px",
+          "margin-right": "9px",
+          "margin-bottom": "5px",
+          "min-width": "100%",
+          "max-width": "425px"
+        },
+        "text": "Grid Layout Flex Box",
+        "target": true
+      },
+      {
+        "style": {
+          "width": "29px",
+          "height": "25px",
+          "border": "3px solid black",
+          "box-sizing": "border-box",
+          "min-width": "clamp(54px, 64%, 85px)"
+        },
+        "text": "Box Test"
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "clamped",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "axis": "width",
+      "dagResult": 636,
+      "actual": 254.39,
+      "delta": 381.61
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h2",
+    "nodes": {
+      "w1": {
+        "id": "w1",
+        "kind": "size:width",
+        "mode": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 636,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "width",
+              "value": 636,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-left",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-right",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-left-width",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-right-width",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "636px (width) + 0px (padding-left) + 0px (padding-right) + 0px (border-left-width) + 0px (border-right-width)",
+        "cssProperties": {
+          "display": "grid",
+          "position": "static",
+          "parent.display": "block",
+          "aspect-ratio": "auto",
+          "width": "636px",
+          "box-sizing": "content-box",
+          "padding-left": "0px",
+          "padding-right": "0px",
+          "border-left-width": "0px",
+          "border-right-width": "0px",
+          "min-width": "0px",
+          "max-width": "none"
+        }
+      },
+      "w0": {
+        "id": "w0",
+        "kind": "size:width",
+        "mode": "clamped",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 636,
+        "inputs": {
+          "constraintCB": "w1"
+        },
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "property",
+              "name": "min-width",
+              "value": 636,
+              "unit": "px"
+            },
+            {
+              "op": "min",
+              "args": [
+                {
+                  "op": "property",
+                  "name": "max-width",
+                  "value": 425,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "width",
+                  "value": 254.391,
+                  "unit": "px"
+                }
+              ]
+            }
+          ]
+        },
+        "expr": "max(636px (min-width), min(425px (max-width), 254.391px (width)))",
+        "cssProperties": {
+          "display": "block",
+          "position": "static",
+          "parent.display": "grid",
+          "aspect-ratio": "auto",
+          "width": "254.391px",
+          "box-sizing": "border-box",
+          "min-width": "100%",
+          "max-width": "425px"
+        }
+      },
+      "h2": {
+        "id": "h2",
+        "kind": "size:height",
+        "mode": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 69,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 69,
+          "unit": "px"
+        },
+        "expr": "69px (height)",
+        "cssProperties": {
+          "display": "block",
+          "position": "static",
+          "parent.display": "grid",
+          "aspect-ratio": "auto",
+          "height": "69px",
+          "box-sizing": "border-box",
+          "min-height": "auto",
+          "max-height": "none"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>",
+      "width": 254.39,
+      "height": 69
+    },
+    "body:nth-child(2) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 636,
+      "height": 128
+    }
+  }
+}

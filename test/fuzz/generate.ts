@@ -184,6 +184,44 @@ function maybeWritingMode(rng: Rng): Record<string, string> {
   return { "writing-mode": rng.pick(["horizontal-tb", "vertical-rl", "vertical-lr"]) };
 }
 
+function maybeDirection(rng: Rng): Record<string, string> {
+  if (!rng.chance(0.05)) return {};
+  return { direction: rng.pick(["ltr", "rtl"]) };
+}
+
+function maybeWhiteSpace(rng: Rng): Record<string, string> {
+  if (!rng.chance(0.1)) return {};
+  return { "white-space": rng.pick(["normal", "nowrap", "pre", "pre-wrap", "pre-line"]) };
+}
+
+function maybeClear(rng: Rng): Record<string, string> {
+  if (!rng.chance(0.1)) return {};
+  return { clear: rng.pick(["left", "right", "both"]) };
+}
+
+function maybeContain(rng: Rng): Record<string, string> {
+  if (!rng.chance(0.05)) return {};
+  return { contain: rng.pick(["layout", "size", "paint", "layout paint", "strict", "content"]) };
+}
+
+function maybeTransform(rng: Rng): Record<string, string> {
+  if (!rng.chance(0.05)) return {};
+  // Only identity-like transforms — they affect containing block without changing visual size
+  return { transform: rng.pick(["translateZ(0)", "translate(0, 0)", "scale(1)"]) };
+}
+
+/** Random size value including intrinsic keywords. */
+function randomSizeValue(rng: Rng, min = 20, max = 400): string {
+  return rng.weighted([
+    [randomPx(rng, min, max), 8],
+    [`${rng.int(10, 100)}%`, 2],
+    ["min-content", 1],
+    ["max-content", 1],
+    ["fit-content", 1],
+    [randomCssFunction(rng, min, max), 1],
+  ]);
+}
+
 function maybeFloat(rng: Rng): Record<string, string> {
   if (!rng.chance(0.1)) return {};
   return { float: rng.pick(["left", "right"]) };
@@ -229,7 +267,7 @@ function maybeFlexShorthand(rng: Rng, style: Record<string, string>): void {
   if (rng.chance(0.3)) style["flex-shrink"] = String(rng.int(0, 4));
   if (rng.chance(0.4)) {
     style["flex-basis"] = rng.weighted([
-      ["auto", 4], ["0", 3], ["0px", 1], ["0%", 1],
+      ["auto", 4], ["content", 1], ["0", 3], ["0px", 1], ["0%", 1],
       [randomPx(rng, 0, 200), 4], [`${rng.int(10, 80)}%`, 2],
       [randomCssFunction(rng, 0, 200), 1],
     ]);
@@ -260,23 +298,13 @@ function maybeGap(rng: Rng): Record<string, string> {
 function randomCssProps(rng: Rng): Record<string, string> {
   const style: Record<string, string> = {};
 
-  // Size — allow percentages, calc, viewport units, and CSS functions
-  if (rng.chance(0.6)) {
-    style.width = rng.weighted([
-      [randomPx(rng, 20, 400), 6],
-      [`${rng.int(20, 100)}%`, 2],
-      [`${rng.int(20, 80)}vw`, 1],
-      [randomCssFunction(rng, 20, 400), 1],
-    ]);
-  }
-  if (rng.chance(0.6)) {
-    style.height = rng.weighted([
-      [randomPx(rng, 20, 400), 6],
-      [`${rng.int(20, 100)}%`, 2],
-      [`${rng.int(20, 80)}vh`, 1],
-      [randomCssFunction(rng, 20, 400), 1],
-    ]);
-  }
+  // Size — allow percentages, calc, viewport units, CSS functions, and intrinsic keywords
+  if (rng.chance(0.6)) style.width = randomSizeValue(rng, 20, 400);
+  if (rng.chance(0.6)) style.height = randomSizeValue(rng, 20, 400);
+
+  // Occasionally use logical properties instead of physical
+  if (rng.chance(0.05) && !style.width) style["inline-size"] = randomPx(rng, 20, 400);
+  if (rng.chance(0.05) && !style.height) style["block-size"] = randomPx(rng, 20, 400);
 
   // Box model
   Object.assign(style, maybePadding(rng), maybeBorder(rng), maybeMargin(rng), maybeBoxSizing(rng));
@@ -292,7 +320,7 @@ function randomCssProps(rng: Rng): Record<string, string> {
     style.display = rng.weighted([
       ["block", 5], ["flex", 3], ["inline-block", 3], ["inline-flex", 1],
       ["grid", 2], ["inline-grid", 1], ["none", 1], ["contents", 1],
-      ["table", 1], ["table-cell", 1],
+      ["table", 1], ["table-cell", 1], ["flow-root", 1], ["inline", 1],
     ]);
   }
 
@@ -319,8 +347,8 @@ function randomCssProps(rng: Rng): Record<string, string> {
   // Overflow
   Object.assign(style, maybeOverflow(rng));
 
-  // Writing mode / float
-  Object.assign(style, maybeWritingMode(rng), maybeFloat(rng));
+  // Writing mode / float / direction
+  Object.assign(style, maybeWritingMode(rng), maybeFloat(rng), maybeDirection(rng));
 
   // Aspect ratio
   if (rng.chance(0.1)) {
@@ -336,6 +364,12 @@ function randomCssProps(rng: Rng): Record<string, string> {
 
   // Justify
   if (rng.chance(0.1)) style["justify-content"] = rng.pick(["flex-start", "flex-end", "center", "space-between", "space-around", "space-evenly"]);
+
+  // Text layout
+  Object.assign(style, maybeWhiteSpace(rng));
+
+  // Containment & transforms (affect containing block)
+  Object.assign(style, maybeContain(rng), maybeTransform(rng));
 
   return style;
 }
@@ -359,14 +393,17 @@ function makeLeaf(rng: Rng): LayoutSpec {
     style.display = "none";
   } else if (rng.chance(0.05)) {
     style.display = "contents";
+  } else if (rng.chance(0.03)) {
+    style.display = "flow-root";
   }
 
   // Occasionally add min/max constraints
   Object.assign(style, maybeMinMaxBoth(rng));
 
-  // Occasionally use percentage or CSS function width
+  // Occasionally use non-px widths
   if (rng.chance(0.1)) style.width = `${rng.int(20, 100)}%`;
   else if (rng.chance(0.05)) style.width = randomCssFunction(rng, 20, 150);
+  else if (rng.chance(0.03)) style.width = rng.pick(["min-content", "max-content", "fit-content"]);
 
   // Occasionally use "0" instead of "0px"
   for (const [k, v] of Object.entries(style)) {
@@ -468,6 +505,9 @@ function buildGrid(rng: Rng, children: LayoutSpec[]): LayoutSpec {
     ...maybeGap(rng),
   };
   if (rng.chance(0.3)) style["grid-auto-rows"] = rng.pick(["auto", "min-content", randomPx(rng, 30, 150)]);
+  if (rng.chance(0.2)) style["grid-auto-columns"] = rng.pick(["auto", "min-content", randomPx(rng, 30, 150), `minmax(${rng.int(30, 80)}px, auto)`]);
+  if (rng.chance(0.2)) style["grid-template-rows"] = rng.pick(["auto", `repeat(${rng.int(2, 3)}, ${rng.int(1, 2)}fr)`, `${randomPx(rng, 50, 150)} auto`]);
+  if (rng.chance(0.15)) style["grid-auto-flow"] = rng.pick(["row", "column", "row dense", "column dense"]);
   if (rng.chance(0.3)) style.height = randomPx(rng, 200, 600);
   if (rng.chance(0.2)) style["align-items"] = rng.pick(["stretch", "start", "end", "center"]);
   if (rng.chance(0.2)) style["justify-items"] = rng.pick(["stretch", "start", "end", "center"]);
@@ -487,14 +527,16 @@ function buildBlockExplicit(rng: Rng, children: LayoutSpec[]): LayoutSpec {
     ...maybeBorder(rng),
     ...maybeBoxSizing(rng),
     ...maybeWritingMode(rng),
+    ...maybeDirection(rng),
+    ...maybeContain(rng),
   };
-  if (rng.chance(0.7)) style.width = randomPx(rng, 100, 600);
+  if (rng.chance(0.7)) style.width = randomSizeValue(rng, 100, 600);
   if (rng.chance(0.5)) style.height = randomPx(rng, 100, 600);
   Object.assign(style, maybeMinMaxBoth(rng));
 
   for (const child of children) {
     if (!child.style) child.style = {};
-    Object.assign(child.style, maybeMargin(rng), maybeFloat(rng));
+    Object.assign(child.style, maybeMargin(rng), maybeFloat(rng), maybeClear(rng), maybeWhiteSpace(rng));
   }
 
   return { style, children };
@@ -506,19 +548,23 @@ function buildBlockAuto(rng: Rng, children: LayoutSpec[]): LayoutSpec {
     ...maybePadding(rng),
     ...maybeBorder(rng),
     ...maybeWritingMode(rng),
+    ...maybeDirection(rng),
   };
 
   for (const child of children) {
     if (!child.style) child.style = {};
-    Object.assign(child.style, maybeMargin(rng), maybeFloat(rng));
+    Object.assign(child.style, maybeMargin(rng), maybeFloat(rng), maybeClear(rng));
   }
 
   return { style, children };
 }
 
 function buildPositioned(rng: Rng, children: LayoutSpec[]): LayoutSpec {
+  // Container creates a containing block via position:relative, transform, or contain
+  const cbMethod = rng.weighted([
+    ["position", 8], ["transform", 1], ["contain", 1],
+  ]);
   const style: Record<string, string> = {
-    position: "relative",
     width: randomPx(rng, 200, 600),
     height: randomPx(rng, 200, 600),
     ...maybeOverflow(rng),
@@ -526,6 +572,9 @@ function buildPositioned(rng: Rng, children: LayoutSpec[]): LayoutSpec {
     ...maybeBorder(rng),
     ...maybeBoxSizing(rng),
   };
+  if (cbMethod === "position") style.position = "relative";
+  else if (cbMethod === "transform") style.transform = "translateZ(0)";
+  else style.contain = "layout";
 
   // Make at least one child positioned
   if (children.length > 0) {

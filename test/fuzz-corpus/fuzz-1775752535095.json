@@ -1,0 +1,196 @@
+{
+  "seed": 1775752535095,
+  "spec": {
+    "style": {
+      "display": "grid",
+      "grid-template-columns": "2fr 3fr 2fr 2fr",
+      "width": "356px",
+      "overflow": "hidden",
+      "box-sizing": "border-box"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "62px",
+          "height": "72px",
+          "box-sizing": "border-box",
+          "min-height": "52px",
+          "min-width": "61%",
+          "max-width": "453px"
+        },
+        "target": true
+      },
+      {
+        "style": {
+          "width": "142px",
+          "height": "29px",
+          "padding": "14px",
+          "border": "1px solid black",
+          "min-height": "61px",
+          "min-width": "89px"
+        }
+      },
+      {
+        "style": {
+          "width": "82%",
+          "height": "34px",
+          "border": "2px solid black",
+          "max-height": "484px"
+        }
+      },
+      {
+        "style": {
+          "width": "56px",
+          "height": "73px",
+          "border": "4px solid black",
+          "min-height": "80px",
+          "max-height": "354px",
+          "max-width": "263px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w0",
+      "kind": "clamped",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "axis": "width",
+      "dagResult": 217.16,
+      "actual": 62,
+      "delta": 155.16
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h2",
+    "nodes": {
+      "w1": {
+        "id": "w1",
+        "kind": "size:width",
+        "mode": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 356,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "width",
+          "value": 356,
+          "unit": "px"
+        },
+        "expr": "356px (width)",
+        "cssProperties": {
+          "display": "grid",
+          "position": "static",
+          "parent.display": "block",
+          "aspect-ratio": "auto",
+          "width": "356px",
+          "box-sizing": "border-box",
+          "min-width": "0px",
+          "max-width": "none"
+        }
+      },
+      "w0": {
+        "id": "w0",
+        "kind": "size:width",
+        "mode": "clamped",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 217.16,
+        "inputs": {
+          "constraintCB": "w1"
+        },
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "property",
+              "name": "min-width",
+              "value": 217.16,
+              "unit": "px"
+            },
+            {
+              "op": "min",
+              "args": [
+                {
+                  "op": "property",
+                  "name": "max-width",
+                  "value": 453,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "width",
+                  "value": 62,
+                  "unit": "px"
+                }
+              ]
+            }
+          ]
+        },
+        "expr": "max(217.16px (min-width), min(453px (max-width), 62px (width)))",
+        "cssProperties": {
+          "display": "block",
+          "position": "static",
+          "parent.display": "grid",
+          "aspect-ratio": "auto",
+          "width": "62px",
+          "box-sizing": "border-box",
+          "min-width": "61%",
+          "max-width": "453px"
+        }
+      },
+      "h2": {
+        "id": "h2",
+        "kind": "size:height",
+        "mode": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 72,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 72,
+          "unit": "px"
+        },
+        "expr": "72px (height)",
+        "cssProperties": {
+          "display": "block",
+          "position": "static",
+          "parent.display": "grid",
+          "aspect-ratio": "auto",
+          "height": "72px",
+          "box-sizing": "border-box",
+          "min-height": "52px",
+          "max-height": "none"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 62,
+      "height": 72
+    },
+    "body:nth-child(2) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 356,
+      "height": 91
+    }
+  }
+}

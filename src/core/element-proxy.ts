@@ -208,28 +208,34 @@ export class ElementProxy {
    */
   getExplicitSize(axis: Axis): ExplicitSize | null {
     const el = this.element;
+    // Also check logical properties (inline-size maps to width in horizontal-tb)
+    const logicalProp = axis === "width" ? "inline-size" : "block-size";
 
-    // Check inline style first
+    // Check inline style first (physical then logical)
     if (el instanceof HTMLElement) {
-      const inlineVal = el.style.getPropertyValue(axis);
-      if (inlineVal) {
-        if (inlineVal.endsWith("%")) return { kind: "percentage", resolvedPx: this.readPx(axis) };
-        if (isExplicitLength(inlineVal)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
-        if (isCssFunction(inlineVal)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
-        // Known non-explicit keywords — stop looking
-        if (inlineVal === "auto" || inlineVal === "none") return null;
+      for (const prop of [axis, logicalProp]) {
+        const inlineVal = el.style.getPropertyValue(prop);
+        if (inlineVal) {
+          if (inlineVal.endsWith("%")) return { kind: "percentage", resolvedPx: this.readPx(axis) };
+          if (isExplicitLength(inlineVal)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
+          if (isCssFunction(inlineVal)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
+          if (inlineVal === "auto" || inlineVal === "none") return null;
+          if (isIntrinsicKeyword(inlineVal)) return null; // Handled separately
+        }
       }
     }
 
-    // Check stylesheet rules
+    // Check stylesheet rules (physical then logical)
     const rules = getMatchedCSSRules(el);
     for (let i = rules.length - 1; i >= 0; i--) {
-      const val = rules[i].style.getPropertyValue(axis);
-      if (!val) continue;
-      if (val.endsWith("%")) return { kind: "percentage", resolvedPx: this.readPx(axis) };
-      if (isExplicitLength(val)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
-      if (val === "auto" || val === "none") return null;
-      if (isCssFunction(val)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
+      for (const prop of [axis, logicalProp]) {
+        const val = rules[i].style.getPropertyValue(prop);
+        if (!val) continue;
+        if (val.endsWith("%")) return { kind: "percentage", resolvedPx: this.readPx(axis) };
+        if (isExplicitLength(val)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
+        if (val === "auto" || val === "none") return null;
+        if (isCssFunction(val)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
+      }
     }
 
     return null;
