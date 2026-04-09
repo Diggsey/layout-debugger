@@ -1,0 +1,559 @@
+{
+  "seed": 1775772116251,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "292px",
+      "overflow": "hidden",
+      "padding": "11px",
+      "box-sizing": "border-box",
+      "row-gap": "14px",
+      "writing-mode": "vertical-lr",
+      "align-items": "normal",
+      "height": "270px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "106px",
+          "height": "92px",
+          "box-sizing": "border-box",
+          "margin": "0",
+          "min-height": "19px",
+          "max-height": "37%",
+          "flex-grow": "2",
+          "flex-basis": "calc(64% - 37px)"
+        }
+      },
+      {
+        "style": {
+          "display": "flex",
+          "flex-direction": "column",
+          "height": "648px",
+          "overflow": "hidden",
+          "width": "292px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "39px",
+              "height": "45px",
+              "border": "1px solid black",
+              "max-width": "459px"
+            }
+          },
+          {
+            "style": {
+              "width": "34px",
+              "height": "62px",
+              "padding": "14px",
+              "box-sizing": "border-box",
+              "flex-basis": "65%"
+            }
+          },
+          {
+            "style": {
+              "width": "fit-content",
+              "height": "fit-content",
+              "margin": "8px",
+              "box-sizing": "border-box",
+              "min-height": "40%",
+              "display": "flex",
+              "flex-grow": "3",
+              "position": "sticky",
+              "overflow": "hidden",
+              "writing-mode": "vertical-rl",
+              "align-self": "center",
+              "max-height": "267px",
+              "min-width": "76px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "73px",
+                  "height": "41px",
+                  "box-sizing": "border-box",
+                  "display": "inline-flex",
+                  "min-width": "75%",
+                  "max-width": "339px",
+                  "overflow": "hidden",
+                  "float": "right",
+                  "align-items": "baseline",
+                  "transform": "translateZ(0)"
+                }
+              },
+              {
+                "style": {
+                  "width": "30px",
+                  "height": "48px",
+                  "display": "contents",
+                  "min-width": "60px",
+                  "max-height": "49%"
+                }
+              },
+              {
+                "style": {
+                  "width": "126px",
+                  "height": "82px",
+                  "border": "1px solid black",
+                  "box-sizing": "border-box",
+                  "margin-top": "5px",
+                  "margin-left": "13px",
+                  "max-width": "213px",
+                  "max-height": "39%"
+                },
+                "text": "Content Box Flex"
+              }
+            ]
+          },
+          {
+            "style": {
+              "width": "147px",
+              "height": "60px",
+              "margin": "5px",
+              "min-width": "18px",
+              "max-width": "138px",
+              "flex-shrink": "1",
+              "min-height": "71px"
+            }
+          }
+        ],
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "h1",
+      "kind": "flex-item-main",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "axis": "height",
+      "dagResult": 229,
+      "actual": 208.78,
+      "delta": 20.22
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h1",
+    "nodes": {
+      "w0": {
+        "id": "w0",
+        "kind": "size:width",
+        "mode": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 292,
+        "inputs": {},
+        "description": "width is set explicitly in CSS",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "width",
+              "value": 292,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-left",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-right",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-left-width",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-right-width",
+              "value": 0,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "292px (width) + 0px (padding-left) + 0px (padding-right) + 0px (border-left-width) + 0px (border-right-width)",
+        "cssProperties": {
+          "display": "flex",
+          "position": "static",
+          "parent.display": "flex",
+          "parent.flex-direction": "row",
+          "parent.flex-wrap": "nowrap",
+          "parent.writing-mode": "vertical-lr",
+          "aspect-ratio": "auto",
+          "width": "292px",
+          "box-sizing": "content-box",
+          "padding-left": "0px",
+          "padding-right": "0px",
+          "border-left-width": "0px",
+          "border-right-width": "0px",
+          "min-width": "auto",
+          "max-width": "none"
+        }
+      },
+      "h3": {
+        "id": "h3",
+        "kind": "flex-basis:height",
+        "mode": "flex-basis",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 648,
+        "inputs": {},
+        "description": "Starting size before flex grow/shrink",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 648,
+          "unit": "px"
+        },
+        "expr": "648px (height)",
+        "cssProperties": {}
+      },
+      "h4": {
+        "id": "h4",
+        "kind": "min-content:height",
+        "mode": "min-content-auto",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 0,
+        "inputs": {},
+        "description": "Minimum height from content",
+        "calc": {
+          "op": "constant",
+          "value": 0,
+          "unit": "px"
+        },
+        "expr": "0px",
+        "cssProperties": {}
+      },
+      "h2": {
+        "id": "h2",
+        "kind": "flex-base-size:height",
+        "mode": "flex-base-size",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 648,
+        "inputs": {
+          "basis": "h3",
+          "minContent": "h4"
+        },
+        "description": "Hypothetical main size (basis clamped by min/max)",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "ref",
+              "nodeId": "h4"
+            },
+            {
+              "op": "ref",
+              "nodeId": "h3"
+            }
+          ]
+        },
+        "expr": "max(0px, 648px)",
+        "cssProperties": {}
+      },
+      "h8": {
+        "id": "h8",
+        "kind": "size:height",
+        "mode": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 270,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "property",
+          "name": "height",
+          "value": 270,
+          "unit": "px"
+        },
+        "expr": "270px (height)",
+        "cssProperties": {
+          "display": "flex",
+          "position": "static",
+          "parent.display": "block",
+          "aspect-ratio": "auto",
+          "height": "270px",
+          "box-sizing": "border-box",
+          "min-height": "0px",
+          "max-height": "none"
+        }
+      },
+      "h7": {
+        "id": "h7",
+        "kind": "content-area:height",
+        "mode": "content-area",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 248,
+        "inputs": {
+          "borderBox": "h8"
+        },
+        "description": "Usable space inside element after subtracting padding and border",
+        "calc": {
+          "op": "sub",
+          "left": {
+            "op": "ref",
+            "nodeId": "h8"
+          },
+          "right": {
+            "op": "add",
+            "args": [
+              {
+                "op": "property",
+                "name": "padding-top",
+                "value": 11,
+                "unit": "px"
+              },
+              {
+                "op": "property",
+                "name": "padding-bottom",
+                "value": 11,
+                "unit": "px"
+              },
+              {
+                "op": "property",
+                "name": "border-top-width",
+                "value": 0,
+                "unit": "px"
+              },
+              {
+                "op": "property",
+                "name": "border-bottom-width",
+                "value": 0,
+                "unit": "px"
+              }
+            ]
+          }
+        },
+        "expr": "270px − 11px (padding-top) + 11px (padding-bottom) + 0px (border-top-width) + 0px (border-bottom-width)",
+        "cssProperties": {
+          "padding-top": "11px",
+          "padding-bottom": "11px",
+          "border-top-width": "0px",
+          "border-bottom-width": "0px"
+        }
+      },
+      "h6": {
+        "id": "h6",
+        "kind": "flex-free-space:height",
+        "mode": "flex-free-space",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": -419,
+        "inputs": {
+          "containerContent": "h7"
+        },
+        "description": "Remaining space in the final flex iteration",
+        "calc": {
+          "op": "sub",
+          "left": {
+            "op": "ref",
+            "nodeId": "h7"
+          },
+          "right": {
+            "op": "add",
+            "args": [
+              {
+                "op": "property",
+                "name": "flex-basis",
+                "value": 19,
+                "unit": "px"
+              },
+              {
+                "op": "property",
+                "name": "flex-basis",
+                "value": 648,
+                "unit": "px"
+              }
+            ]
+          }
+        },
+        "expr": "248px − 19px (flex-basis) + 648px (flex-basis)",
+        "cssProperties": {}
+      },
+      "h9": {
+        "id": "h9",
+        "kind": "flex-shrink-factor:height",
+        "mode": "flex-scaled-shrink",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 648,
+        "inputs": {
+          "basis": "h3"
+        },
+        "description": "Scaled shrink factor (flex-shrink × inner basis)",
+        "calc": {
+          "op": "mul",
+          "left": {
+            "op": "property",
+            "name": "flex-shrink",
+            "value": 1,
+            "unit": ""
+          },
+          "right": {
+            "op": "max",
+            "args": [
+              {
+                "op": "constant",
+                "value": 0,
+                "unit": "px"
+              },
+              {
+                "op": "sub",
+                "left": {
+                  "op": "ref",
+                  "nodeId": "h3"
+                },
+                "right": {
+                  "op": "add",
+                  "args": [
+                    {
+                      "op": "property",
+                      "name": "padding-top",
+                      "value": 0,
+                      "unit": "px"
+                    },
+                    {
+                      "op": "property",
+                      "name": "padding-bottom",
+                      "value": 0,
+                      "unit": "px"
+                    },
+                    {
+                      "op": "property",
+                      "name": "border-top-width",
+                      "value": 0,
+                      "unit": "px"
+                    },
+                    {
+                      "op": "property",
+                      "name": "border-bottom-width",
+                      "value": 0,
+                      "unit": "px"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "expr": "1 (flex-shrink) × max(0px, 648px − 0px (padding-top) + 0px (padding-bottom) + 0px (border-top-width) + 0px (border-bottom-width))",
+        "cssProperties": {}
+      },
+      "h5": {
+        "id": "h5",
+        "kind": "flex-share:height",
+        "mode": "flex-shrink-share",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": -419,
+        "inputs": {
+          "freeSpace": "h6",
+          "factor0": "h9"
+        },
+        "description": "Amount this item shrinks to fit",
+        "calc": {
+          "op": "property",
+          "name": "flex-basis",
+          "value": -419,
+          "unit": "px"
+        },
+        "expr": "-419px (flex-basis)",
+        "cssProperties": {}
+      },
+      "h1": {
+        "id": "h1",
+        "kind": "size:height",
+        "mode": "flex-item-main",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 229,
+        "inputs": {
+          "baseSize": "h2",
+          "share": "h5"
+        },
+        "description": "Flex item — height determined by the flex layout algorithm",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "flex-basis",
+              "value": 648,
+              "unit": "px"
+            },
+            {
+              "op": "ref",
+              "nodeId": "h5"
+            }
+          ]
+        },
+        "expr": "648px (flex-basis) + -419px",
+        "cssProperties": {
+          "display": "flex",
+          "position": "static",
+          "parent.display": "flex",
+          "parent.flex-direction": "row",
+          "parent.flex-wrap": "nowrap",
+          "parent.writing-mode": "vertical-lr",
+          "padding-top": "0px",
+          "padding-bottom": "0px",
+          "border-top-width": "0px",
+          "border-bottom-width": "0px",
+          "box-sizing": "content-box",
+          "flex-basis": "auto",
+          "height": "648px",
+          "max-height": "none",
+          "min-height": "auto",
+          "overflow-y": "hidden",
+          "margin-top": "0px",
+          "margin-bottom": "0px",
+          "flex-grow": "0",
+          "flex-shrink": "1",
+          "parent.column-gap": "normal"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "desc": "<div>",
+      "width": 292,
+      "height": 208.78
+    },
+    "body:nth-child(2) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 292,
+      "height": 270
+    }
+  }
+}

@@ -161,17 +161,30 @@ export class NodeBuilder {
     // Resolve percentage constraints via the containing block DAG node.
     // Per CSS spec, percentage min/max constraints only resolve against a
     // *definite* containing block size. If the CB is auto-sized, ignore them.
+    // For grid items, percentage constraints resolve against the grid track
+    // (not the container), which we don't model — skip them.
+    const lp = this.proxy.getLayoutParent();
+    const lpDisplay = lp.readProperty("display");
+    const isGridItem = lpDisplay === "grid" || lpDisplay === "inline-grid";
+
     let cbNode: LayoutNode | null = null;
     let cbDefinite: boolean | null = null;
     const getCb = () => {
       if (cbDefinite === null) {
-        const cb = this.proxy.getContainingBlock();
-        // Width (inline axis) is nearly always definite — block elements fill their CB.
-        // Height is only definite if explicitly set or the element is the viewport.
-        cbDefinite = axis === "width"
-          || cb.element === document.documentElement
-          || !!cb.getExplicitSize(axis);
-        if (cbDefinite) cbNode = this.computeSize(cb.element, axis);
+        if (isGridItem) {
+          cbDefinite = false; // Grid track sizes not modeled
+        } else {
+          const cb = this.proxy.getContainingBlock();
+          // Width (inline axis) is nearly always definite — block elements fill their CB.
+          // Height is only definite if explicitly set or the element is the viewport.
+          cbDefinite = axis === "width"
+            || cb.element === document.documentElement
+            || !!cb.getExplicitSize(axis);
+        }
+        if (cbDefinite) {
+          const cb = this.proxy.getContainingBlock();
+          cbNode = this.computeSize(cb.element, axis);
+        }
       }
       return { definite: cbDefinite, node: cbNode };
     };

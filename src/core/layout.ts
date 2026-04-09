@@ -87,6 +87,9 @@ function determineMode(proxy: ElementProxy, axis: Axis): NodeMode {
     }
   }
 
+  // Pure inline elements ignore width/height — always content-driven
+  if (display === "inline") return "content-driven";
+
   const ar = proxy.readProperty("aspect-ratio");
   if (!isGridItem && ar && ar !== "auto") {
     const match = ar.match(/^([\d.]+)\s*(?:\/\s*([\d.]+))?$/);
