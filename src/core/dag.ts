@@ -8,6 +8,8 @@
 
 import { type Units, UNITLESS, PX, unitsMul, unitsDiv, unitsAssertEqual } from "./units";
 import { ElementProxy, type CssPropertyName } from "./element-proxy";
+// Circular import — safe because these are only called at runtime, not during module initialization.
+import { computeSize, computeIntrinsicSize, containerContentArea, borderBoxCalc } from "./build-dag";
 
 export { ElementProxy } from "./element-proxy";
 export type { ExplicitSize, CssPropertyName } from "./element-proxy";
@@ -219,17 +221,8 @@ export interface DagResult {
 }
 
 // ---------------------------------------------------------------------------
-// Callback interface for analyzer functions
+// Compute function registry — breaks circular dependency between dag.ts and build-dag.ts
 // ---------------------------------------------------------------------------
-
-export interface SizeFns {
-  computeSize(el: Element, axis: Axis, depth: number): LayoutNode;
-  computeIntrinsicSize(el: Element, axis: Axis, depth: number): LayoutNode;
-  contentSize(el: Element, axis: Axis, depth: number, intrinsic?: boolean): LayoutNode;
-  containerContentArea(container: Element, axis: Axis, borderBoxNode: LayoutNode): LayoutNode;
-  borderBoxCalc(proxy: ElementProxy, axis: Axis): CalcExpr;
-  create(kind: NodeKind, element: Element, cb: (nb: NodeBuilder) => void): LayoutNode;
-}
 
 // ---------------------------------------------------------------------------
 // DagBuilder — node cache with deduplication
@@ -258,7 +251,7 @@ export class DagBuilder {
    * cb receives a NodeBuilder to populate (describe, calc, inputs, etc.)
    * and returns nothing. The node is finished automatically after cb returns.
    */
-  create(kind: NodeKind, element: Element, cb: (nb: NodeBuilder) => void): LayoutNode {
+  create(kind: NodeKind, element: Element, depth: number, cb: (nb: NodeBuilder) => void): LayoutNode {
     const key = this.key(kind, element);
     const cached = this.nodes.get(key);
     if (cached) return cached;
@@ -267,7 +260,7 @@ export class DagBuilder {
       throw new CycleError(kind, element);
     }
     this.building.add(key);
-    const nb = new NodeBuilder(this, kind, element);
+    const nb = new NodeBuilder(this, kind, element, depth);
     try {
       cb(nb);
       return nb._finish();
@@ -318,6 +311,7 @@ export class DagBuilder {
 export class NodeBuilder {
   readonly element: Element;
   readonly proxy: ElementProxy;
+  readonly depth: number;
   private _kind: NodeKind;
   private _mode: NodeMode = "terminal";
   private _builder: DagBuilder;
@@ -326,10 +320,11 @@ export class NodeBuilder {
   private _calc: CalcExpr | null = null;
   private _resultOverride: number | null = null;
 
-  constructor(builder: DagBuilder, kind: NodeKind, element: Element, proxy?: ElementProxy) {
+  constructor(builder: DagBuilder, kind: NodeKind, element: Element, depth: number, proxy?: ElementProxy) {
     this._builder = builder;
     this._kind = kind;
     this.element = element;
+    this.depth = depth;
     this.proxy = proxy ?? new ElementProxy(element);
   }
 
@@ -386,7 +381,7 @@ export class NodeBuilder {
 
   /** Create a sub-node (delegates to DagBuilder). */
   create(kind: NodeKind, element: Element, cb: (nb: NodeBuilder) => void): LayoutNode {
-    return this._builder.create(kind, element, cb);
+    return this._builder.create(kind, element, this.depth, cb);
   }
 
   /** Check if a node is currently being built (cycle detection). */
@@ -394,12 +389,30 @@ export class NodeBuilder {
     return this._builder.isBuilding(kind, element);
   }
 
-  /**
-   * Apply min/max constraints as a post-processing step.
-   * @param computeCbSize — callback to compute the containing block's size as a DAG node
-   *   (needed to resolve percentage constraints like `min-width: 50%`)
-   */
-  maybeClamp(axis: Axis, computeCbSize?: (el: Element, axis: Axis) => LayoutNode): void {
+  // --- Recursive computation methods ---
+
+  /** Compute the size of an element on the given axis. Depth decrements automatically. */
+  computeSize(el: Element, axis: Axis, depth = this.depth - 1): LayoutNode {
+    return computeSize(this._builder, el, axis, depth);
+  }
+
+  /** Compute the intrinsic (content-based) size of an element. */
+  computeIntrinsicSize(el: Element, axis: Axis, depth = this.depth - 1): LayoutNode {
+    return computeIntrinsicSize(this._builder, el, axis, depth);
+  }
+
+  /** Compute the content-area node for a container (border-box minus padding/border). */
+  containerContentArea(container: Element, axis: Axis, borderBoxNode: LayoutNode): LayoutNode {
+    return containerContentArea(this, container, axis, borderBoxNode);
+  }
+
+  /** Build a CalcExpr for an element's border-box size. */
+  borderBoxCalc(proxy: ElementProxy, axis: Axis): CalcExpr {
+    return borderBoxCalc(proxy, axis);
+  }
+
+  /** Apply min/max constraints as a post-processing step. */
+  maybeClamp(axis: Axis): void {
     if (!this._calc) return;
     const p = this.proxy;
     const minPropName = axis === "width" ? "min-width" : "min-height";
@@ -418,20 +431,18 @@ export class NodeBuilder {
 
     // Resolve percentage constraints via the containing block DAG node
     let cbNode: LayoutNode | null = null;
-    const getCbNode = (): LayoutNode | null => {
-      if (cbNode) return cbNode;
-      if (!computeCbSize) return null;
-      const cb = this.proxy.getContainingBlock();
-      cbNode = computeCbSize(cb.element, axis);
+    const getCbNode = (): LayoutNode => {
+      if (!cbNode) {
+        const cb = this.proxy.getContainingBlock();
+        cbNode = this.computeSize(cb.element, axis);
+      }
       return cbNode;
     };
 
     const resolveConstraint = (val: string, fallback: number): number => {
       if (val.endsWith("px")) return px(val) + padBorder;
       if (val.endsWith("%")) {
-        const node = getCbNode();
-        if (!node) return fallback;
-        return (parseFloat(val) / 100) * node.result + padBorder;
+        return (parseFloat(val) / 100) * getCbNode().result + padBorder;
       }
       return fallback;
     };

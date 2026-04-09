@@ -9,7 +9,7 @@
  * - CSS Flexbox §9.4  Cross Size Determination
  * - CSS Flexbox §4.5  Automatic Minimum Size of Flex Items
  */
-import type { Axis, LayoutNode, SizeFns, CalcExpr, NodeBuilder, NodeKind } from "../dag";
+import type { Axis, LayoutNode, CalcExpr, NodeBuilder, NodeKind } from "../dag";
 import { ElementProxy, ref, constant, prop, propVal, measured, add, sub, mul, div, cmax, cmin } from "../dag";
 import { PX } from "../units";
 import { px, round, measureMinContentSize } from "../utils";
@@ -19,7 +19,7 @@ import { px, round, measureMinContentSize } from "../utils";
 // ---------------------------------------------------------------------------
 
 export function flexItemMain(
-  fns: SizeFns, nb: NodeBuilder, axis: Axis, depth: number,
+  nb: NodeBuilder, axis: Axis,
 ): void {
   const el = nb.element;
 
@@ -29,13 +29,13 @@ export function flexItemMain(
 
   const parent = nb.proxy.getLayoutParent();
   const container = parent.element;
-  const containerBorderBox = fns.computeSize(container, axis, depth - 1);
-  const containerContent = fns.containerContentArea(container, axis, containerBorderBox);
+  const containerBorderBox = nb.computeSize(container, axis);
+  const containerContent = nb.containerContentArea(container, axis, containerBorderBox);
 
   // Build sibling data — each child's measurements are their own LayoutNodes
   const flexChildren = parent.getFlexChildren();
   const siblings = flexChildren.map(childProxy =>
-    buildFlexChildData(fns, nb, childProxy, axis, depth, containerContent.result),
+    buildFlexChildData(nb, childProxy, axis, containerContent.result),
   );
   // Main-axis gap: column-gap for row direction, row-gap for column direction
   const direction = parent.readProperty("flex-direction");
@@ -49,7 +49,7 @@ export function flexItemMain(
   const baseSizeNode = target?.hypoNode ?? nb.create(`flex-base-size:${axis}`, el, (n) => {
     n.setMode("flex-base-size")
       .describe("Effective starting size")
-      .calc(fns.borderBoxCalc(nb.proxy, axis));
+      .calc(nb.borderBoxCalc(nb.proxy, axis));
   });
   const totalBases = siblings.reduce((sum, s) => sum + s.hypothetical + s.margin, 0);
   const totalGap = gap * Math.max(0, siblings.length - 1);
@@ -67,7 +67,7 @@ export function flexItemMain(
   if (!myResult || !target) {
     // Element not found among siblings — use measured size
     nb.describe(`Flex item \u2014 ${axis} determined by the flex layout algorithm`)
-      .calc(fns.borderBoxCalc(nb.proxy, axis));
+      .calc(nb.borderBoxCalc(nb.proxy, axis));
     return;
   }
 
@@ -139,7 +139,7 @@ export function flexItemMain(
 // ---------------------------------------------------------------------------
 
 export function flexItemCross(
-  fns: SizeFns, nb: NodeBuilder, axis: Axis, depth: number,
+  nb: NodeBuilder, axis: Axis,
 ): void {
   const el = nb.element;
   const parent = nb.proxy.getLayoutParent();
@@ -148,16 +148,16 @@ export function flexItemCross(
     const explicit = nb.proxy.getExplicitSize(axis)!;
     if (explicit.kind === "percentage") {
       const cb = nb.proxy.getContainingBlock();
-      const cbNode = fns.computeSize(cb.element, axis, depth - 1);
+      const cbNode = nb.computeSize(cb.element, axis);
       nb.setMode("percentage");
       nb.describe(`${axis} is a percentage of the containing block`)
-        .calc(fns.borderBoxCalc(nb.proxy, axis))
+        .calc(nb.borderBoxCalc(nb.proxy, axis))
         .input("containingBlock", cbNode);
       return;
     }
     nb.setMode("explicit");
     nb.describe(`${axis} is set explicitly in CSS`)
-      .calc(fns.borderBoxCalc(nb.proxy, axis));
+      .calc(nb.borderBoxCalc(nb.proxy, axis));
     return;
   }
 
@@ -168,7 +168,7 @@ export function flexItemCross(
 
   if (!isStretch) {
     // flex-cross-content: size from content
-    const contentNode = fns.contentSize(el, axis, depth);
+    const contentNode = nb.computeIntrinsicSize(el, axis);
     nb.describe(`Flex item \u2014 cross ${axis} sized by content (align: ${effectiveAlign})`)
       .calc(ref(contentNode))
       .input("content", contentNode);
@@ -176,8 +176,8 @@ export function flexItemCross(
   }
 
   // Per CSS Flexbox §9.4: stretched cross size = container content area - item margins
-  const containerCross = fns.computeSize(parent.element, axis, depth - 1);
-  const containerContent = fns.containerContentArea(parent.element, axis, containerCross);
+  const containerCross = nb.computeSize(parent.element, axis);
+  const containerContent = nb.containerContentArea(parent.element, axis, containerCross);
   const [mStart, mEnd] = axis === "width"
     ? ["margin-left", "margin-right"] as const
     : ["margin-top", "margin-bottom"] as const;
@@ -208,8 +208,8 @@ interface FlexChildData {
 }
 
 function buildFlexChildData(
-  fns: SizeFns, parentNb: NodeBuilder, childProxy: ElementProxy, axis: Axis,
-  depth: number, containerContentPx: number,
+  parentNb: NodeBuilder, childProxy: ElementProxy, axis: Axis,
+  containerContentPx: number,
 ): FlexChildData {
   const child = childProxy.element;
   const minPropName = axis === "width" ? "min-width" : "min-height";
@@ -246,12 +246,12 @@ function buildFlexChildData(
       basis = isBorderBox ? raw : raw + pb;
       basisCalc = propVal(axis, raw);
     } else {
-      basis = fns.computeIntrinsicSize(child, axis, depth - 1).result;
-      basisCalc = ref(fns.computeIntrinsicSize(child, axis, depth - 1));
+      basis = parentNb.computeIntrinsicSize(child, axis).result;
+      basisCalc = ref(parentNb.computeIntrinsicSize(child, axis));
     }
   } else {
-    basis = fns.computeIntrinsicSize(child, axis, depth - 1).result;
-    basisCalc = ref(fns.computeIntrinsicSize(child, axis, depth - 1));
+    basis = parentNb.computeIntrinsicSize(child, axis).result;
+    basisCalc = ref(parentNb.computeIntrinsicSize(child, axis));
   }
   basis = Math.max(basis, pb);
 

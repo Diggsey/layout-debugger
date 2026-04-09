@@ -3,10 +3,11 @@
  *
  * Entry point: buildDag(el) → DagResult with width and height root nodes.
  */
-import type { LayoutNode, DagResult, Axis, NodeKind, NodeMode, SizeFns, CalcExpr } from "./dag";
+import type { LayoutNode, DagResult, Axis, NodeKind, NodeMode, CalcExpr } from "./dag";
 import { DagBuilder, NodeBuilder, ElementProxy, ref, constant, prop, add, cmax } from "./dag";
 import { PX } from "./units";
-import { blockFill, containerContentArea } from "./analyzers/block";
+import { blockFill } from "./analyzers/block";
+export { containerContentArea } from "./analyzers/block";
 import { flexItemMain, flexItemCross } from "./analyzers/flex";
 import { gridItem } from "./analyzers/grid";
 import { positioned } from "./analyzers/positioned";
@@ -33,7 +34,7 @@ export function buildDag(el: Element): DagResult {
 // ---------------------------------------------------------------------------
 
 /** Build a CalcExpr for an element's border-box size from its CSS properties. */
-function borderBoxCalc(proxy: ElementProxy, axis: Axis): CalcExpr {
+export function borderBoxCalc(proxy: ElementProxy, axis: Axis): CalcExpr {
   if (proxy.readProperty("box-sizing") === "border-box") {
     return prop(proxy, axis);
   }
@@ -45,10 +46,10 @@ function borderBoxCalc(proxy: ElementProxy, axis: Axis): CalcExpr {
     prop(proxy, "border-top-width"), prop(proxy, "border-bottom-width"));
 }
 
-function measuredNode(b: DagBuilder, el: Element, axis: Axis, mode: NodeMode, description?: string): LayoutNode {
+function measuredNode(b: DagBuilder, el: Element, axis: Axis, depth: number, mode: NodeMode, description?: string): LayoutNode {
   const kind: NodeKind = `measured:${axis}`;
   const desc = description ?? `Size of the browser ${mode === "viewport" ? "viewport" : mode}`;
-  return b.create(kind, el, (nb) => {
+  return b.create(kind, el, depth, (nb) => {
     nb.setMode(mode).describe(desc).calc(borderBoxCalc(nb.proxy, axis));
   });
 }
@@ -164,16 +165,14 @@ function determineMode(proxy: ElementProxy, axis: Axis): NodeMode {
 // Core dispatch
 // ---------------------------------------------------------------------------
 
-function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): LayoutNode {
-  if (depth <= 0) return measuredNode(b, el, axis, "terminal", "Measured size (computation depth limit reached)");
+export function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): LayoutNode {
+  if (depth <= 0) return measuredNode(b, el, axis, depth, "terminal", "Measured size (computation depth limit reached)");
 
   const kind: NodeKind = `size:${axis}`;
 
-  return b.create(kind, el, (nb) => {
+  return b.create(kind, el, depth, (nb) => {
     const mode = determineMode(nb.proxy, axis);
     nb.setMode(mode);
-
-    const fns = buildSizeFns(b);
 
     switch (mode) {
       case "viewport":
@@ -189,11 +188,11 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
           .calc(constant(0, PX));
         break;
       case "aspect-ratio":
-        aspectRatio(fns, nb, axis, depth);
+        aspectRatio(nb, axis);
         break;
       case "percentage": {
         const cb = nb.proxy.getContainingBlock();
-        const cbNode = computeSize(b, cb.element, axis, depth - 1);
+        const cbNode = nb.computeSize(cb.element, axis);
         nb.css("box-sizing");
         nb.describe(`${axis} is a percentage of the containing block`)
           .calc(borderBoxCalc(nb.proxy, axis))
@@ -210,28 +209,28 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
           .calc(borderBoxCalc(nb.proxy, axis));
         break;
       case "flex-item-main":
-        flexItemMain(fns, nb, axis, depth);
+        flexItemMain(nb, axis);
         break;
       case "flex-cross-stretch":
       case "flex-cross-content":
-        flexItemCross(fns, nb, axis, depth);
+        flexItemCross(nb, axis);
         break;
       case "grid-item":
-        gridItem(fns, nb, axis, depth);
+        gridItem(nb, axis);
         break;
       case "positioned-offset":
       case "positioned-shrink-to-fit":
-        positioned(fns, nb, axis, depth);
+        positioned(nb, axis);
         break;
       case "table-cell":
         nb.describe("Table cell — sized by browser table algorithm")
           .calc(borderBoxCalc(nb.proxy, axis));
         break;
       case "block-fill":
-        blockFill(fns, nb, axis, depth);
+        blockFill(nb, axis);
         break;
       case "content-driven":
-        contentSize(b, nb, axis, depth);
+        contentSize(nb, axis);
         break;
       default:
         nb.describe("Measured size")
@@ -239,45 +238,26 @@ function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: number): Lay
         break;
     }
 
-    nb.maybeClamp(axis, (cbEl, cbAxis) => computeSize(b, cbEl, cbAxis, depth - 1));
+    nb.maybeClamp(axis);
   });
-}
-
-/** Build the SizeFns callback interface for a given DagBuilder. */
-function buildSizeFns(b: DagBuilder): SizeFns {
-  const fns: SizeFns = {
-    computeSize: (el, axis, depth) => computeSize(b, el, axis, depth),
-    computeIntrinsicSize: (el, axis, depth) => computeIntrinsicSize(b, el, axis, depth),
-    contentSize: (el, axis, depth, intrinsic) => {
-      if (intrinsic) return computeIntrinsicSize(b, el, axis, depth);
-      // Determine content mode inside the create callback where we have a proxy
-      // Try content-sum first (more common); contentSize will set the correct mode
-      return b.create(`content:${axis}`, el, (nb) => contentSize(b, nb, axis, depth));
-    },
-    containerContentArea: (container, axis, borderBoxNode) =>
-      containerContentArea(fns, container, axis, borderBoxNode),
-    borderBoxCalc,
-    create: (kind, element, cb) => b.create(kind, element, cb),
-  };
-  return fns;
 }
 
 // ---------------------------------------------------------------------------
 // Intrinsic (content-based) size
 // ---------------------------------------------------------------------------
 
-function computeIntrinsicSize(
+export function computeIntrinsicSize(
   b: DagBuilder, el: Element, axis: Axis, depth: number,
 ): LayoutNode {
-  if (depth <= 0) return measuredNode(b, el, axis, "terminal", "Measured size (computation depth limit reached)");
+  if (depth <= 0) return measuredNode(b, el, axis, depth, "terminal", "Measured size (computation depth limit reached)");
 
   const kind: NodeKind = `intrinsic:${axis}`;
 
   if (b.isBuilding(kind, el)) {
-    return measuredNode(b, el, axis, "terminal", "Measured size (circular dependency)");
+    return measuredNode(b, el, axis, depth, "terminal", "Measured size (circular dependency)");
   }
 
-  return b.create(kind, el, (nb) => {
+  return b.create(kind, el, depth, (nb) => {
     nb.setMode("intrinsic-content");
 
     // If the element has an explicit size, that IS the intrinsic size.
@@ -293,7 +273,7 @@ function computeIntrinsicSize(
     if (arVal && arVal !== "auto" && overflow !== "scroll" && overflow !== "auto") {
       const otherAxis: Axis = axis === "width" ? "height" : "width";
       if (nb.proxy.getExplicitSize(otherAxis)) {
-        const otherBB = computeIntrinsicSize(b, el, otherAxis, depth);
+        const otherBB = nb.computeIntrinsicSize(el, otherAxis, depth);
         const arMatch = arVal.match(/^([\d.]+)\s*(?:\/\s*([\d.]+))?$/);
         if (arMatch) {
           const ratioW = parseFloat(arMatch[1]);
@@ -327,9 +307,8 @@ function computeIntrinsicSize(
     }
 
     // Create a content sub-node for the intrinsic measurement.
-    // Can't use fns.contentSize(intrinsic=true) because it recurses back here.
-    const contentNode = b.create(`content:${axis}`, el, (cnb) => {
-      contentSize(b, cnb, axis, depth, true);
+    const contentNode = b.create(`content:${axis}`, el, depth, (cnb) => {
+      contentSize(cnb, axis, true);
     });
 
     nb.css("display");
@@ -344,7 +323,7 @@ function computeIntrinsicSize(
 // ---------------------------------------------------------------------------
 
 function contentSize(
-  b: DagBuilder, nb: NodeBuilder, axis: Axis, depth: number, intrinsic = false,
+  nb: NodeBuilder, axis: Axis, intrinsic = false,
 ): void {
   const el = nb.element;
   const display = nb.css("display");
@@ -367,8 +346,8 @@ function contentSize(
   const children = nb.proxy.getChildren();
   const childNodes: LayoutNode[] = [];
   for (const child of children) {
-    if (depth > 1) {
-      childNodes.push(computeIntrinsicSize(b, child.element, axis, depth - 1));
+    if (nb.depth > 1) {
+      childNodes.push(nb.computeIntrinsicSize(child.element, axis));
     }
   }
 

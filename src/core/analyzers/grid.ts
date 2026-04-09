@@ -1,20 +1,20 @@
 /**
  * Grid layout analyzer.
  */
-import type { Axis, SizeFns, NodeBuilder } from "../dag";
+import type { Axis, NodeBuilder } from "../dag";
 
 export function gridItem(
-  fns: SizeFns, nb: NodeBuilder, axis: Axis, depth: number,
+  nb: NodeBuilder, axis: Axis,
 ): void {
   const parent = nb.proxy.getLayoutParent();
 
   if (parent.getExplicitSize(axis)) {
-    nb.input("container", fns.computeSize(parent.element, axis, depth - 1));
+    nb.input("container", nb.computeSize(parent.element, axis));
   }
 
   const trackProp = axis === "width" ? "grid-column" as const : "grid-row" as const;
   nb.css(trackProp);
 
   nb.describe(`Grid item \u2014 ${axis} determined by the grid track it occupies`)
-    .calc(fns.borderBoxCalc(nb.proxy, axis));
+    .calc(nb.borderBoxCalc(nb.proxy, axis));
 }

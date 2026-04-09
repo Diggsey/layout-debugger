@@ -5,18 +5,18 @@
  * - CSS2 §10.3.3  Block-level, non-replaced elements in normal flow
  * - CSS2 §8.1     Box model content area
  */
-import type { Axis, LayoutNode, NodeKind, SizeFns, NodeBuilder } from "../dag";
+import type { Axis, LayoutNode, NodeKind, NodeBuilder } from "../dag";
 import { ref, add, sub, cmax } from "../dag";
 
 /**
  * Block-fill: auto-width block fills containing block content area minus margins.
  */
 export function blockFill(
-  fns: SizeFns, nb: NodeBuilder, axis: Axis, depth: number,
+  nb: NodeBuilder, axis: Axis,
 ): void {
   const cb = nb.proxy.getContainingBlock();
-  const cbNode = fns.computeSize(cb.element, axis, depth - 1);
-  const contentAreaNode = containerContentArea(fns, cb.element, axis, cbNode);
+  const cbNode = nb.computeSize(cb.element, axis);
+  const contentAreaNode = containerContentArea(nb, cb.element, axis, cbNode);
 
   const [mStartName, mEndName] = axis === "width"
     ? ["margin-left", "margin-right"] as const : ["margin-top", "margin-bottom"] as const;
@@ -36,18 +36,18 @@ export function blockFill(
  * Content area of a container: border-box minus padding and border.
  */
 export function containerContentArea(
-  fns: SizeFns, container: Element, axis: Axis,
+  nb: NodeBuilder, container: Element, axis: Axis,
   borderBoxNode: LayoutNode,
 ): LayoutNode {
   const kind: NodeKind = `content-area:${axis}`;
-  return fns.create(kind, container, (nb) => {
-    nb.setMode("content-area");
+  return nb.create(kind, container, (cnb) => {
+    cnb.setMode("content-area");
     const pbProps = axis === "width"
       ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
       : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
 
-    nb.describe("Usable space inside element after subtracting padding and border")
-      .calc(sub(ref(borderBoxNode), add(...pbProps.map(p => nb.prop(p)))))
+    cnb.describe("Usable space inside element after subtracting padding and border")
+      .calc(sub(ref(borderBoxNode), add(...pbProps.map(p => cnb.prop(p)))))
       .input("borderBox", borderBoxNode);
   });
 }

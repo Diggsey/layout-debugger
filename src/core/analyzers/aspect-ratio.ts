@@ -1,33 +1,33 @@
 /**
  * Aspect ratio analyzer.
  */
-import type { Axis, CalcExpr, SizeFns, NodeBuilder } from "../dag";
+import type { Axis, CalcExpr, NodeBuilder } from "../dag";
 import { ref, prop, mul, div, add, sub } from "../dag";
 import { measureElementSize, round } from "../utils";
 
 export function aspectRatio(
-  fns: SizeFns, nb: NodeBuilder, axis: Axis, depth: number,
+  nb: NodeBuilder, axis: Axis,
 ): void {
   const el = nb.element;
   const ar = nb.css("aspect-ratio");
   if (!ar || ar === "auto") {
-    nb.describe("Measured size").calc(fns.borderBoxCalc(nb.proxy, axis));
+    nb.describe("Measured size").calc(nb.borderBoxCalc(nb.proxy, axis));
     return;
   }
 
   const match = ar.match(/^([\d.]+)\s*(?:\/\s*([\d.]+))?$/);
   if (!match) {
-    nb.describe("Measured size").calc(fns.borderBoxCalc(nb.proxy, axis));
+    nb.describe("Measured size").calc(nb.borderBoxCalc(nb.proxy, axis));
     return;
   }
 
   const otherAxis: Axis = axis === "width" ? "height" : "width";
   if (nb.proxy.getExplicitSize(axis) || !nb.proxy.getExplicitSize(otherAxis)) {
-    nb.describe("Measured size").calc(fns.borderBoxCalc(nb.proxy, axis));
+    nb.describe("Measured size").calc(nb.borderBoxCalc(nb.proxy, axis));
     return;
   }
 
-  const otherNode = fns.computeSize(el, otherAxis, depth);
+  const otherNode = nb.computeSize(el, otherAxis, nb.depth);
 
   const ratioProp = nb.prop("aspect-ratio");
   const isBorderBox = nb.css("box-sizing") === "border-box";

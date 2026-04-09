@@ -1,13 +1,13 @@
 /**
  * Positioned layout analyzer.
  */
-import type { Axis, NodeKind, LayoutNode, SizeFns, NodeBuilder } from "../dag";
+import type { Axis, NodeKind, LayoutNode, NodeBuilder } from "../dag";
 import { ref, prop, measured, sub, add, cmax } from "../dag";
 import { PX } from "../units";
 import { isAuto } from "../utils";
 
 export function positioned(
-  fns: SizeFns, nb: NodeBuilder, axis: Axis, depth: number,
+  nb: NodeBuilder, axis: Axis,
 ): void {
   const el = nb.element;
   const startProp = axis === "width" ? "left" as const : "top" as const;
@@ -25,7 +25,7 @@ export function positioned(
     if (pos === "fixed") {
       cbElement = document.documentElement;
       const vpSize = axis === "width" ? window.innerWidth : window.innerHeight;
-      cbNode = fns.create(`measured:${axis}`, cbElement, (n) => {
+      cbNode = nb.create(`measured:${axis}`, cbElement, (n) => {
         n.setMode("viewport")
           .describe("Size of the browser viewport")
           .calc(measured("viewport", vpSize, PX));
@@ -33,7 +33,7 @@ export function positioned(
     } else {
       const cb = nb.proxy.getContainingBlock();
       cbElement = cb.element;
-      cbNode = fns.computeSize(cbElement, axis, depth - 1);
+      cbNode = nb.computeSize(cbElement, axis);
     }
     const cbBorderProps = axis === "width"
       ? ["border-left-width", "border-right-width"] as const
@@ -62,7 +62,7 @@ export function positioned(
     return;
   }
 
-  const contentNode = fns.contentSize(el, axis, depth);
+  const contentNode = nb.computeIntrinsicSize(el, axis);
   nb.describe(`Absolutely positioned \u2014 ${axis} shrinks to fit content`)
     .calc(ref(contentNode))
     .input("content", contentNode);

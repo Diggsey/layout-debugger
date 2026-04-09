@@ -1,7 +1,7 @@
 export { buildDag } from "./build-dag";
 export { renderDag, renderDagToConsole } from "./dag-render";
 export { DagBuilder, NodeBuilder } from "./dag";
-export type { LayoutNode, DagResult, NodeKind, Axis, SizeFns, CalcExpr } from "./dag";
+export type { LayoutNode, DagResult, NodeKind, Axis, CalcExpr } from "./dag";
 export type { Units } from "./units";
 export { UNITLESS, PX, formatUnits } from "./units";
 export { evaluate, calcUnit, ref, constant, prop, propVal, measured, add, sub, mul, div, cmax, cmin } from "./dag";
