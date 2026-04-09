@@ -1,0 +1,82 @@
+{
+  "seed": 1775735799853,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "761px",
+      "overflow": "hidden",
+      "border": "1px solid black",
+      "justify-content": "space-between"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "flex",
+          "flex-direction": "row",
+          "width": "340px",
+          "overflow": "hidden",
+          "box-sizing": "border-box",
+          "column-gap": "11px",
+          "row-gap": "11px",
+          "align-items": "flex-end",
+          "flex-grow": "2",
+          "max-height": "298px",
+          "margin": "1px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "34px",
+              "height": "42px",
+              "padding": "15px",
+              "border": "4px solid black",
+              "flex-grow": "2"
+            },
+            "text": "Grid Layout Grid",
+            "target": true
+          },
+          {
+            "style": {
+              "max-width": "230px",
+              "max-height": "216px",
+              "overflow": "hidden",
+              "writing-mode": "vertical-rl",
+              "gap": "19px",
+              "flex-grow": "2",
+              "flex-basis": "69%",
+              "margin": "6px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "101px",
+                  "height": "93px",
+                  "max-height": "396px",
+                  "padding": "10px",
+                  "box-sizing": "border-box",
+                  "flex-grow": "1",
+                  "overflow": "hidden"
+                },
+                "text": "Overflow Overflow Box Content Flex"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null
+}

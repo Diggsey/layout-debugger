@@ -1,0 +1,62 @@
+{
+  "seed": 1775735809632,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "297px",
+      "overflow": "hidden",
+      "width": "100px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "144px",
+          "height": "77px",
+          "border-right": "2px solid black",
+          "border-bottom": "1px solid black",
+          "border-left": "4px solid black",
+          "margin-top": "5px",
+          "margin-right": "1px",
+          "margin-bottom": "12px",
+          "max-width": "112px",
+          "flex-grow": "0"
+        }
+      },
+      {
+        "style": {
+          "width": "25px",
+          "height": "64px",
+          "box-sizing": "border-box",
+          "min-width": "88px",
+          "flex-shrink": "4",
+          "max-height": "408px"
+        },
+        "target": true
+      },
+      {
+        "style": {
+          "width": "39px",
+          "height": "85px",
+          "padding": "8px",
+          "flex-grow": "1",
+          "flex-basis": "30%",
+          "margin": "8px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null
+}

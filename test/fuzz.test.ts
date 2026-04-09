@@ -14,7 +14,7 @@ const FUZZ_SEED = Number(process.env.FUZZ_SEED) || Date.now();
 
 test.describe("fuzz", () => {
   test("random layouts", async ({ page }) => {
-    const failures: { seed: number; spec: LayoutSpec; errors: OracleError[] }[] = [];
+    const failures: { seed: number; spec: LayoutSpec; errors: OracleError[]; crashed?: boolean; crashMessage?: string }[] = [];
 
     for (let i = 0; i < FUZZ_N; i++) {
       const seed = FUZZ_SEED + i;
@@ -22,7 +22,7 @@ test.describe("fuzz", () => {
       const result = await runOracle(page, spec);
 
       if (!result.ok) {
-        failures.push({ seed, spec, errors: result.errors });
+        failures.push({ seed, spec, errors: result.errors, crashed: result.crashed, crashMessage: result._message });
 
         const filename = `fuzz-${seed}.json`;
         fs.writeFileSync(
@@ -33,6 +33,7 @@ test.describe("fuzz", () => {
             errors: result.errors,
             dag: result.dag,
             measurements: result.measurements,
+            ...(result.crashed ? { crashed: true, _message: result._message, _stack: result._stack } : {}),
           }, null, 2),
         );
       }
@@ -42,6 +43,7 @@ test.describe("fuzz", () => {
       const summary = failures
         .map((f) => {
           const e = f.errors[0];
+          if (f.crashed) return `  seed=${f.seed}: CRASH: ${f.crashMessage}`;
           if (e.message) return `  seed=${f.seed}: ${e.kind} ${e.elementPath} ${e.axis}: ${e.message}`;
           return `  seed=${f.seed}: ${e.kind} ${e.elementPath} ${e.axis}: DAG=${e.dagResult} actual=${e.actual} delta=${e.delta}`;
         })

@@ -1,0 +1,58 @@
+{
+  "seed": 1775739044336,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "676px",
+      "overflow": "hidden",
+      "align-items": "flex-start"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "61px",
+          "height": "58px",
+          "flex-grow": "2",
+          "flex-basis": "17%",
+          "min-height": "30px"
+        }
+      },
+      {
+        "style": {
+          "width": "139px",
+          "height": "22px",
+          "box-sizing": "border-box",
+          "margin": "2px",
+          "flex-basis": "auto",
+          "align-self": "stretch"
+        }
+      },
+      {
+        "style": {
+          "width": "45px",
+          "height": "67px",
+          "max-width": "135px",
+          "min-width": "28px"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null,
+  "crashed": true,
+  "_message": "Unit mismatch in max: px vs ",
+  "_stack": "Error: Unit mismatch in max: px vs \n    at o (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:527)\n    at O (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:7783)\n    at re (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:18730)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13532\n    at Array.map (<anonymous>)\n    at ne (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13525)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:28293\n    at M.create (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:8407)\n    at K (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:27493)\n    at Module.le [as buildDag] (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:24851)"
+}

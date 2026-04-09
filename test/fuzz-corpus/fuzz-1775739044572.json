@@ -1,0 +1,120 @@
+{
+  "seed": 1775739044572,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "491px",
+      "overflow": "hidden",
+      "padding": "10px",
+      "box-sizing": "border-box",
+      "align-items": "stretch"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "64px",
+          "height": "55px",
+          "padding": "12px",
+          "box-sizing": "border-box",
+          "min-width": "40px",
+          "flex-grow": "0"
+        }
+      },
+      {
+        "style": {
+          "display": "flex",
+          "width": "289px",
+          "overflow": "visible",
+          "padding": "3px",
+          "flex-grow": "0",
+          "flex-direction": "column",
+          "gap": "5px",
+          "align-items": "stretch"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "26px",
+              "height": "22px",
+              "padding-top": "4px",
+              "padding-right": "7px",
+              "border-top": "2px solid black",
+              "border-bottom": "2px solid black",
+              "border-left": "2px solid black",
+              "box-sizing": "border-box",
+              "max-width": "148px",
+              "min-width": "47px",
+              "min-height": "59px",
+              "max-height": "79px",
+              "margin": "2px",
+              "flex-grow": "1",
+              "flex-basis": "auto",
+              "align-self": "center"
+            },
+            "target": true
+          },
+          {
+            "style": {
+              "width": "25px",
+              "height": "213px",
+              "box-sizing": "border-box",
+              "min-height": "22px",
+              "min-width": "48px",
+              "max-width": "212px",
+              "max-height": "223px",
+              "margin-bottom": "9px",
+              "flex-shrink": "4",
+              "flex-basis": "54px"
+            },
+            "text": "Content"
+          },
+          {
+            "style": {
+              "width": "230px",
+              "height": "150px",
+              "border": "2px solid black",
+              "max-width": "137px",
+              "min-width": "37px",
+              "min-height": "12px",
+              "max-height": "236px",
+              "box-sizing": "border-box",
+              "flex-shrink": "1",
+              "flex-basis": "29%",
+              "margin": "10px"
+            }
+          },
+          {
+            "style": {
+              "width": "235px",
+              "height": "70px",
+              "padding": "10px",
+              "min-width": "46px",
+              "max-width": "232px",
+              "min-height": "10px",
+              "max-height": "232px",
+              "box-sizing": "border-box",
+              "flex-grow": "2"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null,
+  "crashed": true,
+  "_message": "Unit mismatch in min: px vs ",
+  "_stack": "Error: Unit mismatch in min: px vs \n    at o (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:527)\n    at k (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:7942)\n    at re (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:19082)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13532\n    at Array.map (<anonymous>)\n    at ne (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13525)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:28293\n    at M.create (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:8407)\n    at K (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:27493)\n    at Module.le [as buildDag] (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:24877)"
+}

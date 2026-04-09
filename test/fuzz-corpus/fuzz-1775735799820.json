@@ -1,0 +1,130 @@
+{
+  "seed": 1775735799820,
+  "spec": {
+    "style": {
+      "overflow-x": "auto",
+      "overflow-y": "auto",
+      "aspect-ratio": "3 / 1",
+      "width": "322px"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "flex",
+          "flex-direction": "row",
+          "width": "513px",
+          "overflow": "visible",
+          "gap": "6px",
+          "align-items": "center",
+          "height": "376px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "546px",
+              "overflow": "hidden",
+              "max-width": "497px",
+              "margin-top": "11px",
+              "margin-left": "1px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "98px",
+                  "height": "94px",
+                  "border": "1px solid black",
+                  "box-sizing": "border-box",
+                  "margin": "7px",
+                  "display": "inline-block"
+                }
+              },
+              {
+                "style": {
+                  "width": "71px",
+                  "height": "69px",
+                  "padding": "11px",
+                  "display": "inline-block"
+                }
+              },
+              {
+                "style": {
+                  "width": "98px",
+                  "height": "47px",
+                  "border": "1px solid black",
+                  "margin": "8px",
+                  "min-width": "45px",
+                  "max-width": "441px",
+                  "max-height": "317px",
+                  "display": "inline-block",
+                  "margin-bottom": "7px",
+                  "margin-left": "14px"
+                },
+                "text": "Flex Layout"
+              }
+            ]
+          },
+          {
+            "style": {
+              "display": "flex",
+              "flex-direction": "column",
+              "height": "551px",
+              "overflow": "hidden",
+              "padding": "13px",
+              "box-sizing": "border-box",
+              "gap": "10px",
+              "width": "450px",
+              "flex-shrink": "2",
+              "flex-basis": "61%"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "111px",
+                  "height": "62px",
+                  "margin-top": "4px",
+                  "margin-bottom": "11px",
+                  "margin-left": "2px",
+                  "max-width": "273px",
+                  "min-height": "29px",
+                  "flex-grow": "1",
+                  "flex-shrink": "4"
+                }
+              }
+            ],
+            "target": true
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "100px",
+          "height": "76px",
+          "padding": "12px",
+          "margin": "9px",
+          "max-width": "247px"
+        }
+      },
+      {
+        "style": {
+          "width": "48px",
+          "height": "33px",
+          "padding": "9px",
+          "min-height": "31px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null
+}

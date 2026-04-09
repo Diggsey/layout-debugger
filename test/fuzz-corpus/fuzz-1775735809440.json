@@ -1,0 +1,68 @@
+{
+  "seed": 1775735809440,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "211px",
+      "overflow": "scroll",
+      "padding": "4px",
+      "writing-mode": "vertical-lr"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "76px",
+          "height": "45px",
+          "padding": "7px",
+          "box-sizing": "border-box",
+          "min-height": "17px",
+          "max-height": "463px",
+          "flex-grow": "4",
+          "flex-basis": "36px",
+          "margin-right": "1px",
+          "margin-bottom": "11px"
+        },
+        "target": true
+      },
+      {
+        "style": {
+          "width": "47px",
+          "height": "72px",
+          "padding-right": "15px",
+          "padding-left": "15px",
+          "box-sizing": "border-box",
+          "margin-top": "13px",
+          "flex-grow": "0",
+          "flex-shrink": "3",
+          "flex-basis": "58%",
+          "align-self": "baseline"
+        }
+      },
+      {
+        "style": {
+          "width": "100px",
+          "height": "88px",
+          "border": "2px solid black",
+          "box-sizing": "border-box",
+          "max-height": "451px",
+          "flex-grow": "3",
+          "flex-shrink": "0"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null
+}

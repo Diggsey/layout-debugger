@@ -1,0 +1,102 @@
+{
+  "seed": 1775735799987,
+  "spec": {
+    "style": {
+      "overflow": "hidden",
+      "padding": "12px",
+      "aspect-ratio": "1 / 4",
+      "width": "184px"
+    },
+    "children": [
+      {
+        "style": {
+          "overflow": "visible",
+          "padding": "8px",
+          "box-sizing": "border-box",
+          "width": "387px",
+          "max-height": "500px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "55px",
+              "height": "39px",
+              "border-top": "3px solid black",
+              "border-right": "4px solid black",
+              "border-bottom": "2px solid black",
+              "border-left": "3px solid black",
+              "display": "none"
+            },
+            "text": "Grid Hello Overflow Box Flex"
+          }
+        ]
+      },
+      {
+        "style": {
+          "display": "flex",
+          "flex-direction": "column",
+          "height": "543px",
+          "overflow": "visible",
+          "align-items": "center"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "30px",
+              "height": "99px",
+              "box-sizing": "border-box",
+              "margin": "8px",
+              "min-height": "26px",
+              "max-height": "244px",
+              "flex-grow": "4",
+              "flex-basis": "auto",
+              "max-width": "176px"
+            }
+          },
+          {
+            "style": {
+              "width": "32%",
+              "height": "79px",
+              "padding": "13px",
+              "margin-right": "9px",
+              "margin-bottom": "2px",
+              "margin-left": "3px",
+              "max-height": "242px",
+              "flex-basis": "auto",
+              "align-self": "baseline",
+              "min-height": "14px",
+              "max-width": "129px"
+            },
+            "target": true
+          },
+          {
+            "style": {
+              "width": "37%",
+              "height": "76px",
+              "padding": "11px",
+              "border": "3px solid black",
+              "box-sizing": "border-box",
+              "margin": "6px",
+              "flex-shrink": "3",
+              "flex-basis": "54%",
+              "align-self": "flex-end"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null
+}

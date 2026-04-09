@@ -1,0 +1,131 @@
+{
+  "seed": 1775739044475,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "478px",
+      "overflow": "hidden",
+      "box-sizing": "border-box",
+      "justify-content": "space-between"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "block",
+          "width": "476px",
+          "overflow": "hidden",
+          "flex-grow": "2",
+          "flex-basis": "123px",
+          "max-width": "335px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "102px",
+              "height": "91px",
+              "border": "1px solid black",
+              "box-sizing": "border-box",
+              "margin-top": "15px",
+              "margin-bottom": "1px",
+              "min-width": "69px",
+              "max-width": "116px",
+              "min-height": "42px",
+              "max-height": "113px"
+            }
+          },
+          {
+            "style": {
+              "width": "298px",
+              "height": "36px",
+              "padding-top": "6px",
+              "padding-right": "2px",
+              "margin-right": "3px",
+              "min-width": "78px",
+              "max-width": "158px",
+              "min-height": "54px",
+              "max-height": "148px",
+              "box-sizing": "border-box"
+            }
+          },
+          {
+            "style": {
+              "width": "44px",
+              "height": "338px",
+              "overflow": "hidden",
+              "box-sizing": "border-box",
+              "min-width": "66px",
+              "max-width": "114px",
+              "min-height": "31px",
+              "max-height": "161px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "50px",
+                  "height": "51px",
+                  "padding": "5px",
+                  "border": "2px solid black"
+                }
+              },
+              {
+                "style": {
+                  "width": "62px",
+                  "height": "64px",
+                  "padding": "11px",
+                  "border": "3px solid black"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "style": {
+          "display": "flex",
+          "flex-direction": "row",
+          "width": "203px",
+          "overflow": "hidden",
+          "padding": "3px",
+          "gap": "13px",
+          "height": "454px",
+          "flex-grow": "4",
+          "flex-basis": "65%",
+          "min-width": "18px",
+          "min-height": "69px",
+          "margin-right": "3px",
+          "margin-left": "4px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "24px",
+              "height": "49px",
+              "padding": "9px",
+              "box-sizing": "border-box",
+              "margin": "6px",
+              "max-height": "275px"
+            },
+            "target": true
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null,
+  "crashed": true,
+  "_message": "Unit mismatch in max: px vs ",
+  "_stack": "Error: Unit mismatch in max: px vs \n    at o (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:527)\n    at O (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:7783)\n    at re (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:18730)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13532\n    at Array.map (<anonymous>)\n    at ne (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13525)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:28293\n    at M.create (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:8407)\n    at K (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:27493)\n    at Object.computeSize (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:28782)"
+}

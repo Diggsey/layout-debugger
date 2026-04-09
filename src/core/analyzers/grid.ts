@@ -6,7 +6,7 @@ import type { Axis, SizeFns, NodeBuilder } from "../dag";
 export function gridItem(
   fns: SizeFns, nb: NodeBuilder, axis: Axis, depth: number,
 ): void {
-  const parent = nb.proxy.getParent();
+  const parent = nb.proxy.getLayoutParent();
 
   if (parent.getExplicitSize(axis)) {
     nb.input("container", fns.computeSize(parent.element, axis, depth - 1));

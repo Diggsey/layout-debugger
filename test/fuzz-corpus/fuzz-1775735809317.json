@@ -1,0 +1,107 @@
+{
+  "seed": 1775735809317,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "476px",
+      "overflow": "hidden",
+      "box-sizing": "border-box"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "contents"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "76px",
+              "height": "71px",
+              "box-sizing": "border-box",
+              "max-width": "311px",
+              "min-width": "96px",
+              "min-height": "36px",
+              "flex-grow": "0",
+              "flex-shrink": "3",
+              "flex-basis": "18%"
+            }
+          },
+          {
+            "style": {
+              "width": "24px",
+              "height": "51px",
+              "box-sizing": "border-box",
+              "margin-bottom": "7px",
+              "margin-left": "13px",
+              "max-height": "282px",
+              "flex-grow": "2",
+              "flex-basis": "75%"
+            },
+            "target": true
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "419px",
+          "overflow": "hidden",
+          "padding": "8px",
+          "max-width": "206px",
+          "flex-grow": "3"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "70%",
+              "height": "58px",
+              "max-width": "141px",
+              "display": "inline-block",
+              "margin": "10px"
+            }
+          },
+          {
+            "style": {
+              "width": "81px",
+              "height": "98px",
+              "border-left": "3px solid black",
+              "min-width": "91px",
+              "display": "inline-block",
+              "margin-top": "10px",
+              "margin-bottom": "9px"
+            }
+          },
+          {
+            "style": {
+              "width": "154px",
+              "height": "66px",
+              "max-height": "453px",
+              "display": "inline-block"
+            }
+          },
+          {
+            "style": {
+              "width": "102px",
+              "height": "74px",
+              "display": "inline-block",
+              "max-width": "178px"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null
+}

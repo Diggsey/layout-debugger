@@ -27,8 +27,14 @@ export function round(n: number): number {
 }
 
 /** Get the flex direction main axis property name ('width' or 'height'). */
-export function flexMainAxisProp(direction: string): "width" | "height" {
-  return direction.startsWith("column") ? "height" : "width";
+export function flexMainAxisProp(direction: string, writingMode = "horizontal-tb"): "width" | "height" {
+  const isVertical = writingMode === "vertical-rl" || writingMode === "vertical-lr";
+  const isRow = !direction.startsWith("column");
+  // row → inline axis, column → block axis
+  // horizontal-tb: inline=width, block=height
+  // vertical-*:    inline=height, block=width
+  if (isRow) return isVertical ? "height" : "width";
+  return isVertical ? "width" : "height";
 }
 
 /** Parse a space-separated list of pixel values like "200px 300px 300px" into numbers. */

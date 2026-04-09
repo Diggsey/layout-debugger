@@ -1,0 +1,44 @@
+{
+  "seed": 1775735799749,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "672px",
+      "overflow": "hidden",
+      "padding": "5px",
+      "border": "4px solid black",
+      "gap": "20px",
+      "width": "101px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "20px",
+          "height": "30px",
+          "padding": "3px",
+          "box-sizing": "border-box",
+          "max-width": "408px",
+          "min-height": "52px",
+          "flex-basis": "67%",
+          "align-self": "center"
+        },
+        "text": "Box Box Content Overflow",
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null
+}

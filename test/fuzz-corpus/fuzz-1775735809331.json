@@ -1,0 +1,134 @@
+{
+  "seed": 1775735809331,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "464px",
+      "overflow": "hidden"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "contents"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "95px",
+              "height": "55px",
+              "padding": "3px",
+              "border": "2px solid black",
+              "margin": "3px",
+              "max-width": "290px",
+              "max-height": "399px",
+              "margin-top": "7px",
+              "margin-right": "9px",
+              "flex-grow": "4",
+              "flex-shrink": "4",
+              "flex-basis": "0"
+            }
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "79px",
+          "height": "88px",
+          "box-sizing": "border-box",
+          "margin": "8px",
+          "max-width": "367px",
+          "min-height": "86px",
+          "flex-basis": "23%"
+        }
+      },
+      {
+        "style": {
+          "overflow": "hidden",
+          "padding-top": "4px",
+          "padding-right": "15px",
+          "flex-grow": "3"
+        },
+        "children": [
+          {
+            "style": {
+              "display": "grid",
+              "grid-template-columns": "1fr",
+              "width": "238px",
+              "overflow": "hidden",
+              "box-sizing": "border-box",
+              "column-gap": "7px",
+              "grid-auto-rows": "55px",
+              "height": "280px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "86px",
+                  "height": "49px",
+                  "margin-top": "15px",
+                  "margin-right": "13px",
+                  "margin-bottom": "15px",
+                  "min-height": "65px",
+                  "max-height": "210px"
+                }
+              }
+            ]
+          },
+          {
+            "style": {
+              "display": "flex",
+              "flex-direction": "column",
+              "height": "460px",
+              "overflow": "hidden",
+              "align-items": "center"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "68px",
+                  "height": "25px",
+                  "flex-grow": "2",
+                  "flex-shrink": "2"
+                },
+                "text": "Overflow Box"
+              }
+            ]
+          },
+          {
+            "style": {
+              "width": "119px",
+              "height": "91px",
+              "border": "2px solid black",
+              "box-sizing": "border-box"
+            },
+            "text": "Flex Test"
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "145px",
+          "height": "62px",
+          "margin": "7px",
+          "min-width": "54px",
+          "flex-grow": "2"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null
+}

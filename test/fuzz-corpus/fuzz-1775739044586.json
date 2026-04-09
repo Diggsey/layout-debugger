@@ -1,0 +1,77 @@
+{
+  "seed": 1775739044586,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "577px",
+      "overflow": "hidden",
+      "padding-left": "12px",
+      "box-sizing": "border-box",
+      "gap": "4px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "85px",
+          "height": "25px",
+          "box-sizing": "border-box",
+          "margin": "0",
+          "max-height": "141px",
+          "flex-grow": "0",
+          "flex-basis": "60px",
+          "min-height": "12px",
+          "min-width": "72px",
+          "max-width": "420px"
+        }
+      },
+      {
+        "style": {
+          "width": "109px",
+          "height": "79px",
+          "box-sizing": "border-box",
+          "min-height": "74px",
+          "flex-grow": "3",
+          "flex-basis": "32%"
+        },
+        "target": true
+      },
+      {
+        "style": {
+          "width": "141px",
+          "height": "33px",
+          "min-width": "48px",
+          "min-height": "27px",
+          "flex-grow": "4",
+          "flex-shrink": "2",
+          "flex-basis": "21%"
+        }
+      },
+      {
+        "style": {
+          "width": "86%",
+          "height": "53px",
+          "padding": "14px",
+          "flex-shrink": "1",
+          "min-height": "47px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null,
+  "crashed": true,
+  "_message": "Unit mismatch in max: px vs ",
+  "_stack": "Error: Unit mismatch in max: px vs \n    at o (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:527)\n    at O (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:7783)\n    at re (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:18730)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13532\n    at Array.map (<anonymous>)\n    at ne (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13525)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:28293\n    at M.create (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:8407)\n    at K (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:27493)\n    at Module.le [as buildDag] (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:24877)"
+}

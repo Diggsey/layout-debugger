@@ -1,0 +1,133 @@
+{
+  "seed": 1775739044323,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "655px",
+      "overflow": "hidden"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "109px",
+          "height": "57px",
+          "flex-basis": "58%",
+          "align-self": "stretch"
+        }
+      },
+      {
+        "style": {
+          "width": "336px",
+          "height": "250px",
+          "font-size": "24px",
+          "overflow": "hidden",
+          "padding": "9px",
+          "box-sizing": "border-box",
+          "margin": "0",
+          "display": "flex",
+          "flex-direction": "column",
+          "gap": "8px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "36vw",
+              "height": "55px",
+              "border": "4px solid black",
+              "box-sizing": "border-box",
+              "min-width": "89px",
+              "align-self": "stretch"
+            }
+          },
+          {
+            "style": {
+              "width": "39vw",
+              "height": "76px",
+              "box-sizing": "border-box",
+              "min-height": "94px",
+              "flex-grow": "1",
+              "flex-shrink": "2",
+              "flex-basis": "0"
+            }
+          },
+          {
+            "style": {
+              "display": "flex",
+              "flex-direction": "row",
+              "width": "6em",
+              "overflow": "scroll",
+              "border": "1px solid black",
+              "max-height": "301px",
+              "box-sizing": "border-box",
+              "flex-grow": "3",
+              "flex-basis": "161px",
+              "align-self": "baseline"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "77px",
+                  "height": "63px",
+                  "padding": "14px",
+                  "flex-grow": "4",
+                  "align-self": "baseline"
+                }
+              }
+            ]
+          },
+          {
+            "style": {
+              "width": "36vh",
+              "height": "48px",
+              "padding": "11px",
+              "max-width": "203px",
+              "box-sizing": "border-box",
+              "flex-basis": "0px",
+              "margin": "5px"
+            }
+          }
+        ],
+        "target": true
+      },
+      {
+        "style": {
+          "width": "67px",
+          "height": "32px",
+          "box-sizing": "border-box",
+          "min-width": "80px",
+          "min-height": "27px",
+          "flex-basis": "106px"
+        },
+        "text": "Box Content"
+      },
+      {
+        "style": {
+          "width": "64px",
+          "height": "77px",
+          "margin": "2px",
+          "flex-grow": "2",
+          "flex-basis": "11%",
+          "margin-top": "9px",
+          "margin-bottom": "0px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null,
+  "crashed": true,
+  "_message": "Unit mismatch in max: px vs ",
+  "_stack": "Error: Unit mismatch in max: px vs \n    at o (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:527)\n    at O (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:7783)\n    at re (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:18730)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13532\n    at Array.map (<anonymous>)\n    at ne (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13525)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:28293\n    at M.create (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:8407)\n    at K (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:27493)\n    at Module.le [as buildDag] (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:24877)"
+}

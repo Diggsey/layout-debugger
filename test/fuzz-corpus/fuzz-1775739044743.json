@@ -1,0 +1,84 @@
+{
+  "seed": 1775739044743,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "571px",
+      "overflow": "scroll",
+      "padding": "10px",
+      "gap": "20px",
+      "justify-content": "space-around",
+      "height": "490px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "371px",
+          "height": "442px",
+          "overflow": "scroll",
+          "padding-top": "7px",
+          "padding-bottom": "6px",
+          "padding-left": "14px",
+          "flex-shrink": "0",
+          "flex-basis": "20%",
+          "margin": "0"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "35%",
+              "height": "89%",
+              "border": "3px solid black",
+              "box-sizing": "border-box",
+              "min-width": "76px",
+              "min-height": "18px",
+              "margin": "9px",
+              "max-height": "376px"
+            }
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "30%",
+          "height": "32px",
+          "box-sizing": "border-box",
+          "min-width": "16px",
+          "min-height": "69px"
+        },
+        "target": true
+      },
+      {
+        "style": {
+          "width": "61px",
+          "height": "68px",
+          "padding-top": "9px",
+          "padding-right": "11px",
+          "padding-bottom": "4px",
+          "min-height": "81px",
+          "flex-grow": "0",
+          "flex-shrink": "0",
+          "flex-basis": "0",
+          "align-self": "auto"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null,
+  "crashed": true,
+  "_message": "Unit mismatch in max: px vs ",
+  "_stack": "Error: Unit mismatch in max: px vs \n    at o (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:527)\n    at O (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:7783)\n    at re (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:18730)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13532\n    at Array.map (<anonymous>)\n    at ne (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13525)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:28293\n    at M.create (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:8407)\n    at K (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:27493)\n    at Module.le [as buildDag] (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:24851)"
+}

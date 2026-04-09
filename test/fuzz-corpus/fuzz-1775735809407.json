@@ -1,0 +1,51 @@
+{
+  "seed": 1775735809407,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "634px",
+      "overflow": "hidden",
+      "gap": "6px",
+      "align-items": "center",
+      "height": "402px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "36%",
+          "height": "67px",
+          "margin-bottom": "11px",
+          "min-width": "88px",
+          "flex-grow": "1",
+          "flex-shrink": "4",
+          "flex-basis": "34px"
+        },
+        "text": "Flex Box Layout Layout"
+      },
+      {
+        "style": {
+          "width": "22px",
+          "height": "61px",
+          "padding": "8px",
+          "flex-shrink": "3",
+          "flex-basis": "43%"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null
+}

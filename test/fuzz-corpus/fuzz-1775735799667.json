@@ -1,0 +1,102 @@
+{
+  "seed": 1775735799667,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "458px",
+      "overflow": "hidden",
+      "box-sizing": "border-box",
+      "align-items": "flex-start",
+      "justify-content": "space-evenly"
+    },
+    "children": [
+      {
+        "style": {
+          "overflow": "hidden",
+          "padding": "7px",
+          "width": "551px",
+          "max-width": "106px",
+          "flex-grow": "4",
+          "min-height": "10px"
+        },
+        "children": [
+          {
+            "style": {
+              "display": "flex",
+              "flex-direction": "column",
+              "height": "431px",
+              "overflow": "hidden",
+              "padding-top": "4px",
+              "box-sizing": "border-box",
+              "width": "354px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "136px",
+                  "height": "89px",
+                  "margin": "9px",
+                  "max-width": "202px",
+                  "min-height": "38px",
+                  "flex-grow": "2",
+                  "flex-basis": "0",
+                  "margin-bottom": "15px"
+                },
+                "text": "Layout Hello Layout Box Layout",
+                "target": true
+              },
+              {
+                "style": {
+                  "width": "98px",
+                  "height": "46px",
+                  "max-height": "496px",
+                  "flex-basis": "57%"
+                }
+              },
+              {
+                "style": {
+                  "width": "141px",
+                  "height": "95px",
+                  "max-height": "468px"
+                }
+              }
+            ]
+          },
+          {
+            "style": {
+              "width": "37px",
+              "height": "62px",
+              "box-sizing": "border-box",
+              "min-height": "85px",
+              "max-height": "482px",
+              "margin": "7px"
+            },
+            "text": "Layout Flex"
+          },
+          {
+            "style": {
+              "width": "59px",
+              "height": "75px",
+              "margin": "0",
+              "max-width": "363px"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null
+}

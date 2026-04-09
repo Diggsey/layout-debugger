@@ -1,8 +1,9 @@
 /**
  * Positioned layout analyzer.
  */
-import type { Axis, NodeKind, SizeFns, NodeBuilder } from "../dag";
-import { ref, prop, sub, add, cmax } from "../dag";
+import type { Axis, NodeKind, LayoutNode, SizeFns, NodeBuilder } from "../dag";
+import { ref, prop, measured, sub, add, cmax } from "../dag";
+import { PX } from "../units";
 import { isAuto } from "../utils";
 
 export function positioned(
@@ -14,17 +15,32 @@ export function positioned(
   const startVal = nb.css(startProp);
   const endVal = nb.css(endProp);
 
-  nb.css("position");
+  const pos = nb.css("position");
 
   if (!isAuto(startVal) && !isAuto(endVal)) {
-    const cb = nb.proxy.getContainingBlock();
-    const cbNode = fns.computeSize(cb.element, axis, depth - 1);
+    // For fixed position, the containing block is the viewport (initial containing block),
+    // not the html element. Use window dimensions directly.
+    let cbNode: LayoutNode;
+    let cbElement: Element;
+    if (pos === "fixed") {
+      cbElement = document.documentElement;
+      const vpSize = axis === "width" ? window.innerWidth : window.innerHeight;
+      cbNode = fns.create(`measured:${axis}`, cbElement, (n) => {
+        n.setMode("viewport")
+          .describe("Size of the browser viewport")
+          .calc(measured("viewport", vpSize, PX));
+      });
+    } else {
+      const cb = nb.proxy.getContainingBlock();
+      cbElement = cb.element;
+      cbNode = fns.computeSize(cbElement, axis, depth - 1);
+    }
     const cbBorderProps = axis === "width"
       ? ["border-left-width", "border-right-width"] as const
       : ["border-top-width", "border-bottom-width"] as const;
 
     const cbPaddingBoxKind: NodeKind = `content-area:${axis}`;
-    const cbPaddingBox = nb.create(cbPaddingBoxKind, cb.element, (cnb) => {
+    const cbPaddingBox = nb.create(cbPaddingBoxKind, cbElement, (cnb) => {
       cnb.setMode("content-area")
         .describe("Containing block padding box (for positioned descendants)")
         .calc(sub(ref(cbNode), add(...cbBorderProps.map(p => prop(cnb.proxy, p)))))

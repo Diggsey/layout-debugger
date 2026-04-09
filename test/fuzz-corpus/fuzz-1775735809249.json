@@ -1,0 +1,75 @@
+{
+  "seed": 1775735809249,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "280px",
+      "overflow": "auto",
+      "padding": "11px",
+      "box-sizing": "border-box",
+      "column-gap": "8px",
+      "width": "431px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "60px",
+          "height": "27px",
+          "flex-shrink": "4",
+          "flex-basis": "78%",
+          "align-self": "flex-start",
+          "min-height": "55px",
+          "max-height": "426px"
+        }
+      },
+      {
+        "style": {
+          "width": "75px",
+          "height": "96px",
+          "box-sizing": "border-box",
+          "margin": "0px",
+          "flex-grow": "4",
+          "flex-basis": "24px"
+        }
+      },
+      {
+        "style": {
+          "width": "99px",
+          "height": "44px",
+          "border": "3px solid black",
+          "box-sizing": "border-box"
+        },
+        "target": true
+      },
+      {
+        "style": {
+          "width": "150px",
+          "height": "98px",
+          "margin-top": "14px",
+          "margin-right": "10px",
+          "margin-bottom": "6px",
+          "margin-left": "4px",
+          "min-width": "20px",
+          "max-height": "368px",
+          "flex-grow": "4",
+          "max-width": "249px"
+        },
+        "text": "Layout"
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null
+}

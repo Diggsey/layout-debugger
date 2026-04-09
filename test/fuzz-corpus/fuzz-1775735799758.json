@@ -1,0 +1,40 @@
+{
+  "seed": 1775735799758,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "754px",
+      "overflow-x": "visible",
+      "overflow-y": "visible",
+      "align-items": "center"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "84%",
+          "height": "88px",
+          "margin": "5px",
+          "min-height": "76px",
+          "max-height": "371px",
+          "flex-basis": "48%",
+          "align-self": "flex-start"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null
+}

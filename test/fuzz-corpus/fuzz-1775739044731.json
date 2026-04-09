@@ -1,0 +1,68 @@
+{
+  "seed": 1775739044731,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "586px",
+      "overflow": "hidden",
+      "padding": "6px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "124px",
+          "height": "35px",
+          "padding": "10px",
+          "margin": "1px",
+          "max-height": "248px",
+          "flex-grow": "0",
+          "flex-basis": "59%"
+        }
+      },
+      {
+        "style": {
+          "width": "125px",
+          "height": "60px",
+          "box-sizing": "border-box",
+          "flex-basis": "0px"
+        },
+        "target": true
+      },
+      {
+        "style": {
+          "width": "65px",
+          "height": "67px",
+          "box-sizing": "border-box",
+          "flex-grow": "3",
+          "flex-basis": "0px"
+        }
+      },
+      {
+        "style": {
+          "width": "50px",
+          "height": "24px",
+          "padding": "12px",
+          "max-height": "410px",
+          "flex-basis": "0px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null,
+  "crashed": true,
+  "_message": "Unit mismatch in min: px vs ",
+  "_stack": "Error: Unit mismatch in min: px vs \n    at o (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:527)\n    at k (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:7942)\n    at re (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:19082)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13532\n    at Array.map (<anonymous>)\n    at ne (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13525)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:28293\n    at M.create (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:8407)\n    at K (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:27493)\n    at Module.le [as buildDag] (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:24877)"
+}

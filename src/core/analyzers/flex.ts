@@ -27,7 +27,7 @@ export function flexItemMain(
   nb.css("flex-grow");
   nb.css("flex-shrink");
 
-  const parent = nb.proxy.getParent();
+  const parent = nb.proxy.getLayoutParent();
   const container = parent.element;
   const containerBorderBox = fns.computeSize(container, axis, depth - 1);
   const containerContent = fns.containerContentArea(container, axis, containerBorderBox);
@@ -37,7 +37,10 @@ export function flexItemMain(
   const siblings = flexChildren.map(childProxy =>
     buildFlexChildData(fns, nb, childProxy, axis, depth, containerContent.result),
   );
-  const gap = parent.readPx(axis === "width" ? "column-gap" : "row-gap");
+  // Main-axis gap: column-gap for row direction, row-gap for column direction
+  const direction = parent.readProperty("flex-direction");
+  const gapPropName = direction.startsWith("column") ? "row-gap" as const : "column-gap" as const;
+  const gap = parent.readPx(gapPropName);
 
   const rect = el.getBoundingClientRect();
   const actualSize = round(axis === "width" ? rect.width : rect.height);
@@ -51,8 +54,6 @@ export function flexItemMain(
       .describe("Effective starting size")
       .calc(fns.borderBoxCalc(nb.proxy, axis));
   });
-
-  const gapPropName = axis === "width" ? "column-gap" as const : "row-gap" as const;
   const totalBases = siblings.reduce((sum, s) => sum + s.hypothetical + s.margin, 0);
   const totalGap = gap * Math.max(0, siblings.length - 1);
   const freeSpace = containerContent.result - totalBases - totalGap;
@@ -144,7 +145,7 @@ export function flexItemCross(
   fns: SizeFns, nb: NodeBuilder, axis: Axis, depth: number,
 ): void {
   const el = nb.element;
-  const parent = nb.proxy.getParent();
+  const parent = nb.proxy.getLayoutParent();
 
   if (nb.proxy.getExplicitSize(axis)) {
     const explicit = nb.proxy.getExplicitSize(axis)!;
@@ -163,8 +164,19 @@ export function flexItemCross(
     return;
   }
 
-  nb.css("align-self");
-  parent.readProperty("align-items");
+  const alignSelf = nb.css("align-self");
+  const alignItems = parent.readProperty("align-items");
+  const effectiveAlign = (alignSelf === "auto" || alignSelf === "normal") ? alignItems : alignSelf;
+  const isStretch = effectiveAlign === "stretch" || effectiveAlign === "normal";
+
+  if (!isStretch) {
+    // flex-cross-content: size from content
+    const contentNode = fns.contentSize(el, axis, depth);
+    nb.describe(`Flex item \u2014 cross ${axis} sized by content (align: ${effectiveAlign})`)
+      .calc(ref(contentNode))
+      .input("content", contentNode);
+    return;
+  }
 
   // Per CSS Flexbox §9.4: stretched cross size = container content area - item margins
   const containerCross = fns.computeSize(parent.element, axis, depth - 1);
@@ -224,7 +236,8 @@ function buildFlexChildData(
   } else if (fb.endsWith("%")) {
     const raw = (parseFloat(fb) / 100) * containerContentPx;
     basis = isBorderBox ? raw : raw + pb;
-    basisCalc = prop(childProxy, "flex-basis");
+    // Use propVal since prop() would return UNITLESS for the unresolved percentage
+    basisCalc = propVal("flex-basis", round(basis));
   } else if (fb === "auto") {
     const specified = childProxy.getSpecifiedValue(axis);
     if (specified && specified.endsWith("px")) {
@@ -253,7 +266,8 @@ function buildFlexChildData(
 
   // --- Max main ---
   const maxV = childProxy.readProperty(maxPropName);
-  const maxMain = maxV === "none" ? Infinity : (isBorderBox ? px(maxV) : px(maxV) + pb);
+  // Percentage constraints that haven't resolved to px (indefinite CB) → treat as unconstrained
+  const maxMain = maxV === "none" || !maxV.endsWith("px") ? Infinity : (isBorderBox ? px(maxV) : px(maxV) + pb);
 
   // --- Min main ---
   const minV = childProxy.readProperty(minPropName);
@@ -300,7 +314,7 @@ function buildFlexChildData(
         minMain = maxMain;
       }
     }
-  } else {
+  } else if (minV.endsWith("px")) {
     const raw = px(minV);
     minMain = isBorderBox ? raw : raw + pb;
     if (isBorderBox) {
@@ -311,6 +325,10 @@ function buildFlexChildData(
         : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
       minCalc = add(prop(childProxy, minPropName), ...pbNames.map(p => prop(childProxy, p)));
     }
+  } else {
+    // Percentage min that hasn't resolved to px → treat as 0
+    minMain = 0;
+    minCalc = constant(0, PX);
   }
   minMain = Math.max(minMain, pb);
   const minNode = parentNb.create(`min-content:${axis}`, child, (n) => {

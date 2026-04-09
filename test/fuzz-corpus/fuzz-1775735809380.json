@@ -1,0 +1,85 @@
+{
+  "seed": 1775735809380,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "421px",
+      "overflow": "hidden",
+      "border-top": "2px solid black",
+      "border-bottom": "3px solid black",
+      "border-left": "2px solid black",
+      "width": "352px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "100px",
+          "height": "50px",
+          "border": "2px solid black",
+          "box-sizing": "border-box",
+          "min-height": "40px",
+          "flex-grow": "1",
+          "flex-basis": "0px",
+          "min-width": "64px",
+          "max-width": "191px",
+          "margin-top": "12px",
+          "margin-bottom": "4px"
+        }
+      },
+      {
+        "style": {
+          "width": "95px",
+          "height": "42px",
+          "padding": "9px",
+          "margin": "7px",
+          "flex-shrink": "4",
+          "flex-basis": "auto",
+          "min-width": "72px",
+          "max-width": "408px"
+        }
+      },
+      {
+        "style": {
+          "width": "22%",
+          "height": "66px",
+          "padding": "8px",
+          "border": "2px solid black",
+          "box-sizing": "border-box",
+          "max-width": "179px",
+          "min-width": "81px",
+          "margin": "1px"
+        },
+        "target": true
+      },
+      {
+        "style": {
+          "width": "24px",
+          "height": "65px",
+          "padding": "4px",
+          "border-top": "3px solid black",
+          "border-right": "1px solid black",
+          "border-bottom": "1px solid black",
+          "border-left": "2px solid black",
+          "box-sizing": "border-box",
+          "margin": "9px",
+          "flex-grow": "3",
+          "flex-basis": "48%"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null
+}

@@ -1,0 +1,149 @@
+{
+  "seed": 1775735809387,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "314px",
+      "overflow": "hidden",
+      "box-sizing": "border-box",
+      "gap": "7px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "90%",
+          "padding-left": "5px",
+          "box-sizing": "border-box",
+          "min-width": "88%",
+          "min-height": "100%",
+          "overflow-x": "auto",
+          "overflow-y": "auto",
+          "align-items": "center",
+          "flex-grow": "1",
+          "flex-basis": "27%",
+          "display": "flex",
+          "flex-direction": "column",
+          "overflow": "hidden"
+        },
+        "children": [
+          {
+            "style": {
+              "display": "table",
+              "width": "319px",
+              "overflow": "hidden",
+              "padding-top": "5px",
+              "padding-right": "13px",
+              "height": "70%",
+              "box-sizing": "border-box",
+              "max-width": "373px",
+              "flex-grow": "0",
+              "flex-basis": "0",
+              "margin": "5px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "392px",
+                  "height": "27px",
+                  "padding": "9px",
+                  "border": "1px solid black",
+                  "margin-top": "10px",
+                  "margin-right": "5px",
+                  "min-height": "36px",
+                  "min-width": "68px",
+                  "max-width": "276px",
+                  "max-height": "216px",
+                  "margin": "10px"
+                }
+              }
+            ],
+            "target": true
+          },
+          {
+            "style": {
+              "width": "42%",
+              "height": "24vh",
+              "border-top": "3px solid black",
+              "border-right": "1px solid black",
+              "border-bottom": "1px solid black",
+              "box-sizing": "border-box",
+              "max-height": "298px",
+              "overflow": "scroll",
+              "flex-grow": "4",
+              "flex-shrink": "4",
+              "margin": "0px"
+            }
+          },
+          {
+            "style": {
+              "width": "99px",
+              "height": "49px",
+              "padding": "14px",
+              "margin": "6px",
+              "max-width": "152px"
+            },
+            "text": "Grid Test Test Grid"
+          },
+          {
+            "style": {
+              "width": "124px",
+              "height": "88px",
+              "box-sizing": "border-box",
+              "margin-right": "0",
+              "min-width": "76px",
+              "flex-grow": "2"
+            }
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "71px",
+          "height": "94px",
+          "margin": "3px",
+          "max-width": "479px",
+          "flex-grow": "1",
+          "flex-basis": "23%"
+        },
+        "text": "Overflow Layout Layout"
+      },
+      {
+        "style": {
+          "width": "133px",
+          "height": "26px",
+          "max-width": "400px",
+          "flex-grow": "3",
+          "flex-shrink": "2"
+        }
+      },
+      {
+        "style": {
+          "width": "55px",
+          "height": "93px",
+          "padding-right": "15px",
+          "padding-bottom": "14px",
+          "box-sizing": "border-box",
+          "display": "contents",
+          "min-width": "77px",
+          "max-width": "269px",
+          "max-height": "379px",
+          "flex-shrink": "2"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null
+}

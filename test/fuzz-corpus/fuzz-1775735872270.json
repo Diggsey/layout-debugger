@@ -1,0 +1,138 @@
+{
+  "seed": 1775735872270,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "561px",
+      "overflow": "hidden",
+      "padding": "13px"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "flex",
+          "flex-direction": "column",
+          "height": "310px",
+          "overflow-x": "visible",
+          "overflow-y": "visible",
+          "padding": "5px",
+          "border": "1px solid black",
+          "box-sizing": "border-box",
+          "flex-shrink": "1",
+          "flex-basis": "19px",
+          "align-self": "flex-end",
+          "margin": "9px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "83px",
+              "height": "100px",
+              "padding": "10px",
+              "box-sizing": "border-box",
+              "min-width": "36px",
+              "flex-shrink": "3",
+              "flex-basis": "44%",
+              "margin": "9px"
+            }
+          },
+          {
+            "style": {
+              "display": "grid",
+              "grid-template-columns": "1fr 3fr",
+              "width": "567px",
+              "overflow": "hidden",
+              "flex-shrink": "0",
+              "min-width": "40px",
+              "margin": "5px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "69px",
+                  "height": "87px",
+                  "padding-top": "10px",
+                  "padding-left": "12px",
+                  "border": "3px solid black",
+                  "margin-top": "14px",
+                  "margin-right": "11px",
+                  "margin-bottom": "3px",
+                  "min-height": "52px"
+                }
+              },
+              {
+                "style": {
+                  "width": "26px",
+                  "height": "80px",
+                  "min-width": "51px",
+                  "min-height": "45px",
+                  "margin": "5px"
+                }
+              },
+              {
+                "style": {
+                  "width": "55px",
+                  "height": "64px",
+                  "padding": "5px",
+                  "border": "4px solid black",
+                  "min-height": "15px"
+                }
+              }
+            ]
+          },
+          {
+            "style": {
+              "width": "29%",
+              "height": "51px",
+              "box-sizing": "border-box",
+              "margin-top": "15px",
+              "margin-right": "2px",
+              "margin-bottom": "8px",
+              "margin": "10px"
+            }
+          },
+          {
+            "style": {
+              "width": "136px",
+              "height": "99px",
+              "border-right": "3px solid black",
+              "border-bottom": "2px solid black",
+              "border-left": "1px solid black",
+              "flex-grow": "0",
+              "max-height": "366px"
+            },
+            "target": true
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "57px",
+          "height": "83px",
+          "box-sizing": "border-box",
+          "margin": "2px",
+          "max-height": "440px",
+          "flex-grow": "0",
+          "flex-basis": "0"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null,
+  "crashed": true,
+  "_message": "Unit mismatch in max: px vs ",
+  "_stack": "Error: Unit mismatch in max: px vs \n    at o (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:527)\n    at O (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:7783)\n    at re (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:18571)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13431\n    at Array.map (<anonymous>)\n    at ne (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13424)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:28134\n    at M.create (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:8407)\n    at K (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:27334)\n    at Module.le [as buildDag] (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:24718)"
+}

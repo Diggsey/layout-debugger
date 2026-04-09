@@ -1,0 +1,59 @@
+{
+  "seed": 1775739044487,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "294px",
+      "overflow": "hidden",
+      "padding-top": "8px",
+      "padding-right": "5px",
+      "padding-bottom": "4px",
+      "box-sizing": "border-box",
+      "align-items": "center"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "24px",
+          "height": "90px",
+          "max-height": "147px",
+          "flex-basis": "32%",
+          "min-width": "100px",
+          "max-width": "446px",
+          "margin": "1px"
+        }
+      },
+      {
+        "style": {
+          "width": "82px",
+          "height": "43px",
+          "padding": "3px",
+          "border": "3px solid black",
+          "box-sizing": "border-box",
+          "flex-grow": "0",
+          "flex-basis": "auto",
+          "align-self": "flex-end",
+          "max-width": "149px"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null,
+  "crashed": true,
+  "_message": "Unit mismatch in min: px vs ",
+  "_stack": "Error: Unit mismatch in min: px vs \n    at o (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:527)\n    at k (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:7942)\n    at re (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:19082)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13532\n    at Array.map (<anonymous>)\n    at ne (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13525)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:28293\n    at M.create (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:8407)\n    at K (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:27493)\n    at Module.le [as buildDag] (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:24851)"
+}

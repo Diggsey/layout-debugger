@@ -1,0 +1,68 @@
+{
+  "seed": 1775735872304,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "672px",
+      "overflow": "hidden",
+      "box-sizing": "border-box",
+      "align-items": "flex-end",
+      "width": "334px"
+    },
+    "children": [
+      {
+        "style": {
+          "overflow": "hidden",
+          "box-sizing": "border-box",
+          "aspect-ratio": "4 / 2",
+          "height": "275px",
+          "align-self": "auto",
+          "display": "flex",
+          "flex-direction": "column",
+          "gap": "9px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "53px",
+              "height": "76px",
+              "padding": "14px",
+              "border": "2px solid black",
+              "flex-grow": "0",
+              "flex-basis": "0"
+            },
+            "text": "Content"
+          }
+        ],
+        "target": true
+      },
+      {
+        "style": {
+          "width": "57px",
+          "height": "56px",
+          "box-sizing": "border-box",
+          "flex-grow": "2",
+          "flex-basis": "15%",
+          "margin": "3px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null,
+  "crashed": true,
+  "_message": "Unit mismatch in max: px vs ",
+  "_stack": "Error: Unit mismatch in max: px vs \n    at o (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:527)\n    at O (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:7783)\n    at re (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:18571)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13431\n    at Array.map (<anonymous>)\n    at ne (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13424)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:28134\n    at M.create (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:8407)\n    at K (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:27334)\n    at Object.computeSize (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:28623)"
+}

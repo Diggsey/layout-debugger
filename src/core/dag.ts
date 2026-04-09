@@ -113,6 +113,11 @@ export function constant<T extends number>(n: LiteralNumber<T>, unit: Units = UN
 }
 
 /** Create a CalcExpr property node by reading a CSS property via an ElementProxy. */
+/** Properties whose computed values are unitless numbers (not lengths). */
+const UNITLESS_PROPS = new Set<CssPropertyName>([
+  "flex-grow", "flex-shrink", "aspect-ratio",
+]);
+
 export function prop(proxy: ElementProxy, name: CssPropertyName): CalcExpr {
   const raw = proxy.readProperty(name);
   let value: number;
@@ -120,13 +125,23 @@ export function prop(proxy: ElementProxy, name: CssPropertyName): CalcExpr {
   if (raw.endsWith("px")) {
     value = parseFloat(raw);
     unit = PX;
+  } else if (raw.endsWith("%")) {
+    // Percentage that didn't resolve to px (indefinite containing block).
+    // Use PX unit with the raw numeric value to prevent unit mismatches;
+    // the actual result will be computed correctly by the algorithm.
+    value = parseFloat(raw) || 0;
+    unit = PX;
   } else if (raw.includes("/")) {
     const parts = raw.split("/").map(s => parseFloat(s.trim()));
     value = parts.length === 2 && parts[1] !== 0 ? parts[0] / parts[1] : parseFloat(raw) || 0;
     unit = UNITLESS;
-  } else {
+  } else if (UNITLESS_PROPS.has(name)) {
     value = parseFloat(raw) || 0;
     unit = UNITLESS;
+  } else {
+    // Dimension properties: "0", "normal", "auto", "none" all resolve to 0px
+    value = parseFloat(raw) || 0;
+    unit = PX;
   }
   return { op: "property", name, value, unit };
 }
@@ -396,8 +411,13 @@ export class NodeBuilder {
       : 0;
 
     const result = this._resultOverride ?? round(evaluate(this._calc));
-    const minPx = minVal === "auto" || minVal === "0px" ? 0 : px(minVal) + padBorder;
-    const maxPx = maxVal === "none" ? Infinity : px(maxVal) + padBorder;
+    // Percentage constraints that haven't resolved to px (indefinite containing block) can't be clamped
+    const minResolved = minVal === "auto" || minVal === "0px" || minVal === "0" || minVal.endsWith("px");
+    const maxResolved = maxVal === "none" || maxVal.endsWith("px");
+    const minPx = minVal === "auto" || minVal === "0px" || minVal === "0" ? 0
+      : minResolved ? px(minVal) + padBorder : 0;
+    const maxPx = maxVal === "none" ? Infinity
+      : maxResolved ? px(maxVal) + padBorder : Infinity;
 
     if (result >= minPx && (maxPx === Infinity || result <= maxPx)) return;
 

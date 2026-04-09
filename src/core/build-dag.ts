@@ -56,6 +56,24 @@ function measuredNode(b: DagBuilder, el: Element, axis: Axis, mode: NodeMode, de
 // Determine the calculation mode for an element+axis
 // ---------------------------------------------------------------------------
 
+/**
+ * Walk up through display:contents ancestors to find the real layout parent.
+ * Returns a proxy that records reads with "parent." prefix, even if the
+ * layout parent is a grandparent (when intermediate ancestors have display:contents).
+ */
+function findLayoutParent(proxy: ElementProxy): { proxy: ElementProxy; display: string } | null {
+  // Start with the immediate parent proxy (shares records with the node's proxy)
+  let pp = proxy.getParent();
+  let display = pp.readProperty("display");
+  while (display === "contents" && pp.element.parentElement && pp.element !== document.documentElement) {
+    // The real layout parent is further up — but keep using "parent." prefix
+    pp = pp.getParent();
+    display = pp.readProperty("display");
+  }
+  if (display === "contents") return null;
+  return { proxy: pp, display };
+}
+
 function determineMode(proxy: ElementProxy, axis: Axis): NodeMode {
   const el = proxy.element;
   if (el === document.documentElement) return "viewport";
@@ -66,17 +84,20 @@ function determineMode(proxy: ElementProxy, axis: Axis): NodeMode {
 
   const position = proxy.readProperty("position");
   const parent = el.parentElement;
+  // Find the real layout parent (walks through display:contents ancestors)
+  const lp = (parent && position !== "absolute" && position !== "fixed")
+    ? findLayoutParent(proxy) : null;
+  const lpDisplay = lp?.display;
   let isGridItem = false;
-  if (parent && position !== "absolute" && position !== "fixed") {
-    const pp = proxy.getParent();
-    const parentDisplay = pp.readProperty("display");
-    if (parentDisplay === "flex" || parentDisplay === "inline-flex") {
-      const direction = pp.readProperty("flex-direction");
-      const wrap = pp.readProperty("flex-wrap");
+  if (lp) {
+    if (lpDisplay === "flex" || lpDisplay === "inline-flex") {
+      const direction = lp.proxy.readProperty("flex-direction");
+      const wrap = lp.proxy.readProperty("flex-wrap");
+      const wm = lp.proxy.readProperty("writing-mode");
       if (wrap !== "nowrap") return "terminal"; // Multi-line flex: not yet modeled
-      if (axis === flexMainAxisProp(direction)) return "flex-item-main";
+      if (axis === flexMainAxisProp(direction, wm)) return "flex-item-main";
     }
-    if (parentDisplay === "grid" || parentDisplay === "inline-grid") {
+    if (lpDisplay === "grid" || lpDisplay === "inline-grid") {
       isGridItem = true;
     }
   }
@@ -100,18 +121,16 @@ function determineMode(proxy: ElementProxy, axis: Axis): NodeMode {
   if (intrinsic) return "intrinsic-keyword";
 
   // Flex cross axis (wrapped flex returned "terminal" above, so this is single-line only)
-  if (parent && position !== "absolute" && position !== "fixed") {
-    const pp = proxy.getParent();
-    const parentDisplay = pp.readProperty("display");
-    if (parentDisplay === "flex" || parentDisplay === "inline-flex") {
+  if (lp) {
+    if (lpDisplay === "flex" || lpDisplay === "inline-flex") {
       // This is the cross axis (main axis was handled above)
       const alignSelf = proxy.readProperty("align-self");
-      const alignItems = pp.readProperty("align-items");
+      const alignItems = lp.proxy.readProperty("align-items");
       const effectiveAlign = (alignSelf === "auto" || alignSelf === "normal") ? alignItems : alignSelf;
       return (effectiveAlign === "stretch" || effectiveAlign === "normal")
         ? "flex-cross-stretch" : "flex-cross-content";
     }
-    if (parentDisplay === "grid" || parentDisplay === "inline-grid") return "grid-item";
+    if (lpDisplay === "grid" || lpDisplay === "inline-grid") return "grid-item";
   }
 
   if (position === "absolute" || position === "fixed") {
@@ -125,10 +144,18 @@ function determineMode(proxy: ElementProxy, axis: Axis): NodeMode {
 
   const cssFloat = proxy.readProperty("float");
   const writingMode = proxy.readProperty("writing-mode");
-  const inlineAxis = (writingMode === "vertical-rl" || writingMode === "vertical-lr") ? "height" : "width";
+  const parentWm = lp ? lp.proxy.readProperty("writing-mode") : "horizontal-tb";
   const isFloat = cssFloat !== "none";
   const isInline = display.startsWith("inline");
   if (isInline || isFloat) return "content-driven";
+
+  // Orthogonal flows (child writing-mode differs from parent) have complex auto-sizing
+  // rules per CSS Writing Modes §10.1 — content-driven for both axes is the safe fallback.
+  const isVertical = (wm: string) => wm === "vertical-rl" || wm === "vertical-lr";
+  if (isVertical(writingMode) !== isVertical(parentWm)) return "content-driven";
+
+  // Same writing-mode family: inline axis fills, block axis is content-driven.
+  const inlineAxis = isVertical(parentWm) ? "height" : "width";
   return axis === inlineAxis ? "block-fill" : "content-driven";
 }
 
@@ -325,7 +352,9 @@ function contentSize(
     : round(axis === "width" ? el.getBoundingClientRect().width : el.getBoundingClientRect().height);
 
   const isFlex = display === "flex" || display === "inline-flex";
-  const isFlexMain = isFlex && axis === flexMainAxisProp(nb.css("flex-direction"));
+  const wm = nb.css("writing-mode");
+  const flexDir = isFlex ? nb.css("flex-direction") : null;
+  const isFlexMain = isFlex && axis === flexMainAxisProp(flexDir!, wm);
   const mode: "content-sum" | "content-max" = isFlex && !isFlexMain ? "content-max" : "content-sum";
 
   nb.setMode(mode);
@@ -342,12 +371,15 @@ function contentSize(
     }
   }
 
-  const gap = nb.cssPx(axis === "width" ? "column-gap" : "row-gap");
+  // Gap: for flex, use direction-based gap; for block/grid, use axis-based gap
+  const gapPropName = isFlex
+    ? (flexDir!.startsWith("column") ? "row-gap" as const : "column-gap" as const)
+    : (axis === "width" ? "column-gap" as const : "row-gap" as const);
+  const gap = nb.cssPx(gapPropName);
 
   childNodes.forEach((n, idx) => { nb.input(`child${idx}`, n); });
 
   let calc: CalcExpr;
-  const gapPropName = axis === "width" ? "column-gap" : "row-gap";
   if (childNodes.length === 0) {
     calc = borderBoxCalc(nb.proxy, axis);
   } else {

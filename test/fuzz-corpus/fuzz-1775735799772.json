@@ -1,0 +1,68 @@
+{
+  "seed": 1775735799772,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "331px",
+      "overflow": "hidden",
+      "box-sizing": "border-box",
+      "align-items": "flex-end",
+      "justify-content": "flex-end",
+      "height": "341px"
+    },
+    "children": [
+      {
+        "style": {
+          "display": "grid",
+          "grid-template-columns": "3fr 1fr",
+          "width": "594px",
+          "overflow": "hidden",
+          "border": "2px solid black",
+          "box-sizing": "border-box",
+          "height": "275px",
+          "align-items": "end",
+          "flex-basis": "65%",
+          "align-self": "center",
+          "min-width": "13px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "95px",
+              "height": "23px",
+              "padding": "5px",
+              "box-sizing": "border-box",
+              "display": "contents",
+              "min-width": "98px",
+              "min-height": "21px"
+            }
+          },
+          {
+            "style": {
+              "width": "119px",
+              "height": "22px",
+              "box-sizing": "border-box",
+              "max-width": "174px",
+              "max-height": "457px"
+            }
+          }
+        ],
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null
+}

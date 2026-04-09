@@ -1,0 +1,86 @@
+{
+  "seed": 1775735872317,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "width": "338px",
+      "overflow": "auto",
+      "flex-direction": "column"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "216px",
+          "height": "74px",
+          "padding-top": "9px",
+          "padding-bottom": "10px",
+          "padding-left": "9px",
+          "border": "4px solid black",
+          "min-width": "80px",
+          "max-width": "277px",
+          "min-height": "27px",
+          "max-height": "179px",
+          "box-sizing": "border-box"
+        }
+      },
+      {
+        "style": {
+          "width": "118px",
+          "height": "60px",
+          "border": "2px solid black",
+          "box-sizing": "border-box",
+          "min-width": "14px",
+          "max-width": "201px",
+          "min-height": "35px",
+          "max-height": "239px",
+          "margin": "2px",
+          "flex-grow": "0"
+        }
+      },
+      {
+        "style": {
+          "width": "97px",
+          "height": "37px",
+          "border-right": "4px solid black",
+          "box-sizing": "border-box",
+          "min-width": "69px",
+          "max-width": "289px",
+          "min-height": "43px",
+          "max-height": "71px",
+          "flex-basis": "75%"
+        }
+      },
+      {
+        "style": {
+          "width": "38px",
+          "height": "43px",
+          "padding": "15px",
+          "margin": "1px",
+          "max-width": "143px",
+          "min-width": "52px",
+          "min-height": "16px",
+          "max-height": "197px",
+          "box-sizing": "border-box",
+          "flex-shrink": "4"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null,
+  "crashed": true,
+  "_message": "Unit mismatch in min: px vs ",
+  "_stack": "Error: Unit mismatch in min: px vs \n    at o (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:527)\n    at k (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:7942)\n    at re (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:18923)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13431\n    at Array.map (<anonymous>)\n    at ne (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13424)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:28134\n    at M.create (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:8407)\n    at K (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:27334)\n    at Module.le [as buildDag] (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:24718)"
+}

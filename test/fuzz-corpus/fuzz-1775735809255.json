@@ -1,0 +1,132 @@
+{
+  "seed": 1775735809255,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "row",
+      "width": "416px",
+      "overflow": "scroll",
+      "box-sizing": "border-box"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "499px",
+          "height": "280px",
+          "font-size": "13px",
+          "overflow": "hidden",
+          "padding-top": "3px",
+          "padding-right": "11px",
+          "padding-left": "2px",
+          "box-sizing": "border-box",
+          "display": "flex",
+          "flex-direction": "row",
+          "overflow-x": "visible",
+          "overflow-y": "hidden"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "30vw",
+              "height": "71px",
+              "border": "1px solid black",
+              "margin": "2px",
+              "min-height": "11px",
+              "max-height": "339px",
+              "box-sizing": "border-box",
+              "align-self": "baseline"
+            },
+            "text": "Layout Layout Flex Grid Flex"
+          },
+          {
+            "style": {
+              "display": "grid",
+              "grid-template-columns": "3fr",
+              "width": "28vh",
+              "overflow": "visible",
+              "box-sizing": "border-box",
+              "height": "498px",
+              "align-items": "start",
+              "margin-top": "14px",
+              "margin-right": "4px",
+              "max-width": "394px",
+              "flex-basis": "0%"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "35px",
+                  "height": "78px",
+                  "border": "3px solid black"
+                }
+              }
+            ]
+          },
+          {
+            "style": {
+              "width": "59%",
+              "height": "23px",
+              "box-sizing": "border-box",
+              "min-height": "66px",
+              "max-height": "327px",
+              "flex-grow": "1",
+              "flex-basis": "63%",
+              "margin": "9px"
+            }
+          },
+          {
+            "style": {
+              "width": "147px",
+              "height": "67px",
+              "border": "1px solid black",
+              "box-sizing": "border-box",
+              "margin": "2px",
+              "max-width": "417px",
+              "min-height": "10px",
+              "flex-grow": "1",
+              "margin-right": "11px",
+              "margin-bottom": "11px",
+              "margin-left": "4px"
+            },
+            "text": "Content Box Flex",
+            "target": true
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "20px",
+          "height": "24px",
+          "border": "1px solid black",
+          "flex-grow": "1",
+          "flex-shrink": "3"
+        }
+      },
+      {
+        "style": {
+          "width": "97px",
+          "height": "93px",
+          "border": "4px solid black",
+          "margin": "7px",
+          "max-width": "293px",
+          "flex-grow": "3",
+          "flex-shrink": "0",
+          "flex-basis": "195px"
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null
+}

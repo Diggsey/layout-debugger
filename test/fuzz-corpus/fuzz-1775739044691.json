@@ -1,0 +1,77 @@
+{
+  "seed": 1775739044691,
+  "spec": {
+    "style": {
+      "border-right": "2px solid black",
+      "border-bottom": "4px solid black",
+      "min-width": "30px",
+      "max-width": "172px",
+      "display": "none",
+      "flex-basis": "177px",
+      "overflow": "hidden"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "111px",
+          "height": "40px",
+          "padding": "9px",
+          "border": "1px solid black",
+          "box-sizing": "border-box",
+          "max-height": "192px"
+        }
+      },
+      {
+        "style": {
+          "width": "330px",
+          "height": "291px",
+          "padding": "5px",
+          "box-sizing": "border-box",
+          "min-width": "81px",
+          "border-bottom": "1px solid black",
+          "overflow": "hidden",
+          "float": "left"
+        }
+      },
+      {
+        "style": {
+          "width": "95%",
+          "height": "51px",
+          "display": "none"
+        }
+      },
+      {
+        "style": {
+          "width": "113px",
+          "height": "30%",
+          "margin": "9px",
+          "min-width": "38px",
+          "min-height": "44px",
+          "max-height": "285px",
+          "box-sizing": "border-box",
+          "display": "inline-block",
+          "position": "relative",
+          "overflow": "hidden",
+          "gap": "4px"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null,
+  "crashed": true,
+  "_message": "Unit mismatch in max: px vs ",
+  "_stack": "Error: Unit mismatch in max: px vs \n    at o (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:527)\n    at O (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:7783)\n    at N.maybeClamp (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:10196)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:28723\n    at M.create (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:8407)\n    at K (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:27493)\n    at Module.le [as buildDag] (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:24877)\n    at eval (eval at evaluate (:290:30), <anonymous>:22:36)\n    at UtilityScript.evaluate (<anonymous>:292:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+}

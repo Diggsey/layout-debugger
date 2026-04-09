@@ -1,0 +1,123 @@
+{
+  "seed": 1775739044375,
+  "spec": {
+    "style": {
+      "display": "flex",
+      "flex-direction": "column",
+      "height": "409px",
+      "overflow": "hidden",
+      "padding": "3px",
+      "box-sizing": "border-box",
+      "gap": "7px",
+      "width": "292px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "149px",
+          "height": "98px",
+          "box-sizing": "border-box",
+          "display": "none"
+        }
+      },
+      {
+        "style": {
+          "width": "64px",
+          "height": "77px",
+          "border": "3px solid black",
+          "box-sizing": "border-box",
+          "max-width": "480px",
+          "flex-grow": "3",
+          "flex-shrink": "3",
+          "flex-basis": "35%",
+          "align-self": "baseline"
+        },
+        "text": "Content Layout Grid"
+      },
+      {
+        "style": {
+          "display": "block",
+          "width": "250px",
+          "overflow": "hidden",
+          "flex-grow": "0",
+          "align-self": "flex-start"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "116px",
+              "height": "81px",
+              "padding": "2px",
+              "box-sizing": "border-box",
+              "min-width": "19px",
+              "max-width": "273px",
+              "min-height": "46px",
+              "max-height": "216px"
+            }
+          },
+          {
+            "style": {
+              "overflow": "hidden",
+              "height": "198px",
+              "min-width": "63px",
+              "max-width": "180px",
+              "min-height": "46px",
+              "max-height": "193px",
+              "width": "71px"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "58%",
+                  "height": "32px",
+                  "box-sizing": "border-box",
+                  "margin-bottom": "0px",
+                  "margin-top": "13px",
+                  "margin-right": "6px"
+                }
+              },
+              {
+                "style": {
+                  "width": "60px",
+                  "height": "68px",
+                  "box-sizing": "border-box",
+                  "margin-top": "4px",
+                  "min-width": "77px",
+                  "max-height": "146px",
+                  "margin-right": "13px",
+                  "margin-left": "13px"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "style": {
+          "width": "114px",
+          "height": "91px",
+          "padding-top": "11px",
+          "padding-left": "5px",
+          "min-width": "27px"
+        },
+        "target": true
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "crash",
+      "kind": "crash",
+      "elementPath": "",
+      "axis": "",
+      "dagResult": 0,
+      "actual": 0,
+      "delta": 0
+    }
+  ],
+  "dag": null,
+  "measurements": null,
+  "crashed": true,
+  "_message": "Unit mismatch in max: px vs ",
+  "_stack": "Error: Unit mismatch in max: px vs \n    at o (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:527)\n    at O (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:7783)\n    at re (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:18730)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13532\n    at Array.map (<anonymous>)\n    at ne (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:13525)\n    at C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:28293\n    at M.create (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:8407)\n    at K (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:27493)\n    at Module.le [as buildDag] (C:\\Users\\diggs\\Projects\\layout-debugger\\dist\\layout-debugger.js:1:24877)"
+}

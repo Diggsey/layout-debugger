@@ -133,14 +133,6 @@ export class ElementProxy {
     return parseFloat(this.readProperty(name)) || 0;
   }
 
-  /**
-   * Read a CSS property value WITHOUT recording it.
-   * Used by prop() which has its own tracking via CalcExpr auto-collection.
-   */
-  readRaw(name: CssPropertyName): string {
-    return this._style.getPropertyValue(name);
-  }
-
   /** Record a synthetic CSS property value (e.g. "auto" when computed differs). */
   record(name: CssPropertyName, value: string): void {
     const key = this._prefix ? `${this._prefix}.${name}` : name;
@@ -154,6 +146,21 @@ export class ElementProxy {
     return new ElementProxy(this.element.parentElement!, this._records, this._prefixed("parent"));
   }
 
+  /**
+   * Proxy for the layout parent — the nearest ancestor that isn't display:contents.
+   * Reads are prefixed with "parent." regardless of how many levels were skipped.
+   */
+  getLayoutParent(): ElementProxy {
+    let ancestor = this.element.parentElement;
+    while (ancestor && ancestor !== document.documentElement) {
+      if (getComputedStyle(ancestor).display !== "contents") {
+        return new ElementProxy(ancestor, this._records, this._prefixed("parent"));
+      }
+      ancestor = ancestor.parentElement;
+    }
+    return new ElementProxy(ancestor ?? document.documentElement, this._records, this._prefixed("parent"));
+  }
+
   /** Proxy for the containing block. Reads are prefixed with "containingBlock.". */
   getContainingBlock(): ElementProxy {
     const cb = findContainingBlock(this.element);
@@ -161,22 +168,31 @@ export class ElementProxy {
   }
 
   /**
-   * Get proxies for flex children of this element (skips positioned, hidden, contents).
+   * Get proxies for flex/grid children of this element.
+   * Skips positioned and hidden elements. Recurses into display:contents children
+   * since those children participate in this element's formatting context.
    * Filtered children's styles are NOT recorded.
    */
   getFlexChildren(): ElementProxy[] {
     const children: ElementProxy[] = [];
-    for (const child of Array.from(this.element.children)) {
-      const cs = getComputedStyle(child);
-      if (cs.position === "absolute" || cs.position === "fixed") continue;
-      if (cs.display === "none" || cs.display === "contents") continue;
-      children.push(new ElementProxy(child));
-    }
+    const collect = (parent: Element) => {
+      for (const child of Array.from(parent.children)) {
+        const cs = getComputedStyle(child);
+        if (cs.position === "absolute" || cs.position === "fixed") continue;
+        if (cs.display === "none") continue;
+        if (cs.display === "contents") {
+          collect(child); // Recurse — contents children participate in this context
+          continue;
+        }
+        children.push(new ElementProxy(child));
+      }
+    };
+    collect(this.element);
     return children;
   }
 
   /**
-   * Get proxies for flow children (skips positioned, hidden, contents).
+   * Get proxies for flow children (skips positioned, hidden; recurses into contents).
    * Filtered children's styles are NOT recorded.
    */
   getChildren(): ElementProxy[] {
