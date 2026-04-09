@@ -4,7 +4,7 @@
  * Used by: extension communication, fuzz oracle output, test helpers.
  * All types are JSON-safe (no live DOM references).
  */
-import type { LayoutNode, DagResult, Axis, CalcExpr } from "./dag";
+import type { LayoutNode, DagResult, Axis, CalcExpr } from "./types";
 import { formatUnits } from "./units";
 import { describeElement, round } from "./utils";
 

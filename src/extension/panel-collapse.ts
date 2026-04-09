@@ -169,7 +169,7 @@ function animateCollapse(state: AxisState, nodeId: string, rebuild: () => void):
     badge.style.marginRight = "0";
     badge.style.opacity = "0";
     badge.style.overflow = "hidden";
-    badge.offsetHeight; // force reflow
+    void badge.offsetHeight; // force reflow
     badge.style.transition = BADGE_TRANSITION;
     badge.style.width = natural + "px";
     badge.style.padding = "";
@@ -196,11 +196,11 @@ function animateCollapse(state: AxisState, nodeId: string, rebuild: () => void):
     } else {
       el.classList.add("row-exit");
       el.style.opacity = "1";
-      el.offsetHeight;
+      void el.offsetHeight;
       el.style.transition = `height 0.2s ease-out, opacity 0.15s ease-out`;
       el.style.opacity = "0";
     }
-    el.offsetHeight;
+    void el.offsetHeight;
     el.style.height = "0";
   }
 

@@ -1,7 +1,7 @@
-import { buildDag } from "../core/build-dag";
-import { renderDag, type CalcSegment } from "../core/dag-render";
+import { buildDag } from "../core/layout";
+import { renderDag, type CalcSegment } from "../ui/dag-render";
 import { getElementPath } from "../core/serialize";
-import type { RenderNode } from "../core/dag-render";
+import type { RenderNode } from "../ui/dag-render";
 
 declare global {
   interface Window {

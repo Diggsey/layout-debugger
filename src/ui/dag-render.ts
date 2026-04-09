@@ -4,10 +4,10 @@
  * Uses topological sort (via layoutDag) so shared dependencies appear
  * below all their parents. Side branches are placed before the main line.
  */
-import type { DagResult, LayoutNode, CalcExpr } from "./dag";
+import type { DagResult, LayoutNode, CalcExpr } from "../core/types";
 import { layoutDag, type DagInput } from "./dag-layout";
-import { formatUnits } from "./units";
-import { describeElement } from "./utils";
+import { formatUnits } from "../core/units";
+import { describeElement } from "../core/utils";
 
 /** A segment of a calculation string: either plain text or a value linked to a node. */
 export interface CalcSegment {

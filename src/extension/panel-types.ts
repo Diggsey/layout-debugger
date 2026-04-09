@@ -1,6 +1,6 @@
 // Shared types, constants, and small utilities for the panel.
 
-import type { DagInput, LayoutResult } from "../core/dag-layout";
+import type { DagInput, LayoutResult } from "../ui/dag-layout";
 
 export interface CalcSegment { text: string; refId?: string; label?: string; }
 export interface RenderNode {

@@ -16,7 +16,7 @@
     "test:headed": "npx playwright test --project default --headed",
     "test:fuzz": "npx playwright test --project fuzz",
     "test:fuzz:long": "FUZZ_N=1000 npx playwright test --project fuzz",
-    "lint": "oxlint src/",
+    "lint": "oxlint --deny-warnings src/",
     "dev": "npx tsx scripts/dev.ts",
     "dev:firefox": "npx tsx scripts/dev-firefox.ts",
     "fmt": "oxfmt src/",

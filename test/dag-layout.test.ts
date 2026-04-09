@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { renderAscii, type DagInput } from "../src/core/dag-layout";
+import { renderAscii, type DagInput } from "../src/ui/dag-layout";
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";

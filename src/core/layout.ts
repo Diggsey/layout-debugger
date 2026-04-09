@@ -1,24 +1,23 @@
 /**
- * DAG builder — orchestrates layout computation for any element.
+ * Layout computation — orchestrates DAG construction for any element.
  *
  * Entry point: buildDag(el) → DagResult with width and height root nodes.
+ * Determines the layout mode for each element+axis and dispatches to analyzers.
  */
-import type { LayoutNode, DagResult, Axis, NodeKind, NodeMode, CalcExpr } from "./dag";
-import { DagBuilder, NodeBuilder, ElementProxy, ref, constant, prop, add, cmax } from "./dag";
+import type { LayoutNode, DagResult, Axis, NodeKind, NodeMode, CalcExpr } from "./types";
+import { DagBuilder } from "./dag-builder";
+import type { NodeBuilder } from "./node-builder";
+import { ElementProxy } from "./element-proxy";
+import { ref, constant, add, cmax } from "./calc";
 import { PX } from "./units";
+import { borderBoxCalc } from "./box-model";
 import { blockFill } from "./analyzers/block";
-export { containerContentArea } from "./analyzers/block";
 import { flexItemMain, flexItemCross } from "./analyzers/flex";
 import { gridItem } from "./analyzers/grid";
 import { positioned } from "./analyzers/positioned";
 import { aspectRatio } from "./analyzers/aspect-ratio";
-import {
-  round,
-  flexMainAxisProp,
-  measureIntrinsicSize,
-  measureElementSize,
-  isAuto,
-} from "./utils";
+import { round, flexMainAxisProp, isAuto } from "./utils";
+import { measureIntrinsicSize, measureElementSize } from "./measure";
 
 export function buildDag(el: Element): DagResult {
   const b = new DagBuilder();
@@ -32,19 +31,6 @@ export function buildDag(el: Element): DagResult {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-/** Build a CalcExpr for an element's border-box size from its CSS properties. */
-export function borderBoxCalc(proxy: ElementProxy, axis: Axis): CalcExpr {
-  if (proxy.readProperty("box-sizing") === "border-box") {
-    return prop(proxy, axis);
-  }
-  if (axis === "width") {
-    return add(prop(proxy, "width"), prop(proxy, "padding-left"), prop(proxy, "padding-right"),
-      prop(proxy, "border-left-width"), prop(proxy, "border-right-width"));
-  }
-  return add(prop(proxy, "height"), prop(proxy, "padding-top"), prop(proxy, "padding-bottom"),
-    prop(proxy, "border-top-width"), prop(proxy, "border-bottom-width"));
-}
 
 function measuredNode(b: DagBuilder, el: Element, axis: Axis, depth: number, mode: NodeMode, description?: string): LayoutNode {
   const kind: NodeKind = `measured:${axis}`;
@@ -64,11 +50,9 @@ function measuredNode(b: DagBuilder, el: Element, axis: Axis, depth: number, mod
  * layout parent is a grandparent (when intermediate ancestors have display:contents).
  */
 function findLayoutParent(proxy: ElementProxy): { proxy: ElementProxy; display: string } | null {
-  // Start with the immediate parent proxy (shares records with the node's proxy)
   let pp = proxy.getParent();
   let display = pp.readProperty("display");
   while (display === "contents" && pp.element.parentElement && pp.element !== document.documentElement) {
-    // The real layout parent is further up — but keep using "parent." prefix
     pp = pp.getParent();
     display = pp.readProperty("display");
   }
@@ -86,7 +70,6 @@ function determineMode(proxy: ElementProxy, axis: Axis): NodeMode {
 
   const position = proxy.readProperty("position");
   const parent = el.parentElement;
-  // Find the real layout parent (walks through display:contents ancestors)
   const lp = (parent && position !== "absolute" && position !== "fixed")
     ? findLayoutParent(proxy) : null;
   const lpDisplay = lp?.display;
@@ -96,7 +79,7 @@ function determineMode(proxy: ElementProxy, axis: Axis): NodeMode {
       const direction = lp.proxy.readProperty("flex-direction");
       const wrap = lp.proxy.readProperty("flex-wrap");
       const wm = lp.proxy.readProperty("writing-mode");
-      if (wrap !== "nowrap") return "terminal"; // Multi-line flex: not yet modeled
+      if (wrap !== "nowrap") return "terminal";
       if (axis === flexMainAxisProp(direction, wm)) return "flex-item-main";
     }
     if (lpDisplay === "grid" || lpDisplay === "inline-grid") {
@@ -104,7 +87,6 @@ function determineMode(proxy: ElementProxy, axis: Axis): NodeMode {
     }
   }
 
-  // Aspect-ratio: derive one axis from the other
   const ar = proxy.readProperty("aspect-ratio");
   if (!isGridItem && ar && ar !== "auto") {
     const match = ar.match(/^([\d.]+)\s*(?:\/\s*([\d.]+))?$/);
@@ -122,10 +104,8 @@ function determineMode(proxy: ElementProxy, axis: Axis): NodeMode {
   const intrinsic = proxy.getIntrinsicKeyword(axis);
   if (intrinsic) return "intrinsic-keyword";
 
-  // Flex cross axis (wrapped flex returned "terminal" above, so this is single-line only)
   if (lp) {
     if (lpDisplay === "flex" || lpDisplay === "inline-flex") {
-      // This is the cross axis (main axis was handled above)
       const alignSelf = proxy.readProperty("align-self");
       const alignItems = lp.proxy.readProperty("align-items");
       const effectiveAlign = (alignSelf === "auto" || alignSelf === "normal") ? alignItems : alignSelf;
@@ -151,12 +131,9 @@ function determineMode(proxy: ElementProxy, axis: Axis): NodeMode {
   const isInline = display.startsWith("inline");
   if (isInline || isFloat) return "content-driven";
 
-  // Orthogonal flows (child writing-mode differs from parent) have complex auto-sizing
-  // rules per CSS Writing Modes §10.1 — content-driven for both axes is the safe fallback.
   const isVertical = (wm: string) => wm === "vertical-rl" || wm === "vertical-lr";
   if (isVertical(writingMode) !== isVertical(parentWm)) return "content-driven";
 
-  // Same writing-mode family: inline axis fills, block axis is content-driven.
   const inlineAxis = isVertical(parentWm) ? "height" : "width";
   return axis === inlineAxis ? "block-fill" : "content-driven";
 }
@@ -260,14 +237,12 @@ export function computeIntrinsicSize(
   return b.create(kind, el, depth, (nb) => {
     nb.setMode("intrinsic-content");
 
-    // If the element has an explicit size, that IS the intrinsic size.
     if (nb.proxy.getExplicitSize(axis)) {
       nb.describe(`Intrinsic ${axis}: set explicitly in CSS`)
         .calc(borderBoxCalc(nb.proxy, axis));
       return;
     }
 
-    // If aspect-ratio can derive this axis from an explicit other axis, compute it.
     const arVal = nb.css("aspect-ratio");
     const overflow = nb.css("overflow");
     if (arVal && arVal !== "auto" && overflow !== "scroll" && overflow !== "auto") {
@@ -306,7 +281,6 @@ export function computeIntrinsicSize(
       }
     }
 
-    // Create a content sub-node for the intrinsic measurement.
     const contentNode = b.create(`content:${axis}`, el, depth, (cnb) => {
       contentSize(cnb, axis, true);
     });
@@ -340,9 +314,6 @@ function contentSize(
   nb.setMode(mode);
   nb.css("overflow");
 
-  // Content-driven sizing: children are measured intrinsically to avoid
-  // cycles (a child can't fill a parent whose size depends on that child).
-  // Per CSS2 §10.6.3 / CSS Sizing §4.1.
   const children = nb.proxy.getChildren();
   const childNodes: LayoutNode[] = [];
   for (const child of children) {
@@ -351,7 +322,6 @@ function contentSize(
     }
   }
 
-  // Gap: for flex, use direction-based gap; for block/grid, use axis-based gap
   const gapPropName = isFlex
     ? (flexDir!.startsWith("column") ? "row-gap" as const : "column-gap" as const)
     : (axis === "width" ? "column-gap" as const : "row-gap" as const);

@@ -1,9 +1,11 @@
 /**
  * Aspect ratio analyzer.
  */
-import type { Axis, CalcExpr, NodeBuilder } from "../dag";
-import { ref, prop, mul, div, add, sub } from "../dag";
-import { measureElementSize, round } from "../utils";
+import type { Axis, CalcExpr } from "../types";
+import type { NodeBuilder } from "../node-builder";
+import { ref, prop, mul, div, add, sub } from "../calc";
+import { measureElementSize } from "../measure";
+import { round } from "../utils";
 
 export function aspectRatio(
   nb: NodeBuilder, axis: Axis,

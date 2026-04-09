@@ -8,7 +8,7 @@
  * return new proxies with appropriate key prefixes.
  */
 
-import type { Axis } from "./dag";
+import type { Axis } from "./types";
 
 // ---------------------------------------------------------------------------
 // CSS property name type — every tracked property must be listed here
@@ -318,8 +318,6 @@ export class ElementProxy {
 // Internal helpers (not exported — only ElementProxy uses getComputedStyle)
 // ---------------------------------------------------------------------------
 
-function px(v: string): number { return parseFloat(v) || 0; }
-
 function isExplicitLength(val: string): boolean {
   return /^-?[\d.]+(?:px|em|rem|vh|vw|vmin|vmax|cm|mm|in|pt|pc|ch|ex|lh|rlh|cqi|cqb)$/.test(val);
 }
@@ -351,11 +349,6 @@ function getMatchedCSSRules(el: Element): CSSStyleRule[] {
   return matched;
 }
 
-/** Resolve a CSS variable to its computed value. */
-function resolveCssVariable(el: Element, varName: string): string | null {
-  const val = getComputedStyle(el).getPropertyValue(varName).trim();
-  return val || null;
-}
 
 
 /**

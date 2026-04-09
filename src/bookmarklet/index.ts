@@ -1,7 +1,7 @@
-import { buildDag } from "../core/build-dag";
-import { renderDag, renderDagToConsole } from "../core/dag-render";
+import { buildDag } from "../core/layout";
+import { renderDag, renderDagToConsole } from "../ui/dag-render";
 import { verifyDag, serializeDag, measureElements } from "../core/serialize";
-import type { DagResult } from "../core/dag";
+import type { DagResult } from "../core/types";
 
 /**
  * Analyze why an element is its current size and log the explanation to the console.

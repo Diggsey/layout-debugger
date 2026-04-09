@@ -1,7 +1,8 @@
 /**
  * Grid layout analyzer.
  */
-import type { Axis, NodeBuilder } from "../dag";
+import type { Axis } from "../types";
+import type { NodeBuilder } from "../node-builder";
 
 export function gridItem(
   nb: NodeBuilder, axis: Axis,

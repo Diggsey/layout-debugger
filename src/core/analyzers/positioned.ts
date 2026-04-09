@@ -1,8 +1,9 @@
 /**
  * Positioned layout analyzer.
  */
-import type { Axis, NodeKind, LayoutNode, NodeBuilder } from "../dag";
-import { ref, prop, measured, sub, add, cmax } from "../dag";
+import type { Axis, NodeKind, LayoutNode } from "../types";
+import type { NodeBuilder } from "../node-builder";
+import { ref, prop, measured, sub, add, cmax } from "../calc";
 import { PX } from "../units";
 import { isAuto } from "../utils";
 
@@ -18,8 +19,6 @@ export function positioned(
   const pos = nb.css("position");
 
   if (!isAuto(startVal) && !isAuto(endVal)) {
-    // For fixed position, the containing block is the viewport (initial containing block),
-    // not the html element. Use window dimensions directly.
     let cbNode: LayoutNode;
     let cbElement: Element;
     if (pos === "fixed") {

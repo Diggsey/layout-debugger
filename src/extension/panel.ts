@@ -1,6 +1,6 @@
 // Panel entry point: devtools integration, axis rendering, event delegation.
 
-import { layoutDag, renderAscii, type DagInput, type LayoutResult, type VisualEdge } from "../core/dag-layout";
+import { layoutDag, renderAscii, type DagInput, type LayoutResult, type VisualEdge } from "../ui/dag-layout";
 import type { DagRender, AxisRender, AxisState, RenderNode } from "./panel-types";
 import { COL_W, DOT_R, LINE_COLOR, LINE_W, cx, esc, formatMode } from "./panel-types";
 import { type RowInfo, buildRowInfos, colsBelow, renderRowSvg } from "./panel-gutter";
@@ -454,7 +454,7 @@ function buildDetail(
 
 function buildCalcDisplay(
   node: RenderNode, nodeMap: Map<string, RenderNode>,
-  section: HTMLElement,
+  _section: HTMLElement,
 ): HTMLElement {
   const calcLine = document.createElement("div");
   calcLine.className = "detail-calc";

@@ -9,10 +9,13 @@
  * - CSS Flexbox §9.4  Cross Size Determination
  * - CSS Flexbox §4.5  Automatic Minimum Size of Flex Items
  */
-import type { Axis, LayoutNode, CalcExpr, NodeBuilder, NodeKind } from "../dag";
-import { ElementProxy, ref, constant, prop, propVal, measured, add, sub, mul, div, cmax, cmin } from "../dag";
+import type { Axis, LayoutNode, CalcExpr } from "../types";
+import type { NodeBuilder } from "../node-builder";
+import { ElementProxy } from "../element-proxy";
+import { ref, constant, prop, propVal, measured, add, sub, mul, cmax, cmin } from "../calc";
 import { PX } from "../units";
-import { px, round, measureMinContentSize } from "../utils";
+import { px, round } from "../utils";
+import { measureMinContentSize } from "../measure";
 
 // ---------------------------------------------------------------------------
 // Flex item — main axis

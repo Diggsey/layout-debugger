@@ -1,6 +1,6 @@
 // SVG gutter tile rendering — one tile per row, matching the ASCII tile structure.
 
-import type { LayoutResult } from "../core/dag-layout";
+import type { LayoutResult } from "../ui/dag-layout";
 import {
   COL_W, ROW_H, LINE_COLOR, DOT_COLOR, DOT_R, LINE_W, CURVE_R, CROSS_GAP,
   cx, edgeId,
