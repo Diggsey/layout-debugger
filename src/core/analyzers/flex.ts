@@ -41,7 +41,14 @@ export function flexItemMain(
   // wrappers (or directly inside the flex container). They have default
   // flex values: grow 0, shrink 1, no margin/padding. min-width: auto for
   // anonymous text items resolves to min-content (longest word).
-  const anonMeasured = parent.getAnonymousFlexItems(axis);
+  //
+  // For column flex, the anon text wraps at the container's cross (width)
+  // size, so we pass the cross content size as the wrap width.
+  const crossAxis: Axis = axis === "width" ? "height" : "width";
+  const crossForAnon = axis === "width"
+    ? 0
+    : nb.containerContentArea(container, crossAxis, nb.computeSize(container, crossAxis)).result;
+  const anonMeasured = parent.getAnonymousFlexItems(axis, crossForAnon);
   const anonItems: FlexItem[] = anonMeasured.map(({ basis, minContent }) => ({
     element: container, basis, hypothetical: Math.max(minContent, basis),
     grow: 0, shrink: 1, minMain: minContent, maxMain: Infinity, margin: 0, pb: 0,
@@ -243,18 +250,28 @@ function buildFlexChildData(
   const isBorderBox = childProxy.readProperty("box-sizing") === "border-box";
   const fb = childProxy.readProperty("flex-basis");
 
+  // The flex algorithm uses border-box sizes for consistency. For
+  // content-box elements, wrap an inner value (from prop/propVal) with the
+  // padding+border terms so the stored calc matches the border-box value
+  // used in arithmetic.
+  const pbNames = axis === "width"
+    ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
+    : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
+  const wrapWithPb = (inner: CalcExpr): CalcExpr =>
+    isBorderBox ? inner : add(inner, ...pbNames.map(p => prop(childProxy, p)));
+
   // --- Basis ---
   let basis: number;
   let basisCalc: CalcExpr;
   if (fb === "0" || fb === "0px" || fb === "0%") {
     basis = pb;
-    basisCalc = propVal("flex-basis", 0);
+    basisCalc = wrapWithPb(propVal("flex-basis", 0));
   } else if (fb === "auto") {
     const specified = childProxy.getSpecifiedValue(axis);
     const specifiedPx = specified ? resolveCssLength(specified, containerContentPx) : null;
     if (specifiedPx !== null) {
       basis = isBorderBox ? specifiedPx : specifiedPx + pb;
-      basisCalc = propVal(axis, round(specifiedPx));
+      basisCalc = wrapWithPb(propVal(axis, round(specifiedPx)));
     } else if (specified === "min-content") {
       // Intrinsic keyword — measure min-content directly.
       basis = measureMinContentSize(child, axis);
@@ -266,7 +283,7 @@ function buildFlexChildData(
   } else if (fb.endsWith("px")) {
     const raw = parseFloat(fb);
     basis = isBorderBox ? raw : raw + pb;
-    basisCalc = prop(childProxy, "flex-basis");
+    basisCalc = wrapWithPb(prop(childProxy, "flex-basis"));
   } else if (fb === "content") {
     // flex-basis: content bypasses the element's width/height property and
     // uses the content-based size. Measure directly so we don't get fooled by
@@ -278,7 +295,7 @@ function buildFlexChildData(
     const resolved = resolveCssLength(fb, containerContentPx);
     if (resolved !== null) {
       basis = isBorderBox ? resolved : resolved + pb;
-      basisCalc = propVal("flex-basis", round(resolved));
+      basisCalc = wrapWithPb(propVal("flex-basis", round(resolved)));
     } else {
       basis = parentNb.computeIntrinsicSize(child, axis).result;
       basisCalc = ref(parentNb.computeIntrinsicSize(child, axis));

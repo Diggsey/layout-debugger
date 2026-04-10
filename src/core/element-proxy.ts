@@ -249,11 +249,13 @@ export class ElementProxy {
    * directly inside this element, or inside its display:contents descendants.
    * Each run of text between element siblings becomes one anonymous item.
    *
-   * Returns each item's max-content (basis) and min-content (per-word) size
-   * along the flex container's main axis. Measured by inserting temporary
-   * spans so font/writing-mode context is inherited.
+   * Returns each item's basis and min-content along the flex container's
+   * main axis. For column flex containers (where the main axis is the block
+   * direction), `crossSize` must be provided so that text wrapping is
+   * measured at the correct width and the basis reflects the wrapped height.
+   * For row flex, pass 0 and the text flows at its natural max-content width.
    */
-  getAnonymousFlexItems(axis: Axis): { basis: number; minContent: number }[] {
+  getAnonymousFlexItems(axis: Axis, crossSize: number): { basis: number; minContent: number }[] {
     const items: { basis: number; minContent: number }[] = [];
     let currentRun: Text[] = [];
 
@@ -263,17 +265,25 @@ export class ElementProxy {
       currentRun = [];
       if (!text.trim()) return;
 
-      // max-content: let the browser size the inline box naturally with
-      // `width: max-content`, which collapses whitespace the same way the
-      // original text does. Using white-space:pre would preserve every space
-      // literally and overestimate.
       const span = hostParent.ownerDocument.createElement("span");
-      span.style.cssText = "position:absolute;visibility:hidden;pointer-events:none;display:inline-block;width:max-content;";
+      // For the inline axis (row flex, width), use `width: max-content` so
+      // the text doesn't wrap and we get its natural inline size.
+      // For the block axis (column flex, height), we need to constrain the
+      // cross size so text wraps the way it would in the real layout, and
+      // read the resulting block-axis size.
+      const baseStyle = "position:absolute;visibility:hidden;pointer-events:none;display:inline-block;";
+      if (axis === "width") {
+        span.style.cssText = baseStyle + "width:max-content;";
+      } else {
+        span.style.cssText = baseStyle + `width:${crossSize}px;`;
+      }
       span.textContent = text;
       hostParent.appendChild(span);
       const basis = axis === "width" ? span.offsetWidth : span.offsetHeight;
 
-      // min-content: longest unbreakable unit (typically the longest word)
+      // min-content: longest unbreakable unit (typically the longest word).
+      // Measured at max-content width so each word sits on its own baseline.
+      span.style.cssText = baseStyle + "width:max-content;";
       let minContent = 0;
       const words = text.split(/\s+/).filter(w => w.length > 0);
       for (const word of words) {

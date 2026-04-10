@@ -176,15 +176,36 @@ export class NodeBuilder {
     const lpDisplay = lp.readProperty("display");
     const isGridItem = !isPositioned && (lpDisplay === "grid" || lpDisplay === "inline-grid");
 
-    // For single-track grids, the CB is the track which equals the container
-    // content area. For multi-track grids, skip — we don't model track sizing.
-    const gridSingleTrack = isGridItem && (() => {
-      const trackProp = axis === "width" ? "grid-template-columns" : "grid-template-rows";
+    // For grid items, the percentage CB is the grid area (one track). For
+    // single-track grids or grids where every track is the same px size, we
+    // can use the track size directly. Otherwise we can't determine which
+    // track the item is in without modeling grid placement.
+    //
+    // grid-template-columns controls the inline axis of the grid, which in
+    // vertical writing modes is the vertical (height) physical axis. We
+    // need to pick the track property that matches the grid's block axis
+    // for the element's physical axis.
+    let gridTrackSize: number | null = null;
+    if (isGridItem) {
+      const gridWm = lp.readProperty("writing-mode");
+      const gridIsVertical = gridWm === "vertical-rl" || gridWm === "vertical-lr"
+        || gridWm === "sideways-rl" || gridWm === "sideways-lr";
+      // In horizontal grid: columns → horizontal (width), rows → vertical (height).
+      // In vertical grid: columns → vertical (height), rows → horizontal (width).
+      const trackProp = gridIsVertical
+        ? (axis === "width" ? "grid-template-rows" : "grid-template-columns")
+        : (axis === "width" ? "grid-template-columns" : "grid-template-rows");
       const tracks = lp.readProperty(trackProp);
-      // Computed value is a space-separated list of px lengths for each track.
       const parts = tracks.trim().split(/\s+/).filter(Boolean);
-      return parts.length === 1 && parts[0].endsWith("px");
-    })();
+      if (parts.length > 0 && parts.every(p => p.endsWith("px"))) {
+        const sizes = parts.map(p => parseFloat(p));
+        // All tracks equal → any track's size works as the CB.
+        if (sizes.every(s => Math.abs(s - sizes[0]) < 0.01)) {
+          gridTrackSize = sizes[0];
+        }
+      }
+    }
+    const gridSingleTrack = isGridItem && gridTrackSize !== null;
 
     let cbRefNode: LayoutNode | null = null;
     let cbDefinite: boolean | null = null;
@@ -212,6 +233,14 @@ export class NodeBuilder {
                 .calc(sub(ref(cbBorderBox), add(...borderProps.map(pr => cnb.prop(pr)))))
                 .input("borderBox", cbBorderBox);
             });
+          } else if (gridTrackSize !== null) {
+            // Grid item with a known track size — use the track as CB.
+            cbRefNode = this._builder.create(`padding-area:${axis}`, cb.element, this.depth, (cnb) => {
+              cnb.setMode("content-area")
+                .describe("Grid track size (for grid item percentage resolution)")
+                .calc(propVal(axis, round(gridTrackSize)))
+                .input("borderBox", cbBorderBox);
+            });
           } else {
             cbRefNode = containerContentArea(this, cb.element, axis, cbBorderBox);
           }
@@ -220,23 +249,33 @@ export class NodeBuilder {
       return cbRefNode;
     };
 
-    const resolveConstraint = (val: string, fallback: number): number => {
+    // resolveConstraint returns either the resolved px, or null if the value
+    // couldn't be resolved (e.g. percentage against an indefinite CB).
+    const resolveConstraint = (val: string): number | null => {
       if (val.endsWith("px")) return pxParse(val) + padBorder;
-      // For anything involving percentages (including clamp/min/max), we need
-      // the CB reference size.
       if (val.includes("%")) {
         const cbRef = getCbRef();
-        if (!cbRef) return fallback;
+        if (!cbRef) return null;
         const resolved = resolveCssLength(val, cbRef.result);
-        return resolved === null ? fallback : resolved + padBorder;
+        return resolved === null ? null : resolved + padBorder;
       }
       const resolved = resolveCssLength(val, 0);
-      return resolved === null ? fallback : resolved + padBorder;
+      return resolved === null ? null : resolved + padBorder;
     };
 
-    const minPx = minVal === "auto" || minVal === "0px" || minVal === "0"
-      ? 0 : resolveConstraint(minVal, 0);
-    const maxPx = maxVal === "none" ? Infinity : resolveConstraint(maxVal, Infinity);
+    const minResolved = minVal === "auto" || minVal === "0px" || minVal === "0"
+      ? 0 : resolveConstraint(minVal);
+    const maxResolved = maxVal === "none" ? Infinity : resolveConstraint(maxVal);
+
+    // If either bound is unresolved (e.g. percentage against an indefinite
+    // CB), skip clamping: browsers resolve these against layout-dependent
+    // sizes, and clamping with just the other bound could be wrong if
+    // min > max. The computed value we already have reflects the browser's
+    // real clamped result.
+    if (minResolved === null || maxResolved === null) return;
+
+    const minPx = minResolved;
+    const maxPx = maxResolved;
 
     // CSS §10.4: clamped = max(min, min(max, value))
     const clamped = Math.max(minPx, Math.min(maxPx, result));
