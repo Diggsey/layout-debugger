@@ -199,6 +199,102 @@ export class ElementProxy {
     return this.getFlexChildren(); // same filter logic
   }
 
+  /**
+   * Does this element establish a new block formatting context?
+   * BFC triggers: overflow != visible, display: flex/grid/flow-root/table/etc.,
+   * float: left/right, position: absolute/fixed, contain: layout/paint.
+   * Reads are not recorded (this is a structural check).
+   */
+  isNewBlockFormattingContext(): boolean {
+    const s = getComputedStyle(this.element);
+    if (s.overflow !== "visible") return true;
+    if (s.display === "flex" || s.display === "inline-flex") return true;
+    if (s.display === "grid" || s.display === "inline-grid") return true;
+    if (s.display === "flow-root" || s.display === "inline-block") return true;
+    if (s.display === "table" || s.display === "inline-table") return true;
+    if (s.display === "table-cell") return true;
+    if (s.float !== "none") return true;
+    if (s.position === "absolute" || s.position === "fixed") return true;
+    const contain = s.contain;
+    if (contain && (contain.includes("layout") || contain.includes("paint") || contain.includes("content") || contain.includes("strict"))) return true;
+    return false;
+  }
+
+  /**
+   * Sum the outer border-box widths (including margins) of preceding float
+   * siblings of this element in the normal flow. Used to compute how much
+   * horizontal space a BFC element must avoid. Reads are not recorded.
+   */
+  sumPrecedingFloatOuterWidth(): number {
+    const el = this.element;
+    const parent = el.parentElement;
+    if (!parent) return 0;
+    let total = 0;
+    for (const sibling of Array.from(parent.children)) {
+      if (sibling === el) break;
+      const cs = getComputedStyle(sibling);
+      if (cs.float === "none") continue;
+      if (cs.display === "none" || cs.display === "contents") continue;
+      // offsetWidth gives the border-box width; add margins separately.
+      const borderBox = (sibling as HTMLElement).offsetWidth;
+      const marginLeft = parseFloat(cs.marginLeft) || 0;
+      const marginRight = parseFloat(cs.marginRight) || 0;
+      total += borderBox + marginLeft + marginRight;
+    }
+    return total;
+  }
+
+  /**
+   * Get the measured sizes of anonymous flex items — runs of text content
+   * directly inside this element, or inside its display:contents descendants.
+   * Each run of text between element siblings becomes one anonymous item.
+   *
+   * Measured by inserting a temporary span with the same text and reading
+   * offsetWidth/offsetHeight, so font/writing-mode context is inherited.
+   */
+  getAnonymousFlexItemSizes(axis: Axis): number[] {
+    const sizes: number[] = [];
+    let currentRun: Text[] = [];
+
+    const flushRun = (hostParent: Element) => {
+      if (currentRun.length === 0) return;
+      const text = currentRun.map(n => n.textContent ?? "").join("");
+      currentRun = [];
+      if (!text.trim()) return;
+      const span = hostParent.ownerDocument.createElement("span");
+      // white-space: pre prevents the text from wrapping so we get its
+      // max-content size in the inline direction.
+      span.style.cssText = "position:absolute;visibility:hidden;pointer-events:none;white-space:pre;";
+      span.textContent = text;
+      hostParent.appendChild(span);
+      const size = axis === "width" ? span.offsetWidth : span.offsetHeight;
+      span.remove();
+      sizes.push(size);
+    };
+
+    const walk = (parent: Element) => {
+      for (const node of Array.from(parent.childNodes)) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          currentRun.push(node as Text);
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          const el = node as Element;
+          const cs = getComputedStyle(el);
+          if (cs.display === "contents") {
+            walk(el);
+          } else if (cs.position !== "absolute" && cs.position !== "fixed" && cs.display !== "none") {
+            // Element boundary — flush current text run before the element.
+            flushRun(parent);
+          }
+          // Positioned/hidden elements don't break runs.
+        }
+      }
+      flushRun(parent);
+    };
+
+    walk(this.element);
+    return sizes;
+  }
+
   // --- Explicit size detection ---
 
   /**
@@ -211,14 +307,28 @@ export class ElementProxy {
     // Also check logical properties (inline-size maps to width in horizontal-tb)
     const logicalProp = axis === "width" ? "inline-size" : "block-size";
 
+    // For px literals, parse the authored value directly. Computed style
+    // returns the post-layout used value, which for flex items differs from
+    // the authored value. For percentages and CSS expressions, we fall back to
+    // the computed value (which is already resolved by the browser).
+    const resolveExplicit = (val: string): ExplicitSize | null => {
+      if (val.endsWith("%")) return { kind: "percentage", resolvedPx: this.readPx(axis) };
+      if (val.endsWith("px")) {
+        const parsed = parseFloat(val);
+        if (!isNaN(parsed)) return { kind: "fixed", resolvedPx: parsed };
+      }
+      if (isExplicitLength(val)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
+      if (isCssFunction(val)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
+      return null;
+    };
+
     // Check inline style first (physical then logical)
     if (el instanceof HTMLElement) {
       for (const prop of [axis, logicalProp]) {
         const inlineVal = el.style.getPropertyValue(prop);
         if (inlineVal) {
-          if (inlineVal.endsWith("%")) return { kind: "percentage", resolvedPx: this.readPx(axis) };
-          if (isExplicitLength(inlineVal)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
-          if (isCssFunction(inlineVal)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
+          const resolved = resolveExplicit(inlineVal);
+          if (resolved) return resolved;
           if (inlineVal === "auto" || inlineVal === "none") return null;
           if (isIntrinsicKeyword(inlineVal)) return null; // Handled separately
         }
@@ -231,10 +341,9 @@ export class ElementProxy {
       for (const prop of [axis, logicalProp]) {
         const val = rules[i].style.getPropertyValue(prop);
         if (!val) continue;
-        if (val.endsWith("%")) return { kind: "percentage", resolvedPx: this.readPx(axis) };
-        if (isExplicitLength(val)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
+        const resolved = resolveExplicit(val);
+        if (resolved) return resolved;
         if (val === "auto" || val === "none") return null;
-        if (isCssFunction(val)) return { kind: "fixed", resolvedPx: this.readPx(axis) };
       }
     }
 

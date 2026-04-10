@@ -15,6 +15,10 @@ export default defineConfig({
       name: 'fuzz',
       testMatch: '**/fuzz.test.ts',
     },
+    {
+      name: 'debug',
+      testMatch: '**/debug-one.test.ts',
+    },
   ],
   // Build before running tests
   webServer: {

@@ -15,6 +15,7 @@
     "test": "npx playwright test --project default",
     "test:headed": "npx playwright test --project default --headed",
     "test:json": "npx playwright test --project default --reporter=json > test-results-tmp.json",
+    "test:debug": "node scripts/run-debug.mjs",
     "test:fuzz": "npx playwright test --project fuzz",
     "test:fuzz:long": "FUZZ_N=1000 npx playwright test --project fuzz",
     "analyze": "node scripts/analyze-failures.mjs",

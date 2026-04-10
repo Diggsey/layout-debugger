@@ -8,7 +8,7 @@ import type { LayoutNode, DagResult, Axis, NodeKind, NodeMode, CalcExpr } from "
 import { DagBuilder } from "./dag-builder";
 import type { NodeBuilder } from "./node-builder";
 import { ElementProxy } from "./element-proxy";
-import { ref, constant, add, cmax, measured } from "./calc";
+import { ref, constant, add, cmax, measured, propVal, prop } from "./calc";
 import { PX } from "./units";
 import { borderBoxCalc } from "./box-model";
 import { blockFill } from "./analyzers/block";
@@ -31,6 +31,22 @@ export function buildDag(el: Element): DagResult {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Build a border-box calc using the authored px size on the dimension axis.
+ * For flex items, getComputedStyle returns the post-flex size, so we can't use
+ * borderBoxCalc/prop for the dimension itself. Padding and border are still
+ * read from computed style (they aren't affected by flex distribution).
+ */
+function explicitIntrinsicCalc(nb: NodeBuilder, axis: Axis, authoredPx: number): CalcExpr {
+  const boxSizing = nb.proxy.readProperty("box-sizing");
+  const dim = propVal(axis, authoredPx);
+  if (boxSizing === "border-box") return dim;
+  const pbProps = axis === "width"
+    ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
+    : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
+  return add(dim, ...pbProps.map(p => prop(nb.proxy, p)));
+}
 
 function measuredNode(b: DagBuilder, el: Element, axis: Axis, depth: number, mode: NodeMode, description?: string): LayoutNode {
   const kind: NodeKind = `measured:${axis}`;
@@ -249,9 +265,17 @@ export function computeIntrinsicSize(
   return b.create(kind, el, depth, (nb) => {
     nb.setMode("intrinsic-content");
 
-    if (nb.proxy.getExplicitSize(axis)) {
+    // For explicit sizes, the intrinsic (max-content) size is the authored
+    // value, not the computed value. getComputedStyle returns the post-flex
+    // used value for flex items, so we use the authored resolvedPx from
+    // getExplicitSize. propVal is safe here because the authored value IS
+    // what the calc represents (the specified CSS value).
+    const explicit = nb.proxy.getExplicitSize(axis);
+    if (explicit) {
       nb.describe(`Intrinsic ${axis}: set explicitly in CSS`)
-        .calc(borderBoxCalc(nb.proxy, axis));
+        .calc(explicit.kind === "fixed"
+          ? explicitIntrinsicCalc(nb, axis, explicit.resolvedPx)
+          : borderBoxCalc(nb.proxy, axis));
       return;
     }
 

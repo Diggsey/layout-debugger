@@ -43,7 +43,9 @@ export function measureMinContentSize(el: Element, axis: "width" | "height"): nu
 /**
  * Measure the intrinsic (content-based) size of an element on a given axis.
  * Clones the element with the target axis set to `auto` and inserts it as a
- * sibling so it inherits the same font/writing-mode context.
+ * sibling so it inherits the same font/writing-mode context. Min/max
+ * constraints are reset on the clone because the clone is positioned absolute
+ * and its CB for percentage resolution differs from the original's.
  */
 export function measureIntrinsicSize(el: Element, axis: "width" | "height"): number {
   const clone = el.cloneNode(true) as HTMLElement;
@@ -54,13 +56,18 @@ export function measureIntrinsicSize(el: Element, axis: "width" | "height"): num
     `${axis}: auto !important`,
     "align-self: flex-start !important",
     "flex: none !important",
+    "min-width: 0 !important",
+    "min-height: 0 !important",
     "max-width: none !important",
     "max-height: none !important",
   ].join("; ");
-  const crossAxis = axis === "width" ? "height" : "width";
-  const crossSize = el.getBoundingClientRect()[crossAxis];
-  clone.style.setProperty(crossAxis, `${crossSize}px`, "important");
 
+  // The cross axis is left at whatever the original authored value is — this
+  // preserves aspect-ratio transfer in the clone with the correct box-sizing.
+  // For cases where the original's cross-axis size comes from flex or block
+  // layout (not an explicit value), the clone's positioned-absolute context
+  // will shrink-to-fit, which may differ from the original, but it's better
+  // than forcing a border-box value and breaking the aspect-ratio math.
   const host = el.parentElement ?? document.body;
   host.appendChild(clone);
   const size = clone.getBoundingClientRect()[axis];

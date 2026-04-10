@@ -15,7 +15,7 @@ import { ElementProxy } from "../element-proxy";
 import { ref, constant, prop, propVal, measured, add, sub, mul, cmax, cmin } from "../calc";
 import { PX } from "../units";
 import { px, round, resolveCssLength } from "../utils";
-import { measureMinContentSize } from "../measure";
+import { measureMinContentSize, measureIntrinsicSize } from "../measure";
 
 // ---------------------------------------------------------------------------
 // Flex item — main axis
@@ -37,12 +37,21 @@ export function flexItemMain(
   const siblings = flexChildren.map(childProxy =>
     buildFlexChildData(nb, childProxy.element === el ? nb.proxy : childProxy, axis, containerContent.result),
   );
+  // Anonymous flex items come from text content inside display:contents
+  // wrappers (or directly inside the flex container). They have default
+  // flex values: grow 0, shrink 1, no margin/padding.
+  const anonSizes = parent.getAnonymousFlexItemSizes(axis);
+  const anonItems: FlexItem[] = anonSizes.map((basis) => ({
+    element: container, basis, hypothetical: basis,
+    grow: 0, shrink: 1, minMain: 0, maxMain: Infinity, margin: 0, pb: 0,
+  }));
+
   // Main-axis gap: column-gap for row direction, row-gap for column direction
   const direction = parent.readProperty("flex-direction");
   const gapPropName = direction.startsWith("column") ? "row-gap" as const : "column-gap" as const;
   const gap = parent.readPx(gapPropName);
 
-  // Find the target in siblings
+  // Find the target in siblings (anonymous items come after and can't match).
   const idx = siblings.findIndex(s => s.element === el);
   const target = idx >= 0 ? siblings[idx] : null;
 
@@ -51,16 +60,23 @@ export function flexItemMain(
       .describe("Effective starting size")
       .calc(nb.borderBoxCalc(nb.proxy, axis));
   });
-  const totalBases = siblings.reduce((sum, s) => sum + s.hypothetical + s.margin, 0);
-  const totalGap = gap * Math.max(0, siblings.length - 1);
+  const totalItemCount = siblings.length + anonItems.length;
+  const totalBases = siblings.reduce((sum, s) => sum + s.hypothetical + s.margin, 0)
+    + anonItems.reduce((sum, a) => sum + a.hypothetical, 0);
+  const totalGap = gap * Math.max(0, totalItemCount - 1);
   const freeSpace = containerContent.result - totalBases - totalGap;
 
-  // Resolve flex lengths (iterative freeze-and-redistribute algorithm)
-  const allItems = siblings.map(s => ({
-    element: s.element, basis: s.basis, hypothetical: s.hypothetical,
-    grow: s.grow, shrink: s.shrink, minMain: s.minMain, maxMain: s.maxMain,
-    margin: s.margin, pb: s.pb,
-  }));
+  // Resolve flex lengths (iterative freeze-and-redistribute algorithm).
+  // Anonymous items are appended so the target's index in siblings matches its
+  // index in the merged list.
+  const allItems: FlexItem[] = [
+    ...siblings.map(s => ({
+      element: s.element, basis: s.basis, hypothetical: s.hypothetical,
+      grow: s.grow, shrink: s.shrink, minMain: s.minMain, maxMain: s.maxMain,
+      margin: s.margin, pb: s.pb,
+    })),
+    ...anonItems,
+  ];
   const resolved = resolveFlexLengths(allItems, containerContent.result, totalGap);
   const myResult = idx >= 0 ? resolved[idx] : null;
 
@@ -94,8 +110,14 @@ export function flexItemMain(
     const usedSize = resolved[i].frozen ? resolved[i].target : s.basis;
     finalUsedTerms.push(propVal("flex-basis", usedSize + s.margin));
   }
-  if (siblings.length > 1 && gap > 0) {
-    for (let gi = 0; gi < siblings.length - 1; gi++) {
+  for (let i = 0; i < anonItems.length; i++) {
+    const a = anonItems[i];
+    const r = resolved[siblings.length + i];
+    const usedSize = r.frozen ? r.target : a.basis;
+    finalUsedTerms.push(propVal("flex-basis", usedSize));
+  }
+  if (totalItemCount > 1 && gap > 0) {
+    for (let gi = 0; gi < totalItemCount - 1; gi++) {
       finalUsedTerms.push(prop(parent, gapPropName));
     }
   }
@@ -244,6 +266,12 @@ function buildFlexChildData(
     const raw = parseFloat(fb);
     basis = isBorderBox ? raw : raw + pb;
     basisCalc = prop(childProxy, "flex-basis");
+  } else if (fb === "content") {
+    // flex-basis: content bypasses the element's width/height property and
+    // uses the content-based size. Measure directly so we don't get fooled by
+    // an explicit height on the item itself.
+    basis = round(measureIntrinsicSize(child, axis));
+    basisCalc = measured("content", basis);
   } else {
     const resolved = resolveCssLength(fb, containerContentPx);
     if (resolved !== null) {

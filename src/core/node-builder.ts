@@ -7,7 +7,8 @@
  */
 import type { NodeKind, NodeMode, Axis, CalcExpr, LayoutNode } from "./types";
 import { ElementProxy, type CssPropertyName } from "./element-proxy";
-import { evaluate, prop, propVal, add, sub, ref, cmax, cmin } from "./calc";
+import { evaluate, prop, propVal, constant, add, sub, ref, cmax, cmin } from "./calc";
+import { PX } from "./units";
 import type { DagBuilder } from "./dag-builder";
 // Circular import — safe because these are only called at runtime, not during module init.
 import { computeSize, computeIntrinsicSize } from "./layout";
@@ -150,11 +151,13 @@ export class NodeBuilder {
     const maxVal = p.readProperty(maxPropName);
 
     const boxSizing = p.readProperty("box-sizing");
-    const padBorder = boxSizing !== "border-box"
-      ? (axis === "width"
-        ? p.readPx("padding-left") + p.readPx("padding-right") + p.readPx("border-left-width") + p.readPx("border-right-width")
-        : p.readPx("padding-top") + p.readPx("padding-bottom") + p.readPx("border-top-width") + p.readPx("border-bottom-width"))
-      : 0;
+    const totalPadBorder = axis === "width"
+      ? p.readPx("padding-left") + p.readPx("padding-right") + p.readPx("border-left-width") + p.readPx("border-right-width")
+      : p.readPx("padding-top") + p.readPx("padding-bottom") + p.readPx("border-top-width") + p.readPx("border-bottom-width");
+    // For content-box, the dimension property is the content size, so
+    // min/max in CSS px literals need padBorder added to get the border-box
+    // value. For border-box, this is already 0.
+    const padBorder = boxSizing !== "border-box" ? totalPadBorder : 0;
 
     const result = this._resultOverride ?? round(evaluate(this._calc));
 
@@ -232,17 +235,28 @@ export class NodeBuilder {
     // Record the containing block reference as an input if we used it
     if (cbRefNode) this._inputs["constraintCB"] = cbRefNode;
 
-    // Wrap calc with clamp
-    const resolvedMax = maxVal.endsWith("%") ? round(maxPx - padBorder) : undefined;
-    const resolvedMin = minVal.endsWith("%") ? round(minPx - padBorder) : undefined;
+    // Wrap calc with clamp. For anything that's not a plain px literal
+    // (percentages, calc/clamp/min/max functions), we need to pass the
+    // resolved px explicitly — prop() would read computed style which for
+    // CSS functions is the unresolved expression string.
+    const needsResolvedMax = maxVal !== "none" && !maxVal.endsWith("px");
+    const needsResolvedMin = minVal !== "auto" && minVal !== "0px" && minVal !== "0" && !minVal.endsWith("px");
+    const resolvedMax = needsResolvedMax ? round(maxPx - padBorder) : undefined;
+    const resolvedMin = needsResolvedMin ? round(minPx - padBorder) : undefined;
     const minCalc = minPx > 0 ? constraintCalc(p, axis, minPropName, boxSizing, resolvedMin) : null;
     const maxCalc = maxPx !== Infinity ? constraintCalc(p, axis, maxPropName, boxSizing, resolvedMax) : null;
 
+    // The border-box can't shrink below its own padding+border sum.
+    const pbFloor = totalPadBorder;
     if (maxCalc && minCalc) {
       // Both constraints: max(min, min(max, value))
       this._calc = cmax(minCalc, cmin(maxCalc, this._calc));
     } else if (maxCalc) {
-      this._calc = cmin(maxCalc, this._calc);
+      // Per CSS §10.4, when max < min, the result is min (default 0).
+      // Additionally floor the border-box at its padding+border sum.
+      this._calc = maxPx < pbFloor
+        ? cmax(constant(pbFloor, PX), cmin(maxCalc, this._calc))
+        : cmin(maxCalc, this._calc);
     } else if (minCalc) {
       this._calc = cmax(minCalc, this._calc);
     }
