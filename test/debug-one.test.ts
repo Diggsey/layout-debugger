@@ -11,6 +11,10 @@ const CORPUS_DIR = path.resolve(__dirname, "fuzz-corpus");
 const TARGET_FILE = process.env.FUZZ_FILE ?? "fuzz-1775772116174.json";
 
 test(`debug: ${TARGET_FILE}`, async ({ page }) => {
+  page.on("console", msg => {
+    const text = msg.text();
+    if (text.includes("[FLEX DEBUG]")) console.log("BROWSER:", text);
+  });
   const data = JSON.parse(
     fs.readFileSync(path.resolve(CORPUS_DIR, TARGET_FILE), "utf-8"),
   );

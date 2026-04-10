@@ -326,7 +326,12 @@ function buildFlexChildData(
   // --- Min main ---
   const minV = childProxy.readProperty(minPropName);
   const ov = childProxy.readProperty(axis === "width" ? "overflow-x" : "overflow-y");
-  const isScroll = ov !== "visible" && ov !== "clip";
+  const childDisplay = childProxy.readProperty("display");
+  // Tables have intrinsic sizing that browsers respect even with overflow
+  // hidden — the automatic min-size zeroing from CSS Flex §4.5 doesn't fully
+  // apply. Measure min-content for display:table items.
+  const isTable = childDisplay.startsWith("table");
+  const isScroll = !isTable && ov !== "visible" && ov !== "clip";
   let minMain: number;
   let minCalc: CalcExpr;
   if (minV === "auto") {
