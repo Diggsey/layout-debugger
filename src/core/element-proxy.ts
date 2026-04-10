@@ -313,8 +313,14 @@ export class ElementProxy {
    */
   getExplicitSize(axis: Axis): ExplicitSize | null {
     const el = this.element;
-    // Also check logical properties (inline-size maps to width in horizontal-tb)
-    const logicalProp = axis === "width" ? "inline-size" : "block-size";
+    // Logical properties depend on the element's own writing-mode:
+    //   horizontal-tb: inline-size = width,  block-size = height
+    //   vertical-rl/lr: inline-size = height, block-size = width
+    const wm = this._style.writingMode;
+    const isVertical = wm === "vertical-rl" || wm === "vertical-lr" || wm === "sideways-rl" || wm === "sideways-lr";
+    const logicalProp = isVertical
+      ? (axis === "height" ? "inline-size" : "block-size")
+      : (axis === "width" ? "inline-size" : "block-size");
 
     // For px literals, parse the authored value directly. Computed style
     // returns the post-layout used value, which for flex items differs from
