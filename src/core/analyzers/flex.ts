@@ -14,7 +14,7 @@ import type { NodeBuilder } from "../node-builder";
 import { ElementProxy } from "../element-proxy";
 import { ref, constant, prop, propVal, measured, add, sub, mul, cmax, cmin } from "../calc";
 import { PX } from "../units";
-import { px, round } from "../utils";
+import { px, round, resolveCssLength } from "../utils";
 import { measureMinContentSize } from "../measure";
 
 // ---------------------------------------------------------------------------
@@ -226,32 +226,33 @@ function buildFlexChildData(
   if (fb === "0" || fb === "0px" || fb === "0%") {
     basis = pb;
     basisCalc = propVal("flex-basis", 0);
-  } else if (fb.endsWith("px") && fb !== "auto") {
-    const raw = parseFloat(fb);
-    basis = isBorderBox ? raw : raw + pb;
-    basisCalc = prop(childProxy, "flex-basis");
-  } else if (fb.endsWith("%")) {
-    const raw = (parseFloat(fb) / 100) * containerContentPx;
-    basis = isBorderBox ? raw : raw + pb;
-    // Use propVal since prop() would return UNITLESS for the unresolved percentage
-    basisCalc = propVal("flex-basis", round(basis));
   } else if (fb === "auto") {
     const specified = childProxy.getSpecifiedValue(axis);
-    if (specified && specified.endsWith("px")) {
-      const raw = parseFloat(specified);
-      basis = isBorderBox ? raw : raw + pb;
-      basisCalc = propVal(axis, raw);
-    } else if (specified && specified.endsWith("%")) {
-      const raw = (parseFloat(specified) / 100) * containerContentPx;
-      basis = isBorderBox ? raw : raw + pb;
-      basisCalc = propVal(axis, raw);
+    const specifiedPx = specified ? resolveCssLength(specified, containerContentPx) : null;
+    if (specifiedPx !== null) {
+      basis = isBorderBox ? specifiedPx : specifiedPx + pb;
+      basisCalc = propVal(axis, round(specifiedPx));
+    } else if (specified === "min-content") {
+      // Intrinsic keyword — measure min-content directly.
+      basis = measureMinContentSize(child, axis);
+      basisCalc = measured("min-content", basis);
     } else {
       basis = parentNb.computeIntrinsicSize(child, axis).result;
       basisCalc = ref(parentNb.computeIntrinsicSize(child, axis));
     }
+  } else if (fb.endsWith("px")) {
+    const raw = parseFloat(fb);
+    basis = isBorderBox ? raw : raw + pb;
+    basisCalc = prop(childProxy, "flex-basis");
   } else {
-    basis = parentNb.computeIntrinsicSize(child, axis).result;
-    basisCalc = ref(parentNb.computeIntrinsicSize(child, axis));
+    const resolved = resolveCssLength(fb, containerContentPx);
+    if (resolved !== null) {
+      basis = isBorderBox ? resolved : resolved + pb;
+      basisCalc = propVal("flex-basis", round(resolved));
+    } else {
+      basis = parentNb.computeIntrinsicSize(child, axis).result;
+      basisCalc = ref(parentNb.computeIntrinsicSize(child, axis));
+    }
   }
   basis = Math.max(basis, pb);
 
@@ -266,13 +267,13 @@ function buildFlexChildData(
   let maxMain: number;
   if (maxV === "none") {
     maxMain = Infinity;
-  } else if (maxV.endsWith("px")) {
-    maxMain = isBorderBox ? px(maxV) : px(maxV) + pb;
-  } else if (maxV.endsWith("%")) {
-    const resolved = (parseFloat(maxV) / 100) * containerContentPx;
-    maxMain = isBorderBox ? resolved : resolved + pb;
   } else {
-    maxMain = Infinity;
+    const resolved = resolveCssLength(maxV, containerContentPx);
+    if (resolved === null) {
+      maxMain = Infinity;
+    } else {
+      maxMain = isBorderBox ? resolved : resolved + pb;
+    }
   }
 
   // --- Min main ---
@@ -286,16 +287,19 @@ function buildFlexChildData(
       minMain = 0;
       minCalc = constant(0, PX);
     } else {
+      // Aspect-ratio transfer for min-content only applies when there are no
+      // element children. For containers, the measured min-content is used.
       const arVal = childProxy.readProperty("aspect-ratio");
       const otherAxis: Axis = axis === "width" ? "height" : "width";
       const otherVal = childProxy.readProperty(otherAxis);
-      if (arVal && arVal !== "auto" && otherVal && parseFloat(otherVal) > 0) {
+      const hasKids = child.children.length > 0;
+      if (!hasKids && arVal && arVal !== "auto" && otherVal && parseFloat(otherVal) > 0) {
         const arMatch = arVal.match(/^([\d.]+)\s*(?:\/\s*([\d.]+))?$/);
         if (arMatch) {
           const ratio = parseFloat(arMatch[1]) / (arMatch[2] ? parseFloat(arMatch[2]) : 1);
           const otherPx = parseFloat(otherVal);
           const transferred = axis === "width" ? otherPx * ratio : otherPx / ratio;
-          minMain = transferred + pb;
+          minMain = isBorderBox ? transferred : transferred + pb;
           minCalc = measured("min-content (aspect-ratio)", minMain);
         } else {
           minMain = measureMinContentSize(child, axis);
@@ -307,12 +311,15 @@ function buildFlexChildData(
       }
       const specified = childProxy.getSpecifiedValue(axis);
       if (specified) {
-        const specPx = parseFloat(specified);
-        if (!isNaN(specPx)) {
+        // Per CSS Flexbox §4.5: the specified size suggestion is the computed
+        // main size property if definite. Percentages resolve against the
+        // flex container content area.
+        const specPx = resolveCssLength(specified, containerContentPx);
+        if (specPx !== null) {
           const specBB = isBorderBox ? specPx : specPx + pb;
           if (specBB < minMain) {
             minMain = specBB;
-            minCalc = propVal(axis, specPx);
+            minCalc = propVal(axis, round(specPx));
           }
         }
       }
@@ -331,14 +338,15 @@ function buildFlexChildData(
         : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
       minCalc = add(prop(childProxy, minPropName), ...pbNames.map(p => prop(childProxy, p)));
     }
-  } else if (minV.endsWith("%")) {
-    const resolved = (parseFloat(minV) / 100) * containerContentPx;
-    minMain = isBorderBox ? resolved : resolved + pb;
-    minCalc = propVal(minPropName, round(minMain));
   } else {
-    // Non-px, non-% min → treat as 0
-    minMain = 0;
-    minCalc = constant(0, PX);
+    const resolved = resolveCssLength(minV, containerContentPx);
+    if (resolved !== null) {
+      minMain = isBorderBox ? resolved : resolved + pb;
+      minCalc = propVal(minPropName, round(minMain));
+    } else {
+      minMain = 0;
+      minCalc = constant(0, PX);
+    }
   }
   minMain = Math.max(minMain, pb);
   const minNode = parentNb.create(`min-content:${axis}`, child, (n) => {

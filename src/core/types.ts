@@ -12,7 +12,8 @@ import type { Units } from "./units";
 /** Base kind — what the node represents, independent of axis. */
 export type BaseKind =
   | "size"             // top-level element size
-  | "content-area"     // container padding-box content area
+  | "content-area"     // container content box (border-box − padding − border)
+  | "padding-area"     // container padding box (border-box − border)
   | "content"          // content-driven size (mode distinguishes sum vs max)
   | "intrinsic"        // intrinsic/content-based size
   | "flex-basis"       // flex starting size

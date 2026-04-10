@@ -2,5 +2,6 @@ node_modules/
 dist/
 *.map
 test-results/
+test-results-tmp.json
 tmp/
 .claude/

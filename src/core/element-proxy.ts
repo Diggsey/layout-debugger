@@ -366,12 +366,18 @@ function findContainingBlock(el: Element): Element {
   let ancestor = el.parentElement;
 
   if (position === "fixed") {
+    // Normally the viewport, but transform/filter/perspective/contain
+    // ancestors create a containing block even for fixed elements.
+    while (ancestor && ancestor !== document.documentElement) {
+      if (createsFixedContainingBlock(ancestor)) return ancestor;
+      ancestor = ancestor.parentElement;
+    }
     return document.documentElement;
   }
 
   if (position === "absolute") {
     while (ancestor && ancestor !== document.documentElement) {
-      if (createsContainingBlock(ancestor)) return ancestor;
+      if (createsAbsoluteContainingBlock(ancestor)) return ancestor;
       ancestor = ancestor.parentElement;
     }
     return document.documentElement;
@@ -388,9 +394,9 @@ function findContainingBlock(el: Element): Element {
   return document.documentElement;
 }
 
-function createsContainingBlock(el: Element): boolean {
+/** Does this element create a containing block for position: fixed descendants? */
+function createsFixedContainingBlock(el: Element): boolean {
   const s = getComputedStyle(el);
-  if (s.position !== "static") return true;
   if (s.transform !== "none") return true;
   if (s.filter !== "none") return true;
   if (s.perspective !== "none") return true;
@@ -399,4 +405,11 @@ function createsContainingBlock(el: Element): boolean {
   const contain = s.contain;
   if (contain && (contain.includes("layout") || contain.includes("paint") || contain.includes("strict") || contain.includes("content"))) return true;
   return false;
+}
+
+/** Does this element create a containing block for position: absolute descendants? */
+function createsAbsoluteContainingBlock(el: Element): boolean {
+  const s = getComputedStyle(el);
+  if (s.position !== "static") return true;
+  return createsFixedContainingBlock(el);
 }

@@ -39,7 +39,7 @@ export function positioned(
       ? ["border-left-width", "border-right-width"] as const
       : ["border-top-width", "border-bottom-width"] as const;
 
-    const cbPaddingBoxKind: NodeKind = `content-area:${axis}`;
+    const cbPaddingBoxKind: NodeKind = `padding-area:${axis}`;
     const cbPaddingBox = nb.create(cbPaddingBoxKind, cbElement, (cnb) => {
       cnb.setMode("content-area")
         .describe("Containing block padding box (for positioned descendants)")

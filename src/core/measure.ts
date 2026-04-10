@@ -14,9 +14,9 @@ export function measureElementSize(el: Element, axis: "width" | "height"): numbe
 
 /**
  * Measure the min-content size of an element on a given axis.
- * Creates an off-screen clone with `width/height: min-content` and measures it.
- * This is needed because `min-width: auto` on flex items resolves to min-content,
- * but getComputedStyle just returns "auto".
+ * Clones the element with `width/height: min-content` and measures it.
+ * The clone is inserted as a sibling of the original so it inherits the same
+ * font-size, writing-mode, and other inherited properties.
  */
 export function measureMinContentSize(el: Element, axis: "width" | "height"): number {
   const clone = el.cloneNode(true) as HTMLElement;
@@ -33,7 +33,8 @@ export function measureMinContentSize(el: Element, axis: "width" | "height"): nu
     "max-width: none !important",
     "max-height: none !important",
   ].join("; ");
-  document.body.appendChild(clone);
+  const host = el.parentElement ?? document.body;
+  host.appendChild(clone);
   const value = clone.getBoundingClientRect()[axis];
   clone.remove();
   return value;
@@ -41,8 +42,8 @@ export function measureMinContentSize(el: Element, axis: "width" | "height"): nu
 
 /**
  * Measure the intrinsic (content-based) size of an element on a given axis.
- * Creates an off-screen clone with the target axis set to `auto` and
- * `align-self: flex-start` (to prevent stretch), then measures it.
+ * Clones the element with the target axis set to `auto` and inserts it as a
+ * sibling so it inherits the same font/writing-mode context.
  */
 export function measureIntrinsicSize(el: Element, axis: "width" | "height"): number {
   const clone = el.cloneNode(true) as HTMLElement;
@@ -60,7 +61,8 @@ export function measureIntrinsicSize(el: Element, axis: "width" | "height"): num
   const crossSize = el.getBoundingClientRect()[crossAxis];
   clone.style.setProperty(crossAxis, `${crossSize}px`, "important");
 
-  document.body.appendChild(clone);
+  const host = el.parentElement ?? document.body;
+  host.appendChild(clone);
   const size = clone.getBoundingClientRect()[axis];
   clone.remove();
   return size;

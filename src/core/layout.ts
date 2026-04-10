@@ -8,7 +8,7 @@ import type { LayoutNode, DagResult, Axis, NodeKind, NodeMode, CalcExpr } from "
 import { DagBuilder } from "./dag-builder";
 import type { NodeBuilder } from "./node-builder";
 import { ElementProxy } from "./element-proxy";
-import { ref, constant, add, cmax } from "./calc";
+import { ref, constant, add, cmax, measured } from "./calc";
 import { PX } from "./units";
 import { borderBoxCalc } from "./box-model";
 import { blockFill } from "./analyzers/block";
@@ -36,7 +36,13 @@ function measuredNode(b: DagBuilder, el: Element, axis: Axis, depth: number, mod
   const kind: NodeKind = `measured:${axis}`;
   const desc = description ?? `Size of the browser ${mode === "viewport" ? "viewport" : mode}`;
   return b.create(kind, el, depth, (nb) => {
-    nb.setMode(mode).describe(desc).calc(borderBoxCalc(nb.proxy, axis));
+    nb.setMode(mode).describe(desc);
+    if (mode === "viewport") {
+      const vpSize = axis === "width" ? window.innerWidth : window.innerHeight;
+      nb.calc(measured("viewport", vpSize, PX));
+    } else {
+      nb.calc(borderBoxCalc(nb.proxy, axis));
+    }
   });
 }
 
@@ -155,10 +161,15 @@ export function computeSize(b: DagBuilder, el: Element, axis: Axis, depth: numbe
     nb.setMode(mode);
 
     switch (mode) {
-      case "viewport":
+      case "viewport": {
+        // The initial containing block is the viewport, not html's computed
+        // box. getComputedStyle(html).height returns "0px" when the document
+        // content doesn't stretch html, so we must use window dimensions.
+        const vpSize = axis === "width" ? window.innerWidth : window.innerHeight;
         nb.describe("Size of the browser viewport")
-          .calc(borderBoxCalc(nb.proxy, axis));
+          .calc(measured("viewport", vpSize, PX));
         break;
+      }
       case "display-none":
         nb.describe("Element is hidden (display: none)")
           .calc(constant(0, PX));
@@ -244,9 +255,15 @@ export function computeIntrinsicSize(
       return;
     }
 
+    // Aspect-ratio transfer only applies when the element has no element
+    // children. For block containers with children, the intrinsic size is
+    // determined by the children's content, not the aspect ratio. If the
+    // content is wider than the aspect-ratio-derived size, browsers use the
+    // content size.
     const arVal = nb.css("aspect-ratio");
     const overflow = nb.css("overflow");
-    if (arVal && arVal !== "auto" && overflow !== "scroll" && overflow !== "auto") {
+    const hasChildren = el.children.length > 0;
+    if (!hasChildren && arVal && arVal !== "auto" && overflow !== "scroll" && overflow !== "auto") {
       const otherAxis: Axis = axis === "width" ? "height" : "width";
       if (nb.proxy.getExplicitSize(otherAxis)) {
         const otherBB = nb.computeIntrinsicSize(el, otherAxis, depth);

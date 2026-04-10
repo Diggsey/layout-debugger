@@ -7,12 +7,12 @@
  */
 import type { NodeKind, NodeMode, Axis, CalcExpr, LayoutNode } from "./types";
 import { ElementProxy, type CssPropertyName } from "./element-proxy";
-import { evaluate, prop, propVal, add, cmax, cmin } from "./calc";
+import { evaluate, prop, propVal, add, sub, ref, cmax, cmin } from "./calc";
 import type { DagBuilder } from "./dag-builder";
 // Circular import — safe because these are only called at runtime, not during module init.
 import { computeSize, computeIntrinsicSize } from "./layout";
 import { containerContentArea, borderBoxCalc } from "./box-model";
-import { round } from "./utils";
+import { round, resolveCssLength } from "./utils";
 
 function pxParse(v: string): number { return parseFloat(v) || 0; }
 
@@ -161,42 +161,64 @@ export class NodeBuilder {
     // Resolve percentage constraints via the containing block DAG node.
     // Per CSS spec, percentage min/max constraints only resolve against a
     // *definite* containing block size. If the CB is auto-sized, ignore them.
-    // For grid items, percentage constraints resolve against the grid track
-    // (not the container), which we don't model — skip them.
+    // For grid items, the CB is the grid track — we don't model grid tracks
+    // so skip percentage constraints there.
+    //
+    // The reference box for percentage resolution depends on position:
+    // - Non-positioned (block/inline in normal flow): CB content box
+    // - Absolutely positioned: CB padding box
+    const position = p.readProperty("position");
+    const isPositioned = position === "absolute" || position === "fixed";
     const lp = this.proxy.getLayoutParent();
     const lpDisplay = lp.readProperty("display");
-    const isGridItem = lpDisplay === "grid" || lpDisplay === "inline-grid";
+    const isGridItem = !isPositioned && (lpDisplay === "grid" || lpDisplay === "inline-grid");
 
-    let cbNode: LayoutNode | null = null;
+    let cbRefNode: LayoutNode | null = null;
     let cbDefinite: boolean | null = null;
-    const getCb = () => {
+    const getCbRef = (): LayoutNode | null => {
       if (cbDefinite === null) {
         if (isGridItem) {
-          cbDefinite = false; // Grid track sizes not modeled
+          cbDefinite = false;
         } else {
           const cb = this.proxy.getContainingBlock();
-          // Width (inline axis) is nearly always definite — block elements fill their CB.
-          // Height is only definite if explicitly set or the element is the viewport.
           cbDefinite = axis === "width"
             || cb.element === document.documentElement
             || !!cb.getExplicitSize(axis);
         }
         if (cbDefinite) {
           const cb = this.proxy.getContainingBlock();
-          cbNode = this.computeSize(cb.element, axis);
+          const cbBorderBox = this.computeSize(cb.element, axis);
+          if (isPositioned) {
+            // Padding box = border box − border
+            const borderProps = axis === "width"
+              ? ["border-left-width", "border-right-width"] as const
+              : ["border-top-width", "border-bottom-width"] as const;
+            cbRefNode = this._builder.create(`padding-area:${axis}`, cb.element, this.depth, (cnb) => {
+              cnb.setMode("content-area")
+                .describe("Containing block padding box (for positioned percentage resolution)")
+                .calc(sub(ref(cbBorderBox), add(...borderProps.map(pr => cnb.prop(pr)))))
+                .input("borderBox", cbBorderBox);
+            });
+          } else {
+            cbRefNode = containerContentArea(this, cb.element, axis, cbBorderBox);
+          }
         }
       }
-      return { definite: cbDefinite, node: cbNode };
+      return cbRefNode;
     };
 
     const resolveConstraint = (val: string, fallback: number): number => {
       if (val.endsWith("px")) return pxParse(val) + padBorder;
-      if (val.endsWith("%")) {
-        const cb = getCb();
-        if (!cb.definite || !cb.node) return fallback;
-        return (parseFloat(val) / 100) * cb.node.result + padBorder;
+      // For anything involving percentages (including clamp/min/max), we need
+      // the CB reference size.
+      if (val.includes("%")) {
+        const cbRef = getCbRef();
+        if (!cbRef) return fallback;
+        const resolved = resolveCssLength(val, cbRef.result);
+        return resolved === null ? fallback : resolved + padBorder;
       }
-      return fallback;
+      const resolved = resolveCssLength(val, 0);
+      return resolved === null ? fallback : resolved + padBorder;
     };
 
     const minPx = minVal === "auto" || minVal === "0px" || minVal === "0"
@@ -207,8 +229,8 @@ export class NodeBuilder {
     const clamped = Math.max(minPx, Math.min(maxPx, result));
     if (Math.abs(clamped - result) <= 1) return; // Within tolerance
 
-    // Record the containing block as an input if we used it
-    if (getCb().node) this._inputs["constraintCB"] = getCb().node!;
+    // Record the containing block reference as an input if we used it
+    if (cbRefNode) this._inputs["constraintCB"] = cbRefNode;
 
     // Wrap calc with clamp
     const resolvedMax = maxVal.endsWith("%") ? round(maxPx - padBorder) : undefined;

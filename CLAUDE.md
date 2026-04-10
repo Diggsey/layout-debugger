@@ -31,3 +31,7 @@ Tests use Playwright, not Vitest. Run with `npx playwright test --project defaul
 The `errors` field in fuzz corpus JSON files records historical errors from when the test was first generated. These are NOT expected failures — the test runner compares current results against live browser measurements. If a fuzz test fails, it's a real regression.
 
 Never delete fuzz corpus files — they are permanent regression tests.
+
+## Analysis Scripts
+
+For any repeated ad-hoc analysis (parsing test results, grouping fuzz failures, inspecting JSON output), write a reusable script under `scripts/` rather than invoking `node -e '...'` directly. Direct `node` invocations require per-call approval; a script can be refined and re-run freely.
