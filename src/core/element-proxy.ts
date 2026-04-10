@@ -263,9 +263,12 @@ export class ElementProxy {
       currentRun = [];
       if (!text.trim()) return;
 
-      // max-content: single line, no wrapping
+      // max-content: let the browser size the inline box naturally with
+      // `width: max-content`, which collapses whitespace the same way the
+      // original text does. Using white-space:pre would preserve every space
+      // literally and overestimate.
       const span = hostParent.ownerDocument.createElement("span");
-      span.style.cssText = "position:absolute;visibility:hidden;pointer-events:none;white-space:pre;";
+      span.style.cssText = "position:absolute;visibility:hidden;pointer-events:none;display:inline-block;width:max-content;";
       span.textContent = text;
       hostParent.appendChild(span);
       const basis = axis === "width" ? span.offsetWidth : span.offsetHeight;
