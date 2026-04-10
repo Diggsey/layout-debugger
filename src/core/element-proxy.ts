@@ -249,11 +249,12 @@ export class ElementProxy {
    * directly inside this element, or inside its display:contents descendants.
    * Each run of text between element siblings becomes one anonymous item.
    *
-   * Measured by inserting a temporary span with the same text and reading
-   * offsetWidth/offsetHeight, so font/writing-mode context is inherited.
+   * Returns each item's max-content (basis) and min-content (per-word) size
+   * along the flex container's main axis. Measured by inserting temporary
+   * spans so font/writing-mode context is inherited.
    */
-  getAnonymousFlexItemSizes(axis: Axis): number[] {
-    const sizes: number[] = [];
+  getAnonymousFlexItems(axis: Axis): { basis: number; minContent: number }[] {
+    const items: { basis: number; minContent: number }[] = [];
     let currentRun: Text[] = [];
 
     const flushRun = (hostParent: Element) => {
@@ -261,15 +262,25 @@ export class ElementProxy {
       const text = currentRun.map(n => n.textContent ?? "").join("");
       currentRun = [];
       if (!text.trim()) return;
+
+      // max-content: single line, no wrapping
       const span = hostParent.ownerDocument.createElement("span");
-      // white-space: pre prevents the text from wrapping so we get its
-      // max-content size in the inline direction.
       span.style.cssText = "position:absolute;visibility:hidden;pointer-events:none;white-space:pre;";
       span.textContent = text;
       hostParent.appendChild(span);
-      const size = axis === "width" ? span.offsetWidth : span.offsetHeight;
+      const basis = axis === "width" ? span.offsetWidth : span.offsetHeight;
+
+      // min-content: longest unbreakable unit (typically the longest word)
+      let minContent = 0;
+      const words = text.split(/\s+/).filter(w => w.length > 0);
+      for (const word of words) {
+        span.textContent = word;
+        const w = axis === "width" ? span.offsetWidth : span.offsetHeight;
+        if (w > minContent) minContent = w;
+      }
+
       span.remove();
-      sizes.push(size);
+      items.push({ basis, minContent });
     };
 
     const walk = (parent: Element) => {
@@ -282,17 +293,15 @@ export class ElementProxy {
           if (cs.display === "contents") {
             walk(el);
           } else if (cs.position !== "absolute" && cs.position !== "fixed" && cs.display !== "none") {
-            // Element boundary — flush current text run before the element.
             flushRun(parent);
           }
-          // Positioned/hidden elements don't break runs.
         }
       }
       flushRun(parent);
     };
 
     walk(this.element);
-    return sizes;
+    return items;
   }
 
   // --- Explicit size detection ---

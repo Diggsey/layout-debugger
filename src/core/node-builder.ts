@@ -176,11 +176,21 @@ export class NodeBuilder {
     const lpDisplay = lp.readProperty("display");
     const isGridItem = !isPositioned && (lpDisplay === "grid" || lpDisplay === "inline-grid");
 
+    // For single-track grids, the CB is the track which equals the container
+    // content area. For multi-track grids, skip — we don't model track sizing.
+    const gridSingleTrack = isGridItem && (() => {
+      const trackProp = axis === "width" ? "grid-template-columns" : "grid-template-rows";
+      const tracks = lp.readProperty(trackProp);
+      // Computed value is a space-separated list of px lengths for each track.
+      const parts = tracks.trim().split(/\s+/).filter(Boolean);
+      return parts.length === 1 && parts[0].endsWith("px");
+    })();
+
     let cbRefNode: LayoutNode | null = null;
     let cbDefinite: boolean | null = null;
     const getCbRef = (): LayoutNode | null => {
       if (cbDefinite === null) {
-        if (isGridItem) {
+        if (isGridItem && !gridSingleTrack) {
           cbDefinite = false;
         } else {
           const cb = this.proxy.getContainingBlock();

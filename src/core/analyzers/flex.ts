@@ -39,11 +39,12 @@ export function flexItemMain(
   );
   // Anonymous flex items come from text content inside display:contents
   // wrappers (or directly inside the flex container). They have default
-  // flex values: grow 0, shrink 1, no margin/padding.
-  const anonSizes = parent.getAnonymousFlexItemSizes(axis);
-  const anonItems: FlexItem[] = anonSizes.map((basis) => ({
-    element: container, basis, hypothetical: basis,
-    grow: 0, shrink: 1, minMain: 0, maxMain: Infinity, margin: 0, pb: 0,
+  // flex values: grow 0, shrink 1, no margin/padding. min-width: auto for
+  // anonymous text items resolves to min-content (longest word).
+  const anonMeasured = parent.getAnonymousFlexItems(axis);
+  const anonItems: FlexItem[] = anonMeasured.map(({ basis, minContent }) => ({
+    element: container, basis, hypothetical: Math.max(minContent, basis),
+    grow: 0, shrink: 1, minMain: minContent, maxMain: Infinity, margin: 0, pb: 0,
   }));
 
   // Main-axis gap: column-gap for row direction, row-gap for column direction
@@ -102,7 +103,7 @@ export function flexItemMain(
   const lastTerm = myResult.shareTerms[myResult.shareTerms.length - 1];
   const growing = freeSpace > 0;
 
-  // Build final free space node using exact per-item used values
+  // Build final free space node using exact per-item used values.
   const finalUsedTerms: CalcExpr[] = [];
   const finalUsedInputs: LayoutNode["inputs"] = { containerContent };
   for (let i = 0; i < siblings.length; i++) {
@@ -520,6 +521,8 @@ function resolveFlexLengths(
     const unfrozen = state.map((s, i) => s.frozen ? -1 : i).filter((i) => i >= 0);
     if (unfrozen.length === 0) break;
 
+    // Per CSS Flexbox §9.7 step 4b: for frozen items, use their outer target
+    // main size; for others, use their outer flex base size.
     const used = state.reduce((s, st, i) => s + (st.frozen ? st.target : items[i].basis) + items[i].margin, 0);
     const remaining = containerContent - used - totalGap;
 
