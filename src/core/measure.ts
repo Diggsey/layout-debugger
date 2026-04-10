@@ -21,12 +21,19 @@ export function measureElementSize(el: Element, axis: "width" | "height"): numbe
 export function measureMinContentSize(el: Element, axis: "width" | "height"): number {
   const clone = el.cloneNode(true) as HTMLElement;
   const crossAxis = axis === "width" ? "height" : "width";
+  // For the inline axis (width in horizontal writing modes), min-content is
+  // the usual "shrunk to longest word" measurement. For the block axis
+  // (height), min-content should reflect the element's natural size at its
+  // current cross size — otherwise text measured with auto width will flow
+  // as a single line, giving an unrealistically small min-content height.
+  const crossBorderBox = el.getBoundingClientRect()[crossAxis];
   clone.style.cssText += "; " + [
     "position: absolute !important",
     "visibility: hidden !important",
     "pointer-events: none !important",
     `${axis}: min-content !important`,
-    `${crossAxis}: auto !important`,
+    "box-sizing: border-box !important",
+    `${crossAxis}: ${crossBorderBox}px !important`,
     "flex: none !important",
     "min-width: 0 !important",
     "min-height: 0 !important",
@@ -47,9 +54,9 @@ export function measureMinContentSize(el: Element, axis: "width" | "height"): nu
  * constraints are reset on the clone because the clone is positioned absolute
  * and its CB for percentage resolution differs from the original's.
  */
-export function measureIntrinsicSize(el: Element, axis: "width" | "height"): number {
+export function measureIntrinsicSize(el: Element, axis: "width" | "height", ignoreAspectRatio = false): number {
   const clone = el.cloneNode(true) as HTMLElement;
-  clone.style.cssText += "; " + [
+  const baseRules = [
     "position: absolute !important",
     "visibility: hidden !important",
     "pointer-events: none !important",
@@ -60,7 +67,9 @@ export function measureIntrinsicSize(el: Element, axis: "width" | "height"): num
     "min-height: 0 !important",
     "max-width: none !important",
     "max-height: none !important",
-  ].join("; ");
+  ];
+  if (ignoreAspectRatio) baseRules.push("aspect-ratio: auto !important");
+  clone.style.cssText += "; " + baseRules.join("; ");
 
   // The cross axis is left at whatever the original authored value is — this
   // preserves aspect-ratio transfer in the clone with the correct box-sizing.

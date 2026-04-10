@@ -270,8 +270,9 @@ function buildFlexChildData(
   } else if (fb === "content") {
     // flex-basis: content bypasses the element's width/height property and
     // uses the content-based size. Measure directly so we don't get fooled by
-    // an explicit height on the item itself.
-    basis = round(measureIntrinsicSize(child, axis));
+    // an explicit height on the item itself, and ignore aspect-ratio so we
+    // get the true content-based size rather than an aspect-ratio transfer.
+    basis = round(measureIntrinsicSize(child, axis, true));
     basisCalc = measured("content", basis);
   } else {
     const resolved = resolveCssLength(fb, containerContentPx);
