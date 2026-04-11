@@ -72,7 +72,16 @@ export function flexItemMain(
   const totalBases = siblings.reduce((sum, s) => sum + s.hypothetical + s.margin, 0)
     + anonItems.reduce((sum, a) => sum + a.hypothetical, 0);
   const totalGap = gap * Math.max(0, totalItemCount - 1);
-  const freeSpace = containerContent.result - totalBases - totalGap;
+  // When the container's main size is content-based (no definite size on
+  // that axis), free space is zero by definition — the container sizes to
+  // fit its contents, so items stay at their hypothetical sizes without
+  // any grow/shrink distribution. Detect this via the container's mode.
+  const containerIsContentSized = containerBorderBox.mode === "content-sum"
+    || containerBorderBox.mode === "content-max"
+    || containerBorderBox.mode === "content-driven";
+  const freeSpace = containerIsContentSized
+    ? 0
+    : containerContent.result - totalBases - totalGap;
 
   // Resolve flex lengths (iterative freeze-and-redistribute algorithm).
   // Anonymous items are appended so the target's index in siblings matches its
@@ -85,7 +94,13 @@ export function flexItemMain(
     })),
     ...anonItems,
   ];
-  const resolved = resolveFlexLengths(allItems, containerContent.result, totalGap);
+  // For content-sized containers, pass the sum of hypotheticals as the
+  // container size so the free space calculation yields 0 and items stay
+  // at their hypothetical sizes.
+  const effectiveContainerContent = containerIsContentSized
+    ? totalBases + totalGap
+    : containerContent.result;
+  const resolved = resolveFlexLengths(allItems, effectiveContainerContent, totalGap);
   const myResult = idx >= 0 ? resolved[idx] : null;
 
   if (!myResult || !target) {
