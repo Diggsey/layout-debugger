@@ -73,13 +73,21 @@ export function flexItemMain(
     + anonItems.reduce((sum, a) => sum + a.hypothetical, 0);
   const totalGap = gap * Math.max(0, totalItemCount - 1);
   // When the container's main size is content-based (no definite size on
-  // that axis), free space is zero by definition — the container sizes to
-  // fit its contents, so items stay at their hypothetical sizes without
-  // any grow/shrink distribution. Detect this via the container's mode.
+  // that axis), free space is usually zero — the container sizes to fit
+  // its contents, so items stay at their hypothetical sizes.
+  //
+  // Exception: if any item's hypothetical exceeds its basis because §4.5's
+  // auto-min content floor clamped it up, the container actually expands
+  // to hold the items' "preferred" sizes. The gap between sum-of-basis and
+  // sum-of-hypothetical (which equals the laid-out container minus
+  // sum-of-hypothetical) is distributable free space, so we fall through
+  // to the normal flex algorithm using the measured container size.
   const containerIsContentSized = containerBorderBox.mode === "content-sum"
     || containerBorderBox.mode === "content-max"
     || containerBorderBox.mode === "content-driven";
-  const freeSpace = containerIsContentSized
+  const hasAutoMinFloor = siblings.some(s => s.hypothetical > s.basis + 0.01);
+  const applyContentSizedGuard = containerIsContentSized && !hasAutoMinFloor;
+  const freeSpace = applyContentSizedGuard
     ? 0
     : containerContent.result - totalBases - totalGap;
 
@@ -97,7 +105,7 @@ export function flexItemMain(
   // For content-sized containers, pass the sum of hypotheticals as the
   // container size so the free space calculation yields 0 and items stay
   // at their hypothetical sizes.
-  const effectiveContainerContent = containerIsContentSized
+  const effectiveContainerContent = applyContentSizedGuard
     ? totalBases + totalGap
     : containerContent.result;
   const resolved = resolveFlexLengths(allItems, effectiveContainerContent, totalGap);
