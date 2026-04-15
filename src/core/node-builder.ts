@@ -150,6 +150,14 @@ export class NodeBuilder {
     const minVal = p.readProperty(minPropName);
     const maxVal = p.readProperty(maxPropName);
 
+    // Tables size to fit their content: the table's min-content (sum of cell
+    // min-widths) is a hard floor that overrides max-width per CSS §17.5.2.
+    // getComputedStyle on a display:table element already returns the
+    // content-adjusted used value, so applying max-width again would clamp
+    // below what the browser actually laid out.
+    const display = p.readProperty("display");
+    if (display === "table" || display === "inline-table") return;
+
     const boxSizing = p.readProperty("box-sizing");
     const totalPadBorder = axis === "width"
       ? p.readPx("padding-left") + p.readPx("padding-right") + p.readPx("border-left-width") + p.readPx("border-right-width")
