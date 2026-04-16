@@ -640,24 +640,33 @@ function resolveFlexLengths(
 
     let totalViolation = 0;
     const clamped: number[] = [];
+    const violationKind: ("min" | "max" | null)[] = [];
     for (const i of unfrozen) {
       let violation = 0;
+      let kind: "min" | "max" | null = null;
       if (state[i].target < items[i].minMain) {
         violation = items[i].minMain - state[i].target;
         state[i].target = items[i].minMain;
         state[i].frozenReason = "min";
+        kind = "min";
       } else if (state[i].target > items[i].maxMain) {
         violation = items[i].maxMain - state[i].target;
         state[i].target = items[i].maxMain;
         state[i].frozenReason = "max";
+        kind = "max";
       }
+      violationKind[i] = kind;
       if (violation !== 0) clamped.push(i);
       totalViolation += violation;
     }
     if (clamped.length === 0) break;
     for (const i of clamped) {
-      const isMin = state[i].target === items[i].minMain;
-      if ((totalViolation > 0 && isMin) || (totalViolation < 0 && !isMin)) {
+      // Track the violation direction by kind rather than comparing target
+      // values — when maxMain equals minMain (e.g. max clamped down to
+      // match a measured min-content), comparing target to minMain can
+      // misidentify a max violation as a min violation.
+      const wasMinViolation = violationKind[i] === "min";
+      if ((totalViolation > 0 && wasMinViolation) || (totalViolation < 0 && !wasMinViolation)) {
         state[i].frozen = true;
         // Clear share terms for frozen items — they don't get shares
         state[i].shareTerms = [];
