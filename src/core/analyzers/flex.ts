@@ -279,6 +279,27 @@ function buildFlexChildData(
   const pb = itemPaddingBorder(childProxy, axis);
   const isBorderBox = childProxy.readProperty("box-sizing") === "border-box";
   const fb = childProxy.readProperty("flex-basis");
+  const childDisplay = childProxy.readProperty("display");
+  const isGridChild = childDisplay === "grid" || childDisplay === "inline-grid";
+
+  // Pre-resolve an explicit (px or %) min constraint so the basis
+  // computation can reference it for grid items (see below). Returns 0
+  // for auto or unresolvable percentages.
+  const minVEarly = childProxy.readProperty(minPropName);
+  let explicitMinBorderBox = 0;
+  if (minVEarly.endsWith("px")) {
+    const raw = px(minVEarly);
+    explicitMinBorderBox = isBorderBox ? raw : raw + pb;
+  } else if (minVEarly !== "auto") {
+    if (minVEarly.includes("%") && !containerMainDefinite) {
+      explicitMinBorderBox = 0;
+    } else {
+      const resolved = resolveCssLength(minVEarly, containerContentPx);
+      if (resolved !== null) {
+        explicitMinBorderBox = isBorderBox ? resolved : resolved + pb;
+      }
+    }
+  }
 
   // The flex algorithm uses border-box sizes for consistency. For
   // content-box elements, wrap an inner value (from prop/propVal) with the
@@ -307,8 +328,21 @@ function buildFlexChildData(
       basis = measureMinContentSize(child, axis);
       basisCalc = measured("min-content", basis);
     } else {
-      basis = parentNb.computeIntrinsicSize(child, axis).result;
-      basisCalc = ref(parentNb.computeIntrinsicSize(child, axis));
+      // For grid items, the intrinsic size of a grid container is the
+      // sum of its track sizes, which is clamped up by min-height/min-
+      // width. Chrome's max-content measurement of a grid respects this.
+      // So when flex-basis:auto falls through to content measurement on
+      // a grid item with an explicit min, use max(content, explicitMin)
+      // as the basis — matches browser behavior where hypothetical ends
+      // up equal to basis rather than being raised by a separate min.
+      const intrinsic = parentNb.computeIntrinsicSize(child, axis);
+      if (isGridChild && explicitMinBorderBox > intrinsic.result) {
+        basis = explicitMinBorderBox;
+        basisCalc = cmax(ref(intrinsic), propVal(minPropName, round(explicitMinBorderBox)));
+      } else {
+        basis = intrinsic.result;
+        basisCalc = ref(intrinsic);
+      }
     }
   } else if (fb.endsWith("px")) {
     const raw = parseFloat(fb);
@@ -359,7 +393,6 @@ function buildFlexChildData(
   // --- Min main ---
   const minV = childProxy.readProperty(minPropName);
   const ov = childProxy.readProperty(axis === "width" ? "overflow-x" : "overflow-y");
-  const childDisplay = childProxy.readProperty("display");
   // Tables have intrinsic sizing that browsers respect even with overflow
   // hidden — the automatic min-size zeroing from CSS Flex §4.5 doesn't fully
   // apply. Measure min-content for display:table items.
