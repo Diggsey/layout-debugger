@@ -31,11 +31,18 @@ export function flexItemMain(
   const containerBorderBox = nb.computeSize(container, axis);
   const containerContent = nb.containerContentArea(container, axis, containerBorderBox);
 
+  // Percentage min/max constraints only resolve against a definite
+  // container main size. If the container is content-sized on this axis,
+  // percentage mins/maxes collapse to 0/none.
+  const containerMainDefinite = containerBorderBox.mode !== "content-sum"
+    && containerBorderBox.mode !== "content-max"
+    && containerBorderBox.mode !== "content-driven";
+
   // Build sibling data — each child's measurements are their own LayoutNodes.
   // For the target element, use nb.proxy so reads are recorded on this node.
   const flexChildren = parent.getFlexChildren();
   const siblings = flexChildren.map(childProxy =>
-    buildFlexChildData(nb, childProxy.element === el ? nb.proxy : childProxy, axis, containerContent.result),
+    buildFlexChildData(nb, childProxy.element === el ? nb.proxy : childProxy, axis, containerContent.result, containerMainDefinite),
   );
   // Anonymous flex items come from text content inside display:contents
   // wrappers (or directly inside the flex container). They have default
@@ -262,7 +269,7 @@ interface FlexChildData {
 
 function buildFlexChildData(
   parentNb: NodeBuilder, childProxy: ElementProxy, axis: Axis,
-  containerContentPx: number,
+  containerContentPx: number, containerMainDefinite: boolean,
 ): FlexChildData {
   const child = childProxy.element;
   const minPropName = axis === "width" ? "min-width" : "min-height";
@@ -336,6 +343,9 @@ function buildFlexChildData(
   const maxV = childProxy.readProperty(maxPropName);
   let maxMain: number;
   if (maxV === "none") {
+    maxMain = Infinity;
+  } else if (maxV.includes("%") && !containerMainDefinite) {
+    // Percentage max against indefinite CB resolves to none.
     maxMain = Infinity;
   } else {
     const resolved = resolveCssLength(maxV, containerContentPx);
@@ -413,6 +423,10 @@ function buildFlexChildData(
         : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
       minCalc = add(prop(childProxy, minPropName), ...pbNames.map(p => prop(childProxy, p)));
     }
+  } else if (minV.includes("%") && !containerMainDefinite) {
+    // Percentage min against indefinite CB resolves to 0.
+    minMain = 0;
+    minCalc = constant(0, PX);
   } else {
     const resolved = resolveCssLength(minV, containerContentPx);
     if (resolved !== null) {

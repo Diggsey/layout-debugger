@@ -230,6 +230,18 @@ export class NodeBuilder {
         if (cbDefinite) {
           const cb = this.proxy.getContainingBlock();
           const cbBorderBox = this.computeSize(cb.element, axis);
+          // Override: if CB's size node is content-sized (e.g. a flex/grid
+          // container with no explicit size), its axis is indefinite even
+          // in horizontal writing mode.
+          if (cbBorderBox.mode === "content-sum"
+            || cbBorderBox.mode === "content-max"
+            || cbBorderBox.mode === "content-driven") {
+            cbDefinite = false;
+          }
+        }
+        if (cbDefinite) {
+          const cb = this.proxy.getContainingBlock();
+          const cbBorderBox = this.computeSize(cb.element, axis);
           if (isPositioned) {
             // Padding box = border box − border
             const borderProps = axis === "width"
