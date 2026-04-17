@@ -38,11 +38,13 @@ export function flexItemMain(
     && containerBorderBox.mode !== "content-max"
     && containerBorderBox.mode !== "content-driven";
 
+  const containerWm = parent.readProperty("writing-mode");
+
   // Build sibling data — each child's measurements are their own LayoutNodes.
   // For the target element, use nb.proxy so reads are recorded on this node.
   const flexChildren = parent.getFlexChildren();
   const siblings = flexChildren.map(childProxy =>
-    buildFlexChildData(nb, childProxy.element === el ? nb.proxy : childProxy, axis, containerContent.result, containerMainDefinite),
+    buildFlexChildData(nb, childProxy.element === el ? nb.proxy : childProxy, axis, containerContent.result, containerMainDefinite, containerWm),
   );
   // Anonymous flex items come from text content inside display:contents
   // wrappers (or directly inside the flex container). They have default
@@ -270,6 +272,7 @@ interface FlexChildData {
 function buildFlexChildData(
   parentNb: NodeBuilder, childProxy: ElementProxy, axis: Axis,
   containerContentPx: number, containerMainDefinite: boolean,
+  containerWm: string,
 ): FlexChildData {
   const child = childProxy.element;
   const minPropName = axis === "width" ? "min-width" : "min-height";
@@ -281,6 +284,17 @@ function buildFlexChildData(
   const fb = childProxy.readProperty("flex-basis");
   const childDisplay = childProxy.readProperty("display");
   const isGridChild = childDisplay === "grid" || childDisplay === "inline-grid";
+  const isFlexChild = childDisplay === "flex" || childDisplay === "inline-flex";
+  const childWm = childProxy.readProperty("writing-mode");
+  const isVerticalWm = (wm: string): boolean =>
+    wm === "vertical-rl" || wm === "vertical-lr" || wm === "sideways-rl" || wm === "sideways-lr";
+  const isOrthogonal = isVerticalWm(containerWm) !== isVerticalWm(childWm);
+  // Chrome treats orthogonal flex items that are themselves flex/grid
+  // formatting contexts with content as having their §4.5 content-size
+  // suggestion = basis (not min-content). Empty formatting contexts still
+  // shrink normally.
+  const hasFormattingContent = (isFlexChild || isGridChild) && child.hasChildNodes();
+  const useBasisAsContentMin = isOrthogonal && hasFormattingContent;
 
   // Pre-resolve an explicit (px or %) min constraint so the basis
   // computation can reference it for grid items (see below). Returns 0
@@ -416,6 +430,14 @@ function buildFlexChildData(
     if (isScroll) {
       minMain = 0;
       minCalc = constant(0, PX);
+    } else if (useBasisAsContentMin) {
+      // Orthogonal flex item that is itself a flex/grid container with
+      // content: Chrome's content-size suggestion for §4.5 auto-min is the
+      // item's basis rather than its (degenerate) min-content measurement.
+      // The basis already reflects the item's specified main size, so this
+      // effectively pins min = specified and the item won't shrink.
+      minMain = basis;
+      minCalc = ref(basisNode);
     } else {
       // Aspect-ratio transfer for min-content only applies when there are no
       // element children. For containers, the measured min-content is used.
