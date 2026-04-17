@@ -83,3 +83,35 @@ export function measureIntrinsicSize(el: Element, axis: "width" | "height", igno
   clone.remove();
   return size;
 }
+
+/**
+ * Measure the content-based size used for flex-basis: auto fallthrough
+ * (CSS Flexbox §9.2 step 3E). Unlike measureIntrinsicSize (which gives
+ * unconstrained max-content), this preserves cross-axis min/max so the
+ * measurement reflects the item's actual used cross size — which is what
+ * the browser uses when computing the basis at this step.
+ *
+ * Only the main-axis min/max are stripped; the main-axis size is set to
+ * auto so content determines the extent.
+ */
+export function measureFlexBasisContent(el: Element, axis: "width" | "height"): number {
+  const clone = el.cloneNode(true) as HTMLElement;
+  const mainMin = axis === "width" ? "min-width" : "min-height";
+  const mainMax = axis === "width" ? "max-width" : "max-height";
+  const baseRules = [
+    "position: absolute !important",
+    "visibility: hidden !important",
+    "pointer-events: none !important",
+    `${axis}: auto !important`,
+    "align-self: flex-start !important",
+    "flex: none !important",
+    `${mainMin}: 0 !important`,
+    `${mainMax}: none !important`,
+  ];
+  clone.style.cssText += "; " + baseRules.join("; ");
+  const host = el.parentElement ?? document.body;
+  host.appendChild(clone);
+  const size = clone.getBoundingClientRect()[axis];
+  clone.remove();
+  return size;
+}

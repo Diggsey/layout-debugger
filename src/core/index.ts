@@ -27,7 +27,7 @@ export { serializeDag, measureElements, verifyDag, getElementPath } from "./seri
 export type { SerializedDag, SerializedNode, BrowserMeasurements, ElementMeasurement, VerifyResult, VerifyError } from "./serialize";
 
 // Measurement
-export { measureElementSize, measureMinContentSize, measureIntrinsicSize } from "./measure";
+export { measureElementSize, measureMinContentSize, measureIntrinsicSize, measureFlexBasisContent } from "./measure";
 
 // Utilities
 export { round, px, isAuto, describeElement, flexMainAxisProp, parseTrackList } from "./utils";

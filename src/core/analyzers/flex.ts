@@ -15,7 +15,7 @@ import { ElementProxy } from "../element-proxy";
 import { ref, constant, prop, propVal, measured, add, sub, mul, cmax, cmin } from "../calc";
 import { PX } from "../units";
 import { px, round, resolveCssLength } from "../utils";
-import { measureMinContentSize, measureIntrinsicSize } from "../measure";
+import { measureMinContentSize, measureIntrinsicSize, measureFlexBasisContent } from "../measure";
 
 // ---------------------------------------------------------------------------
 // Flex item — main axis
@@ -328,6 +328,14 @@ function buildFlexChildData(
       basis = measureMinContentSize(child, axis);
       basisCalc = measured("min-content", basis);
     } else {
+      // Per CSS Flexbox §9.2 step 3E, size the item with its main-axis
+      // auto, honoring the cross-axis constraints (including max-width/
+      // max-height clamps). When the cross-axis max doesn't clamp, this
+      // agrees with plain max-content, and we can use the intrinsic DAG
+      // as the calc reference. When it does clamp, the measurement
+      // differs from max-content, and we fall back to a measured()
+      // terminal so the calc expression matches reality.
+      //
       // For grid items, the intrinsic size of a grid container is the
       // sum of its track sizes, which is clamped up by min-height/min-
       // width. Chrome's max-content measurement of a grid respects this.
@@ -335,13 +343,17 @@ function buildFlexChildData(
       // a grid item with an explicit min, use max(content, explicitMin)
       // as the basis — matches browser behavior where hypothetical ends
       // up equal to basis rather than being raised by a separate min.
+      const measuredBasis = round(measureFlexBasisContent(child, axis));
       const intrinsic = parentNb.computeIntrinsicSize(child, axis);
-      if (isGridChild && explicitMinBorderBox > intrinsic.result) {
+      const useIntrinsicDag = Math.abs(intrinsic.result - measuredBasis) < 0.5;
+      const contentResolved = useIntrinsicDag ? intrinsic.result : measuredBasis;
+      const contentExpr: CalcExpr = useIntrinsicDag ? ref(intrinsic) : measured("content", measuredBasis);
+      if (isGridChild && explicitMinBorderBox > contentResolved) {
         basis = explicitMinBorderBox;
-        basisCalc = cmax(ref(intrinsic), propVal(minPropName, round(explicitMinBorderBox)));
+        basisCalc = cmax(contentExpr, propVal(minPropName, round(explicitMinBorderBox)));
       } else {
-        basis = intrinsic.result;
-        basisCalc = ref(intrinsic);
+        basis = contentResolved;
+        basisCalc = contentExpr;
       }
     }
   } else if (fb.endsWith("px")) {
