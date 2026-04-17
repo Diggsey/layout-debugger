@@ -328,6 +328,8 @@ function buildFlexChildData(
   // --- Basis ---
   let basis: number;
   let basisCalc: CalcExpr;
+  const basisInputs: Record<string, LayoutNode> = {};
+  let basisDescription = "Starting size before flex grow/shrink";
   if (fb === "0" || fb === "0px" || fb === "0%") {
     basis = pb;
     basisCalc = wrapWithPb(propVal("flex-basis", 0));
@@ -361,10 +363,26 @@ function buildFlexChildData(
       const intrinsic = parentNb.computeIntrinsicSize(child, axis);
       const useIntrinsicDag = Math.abs(intrinsic.result - measuredBasis) < 0.5;
       const contentResolved = useIntrinsicDag ? intrinsic.result : measuredBasis;
-      const contentExpr: CalcExpr = useIntrinsicDag ? ref(intrinsic) : measured("content", measuredBasis);
+      let contentExpr: CalcExpr;
+      if (useIntrinsicDag) {
+        contentExpr = ref(intrinsic);
+      } else {
+        // Cross-axis max-width/max-height clamps the used cross size, so the
+        // content measurement differs from unconstrained max-content. Attach
+        // the cross-axis size as an input and describe the dependency so the
+        // DAG shows what the basis actually depends on.
+        const crossAxis: Axis = axis === "width" ? "height" : "width";
+        const crossSizeNode = parentNb.computeSize(child, crossAxis);
+        contentExpr = measured("content at used cross size", measuredBasis);
+        basisInputs.crossSize = crossSizeNode;
+        basisDescription = `Content-based ${axis}, measured at the item's used cross size`;
+      }
       if (isGridChild && explicitMinBorderBox > contentResolved) {
         basis = explicitMinBorderBox;
         basisCalc = cmax(contentExpr, propVal(minPropName, round(explicitMinBorderBox)));
+        if (useIntrinsicDag) {
+          basisDescription = `Starting size: max of max-content ${axis} and explicit min (grid intrinsic floor)`;
+        }
       } else {
         basis = contentResolved;
         basisCalc = contentExpr;
@@ -395,8 +413,9 @@ function buildFlexChildData(
 
   const basisNode = parentNb.create(`flex-basis:${axis}`, child, (n) => {
     n.setMode("flex-basis")
-      .describe("Starting size before flex grow/shrink")
-      .calc(basisCalc);
+      .describe(basisDescription)
+      .calc(basisCalc)
+      .inputs(basisInputs);
   });
 
   // --- Max main ---
@@ -426,6 +445,7 @@ function buildFlexChildData(
   const isScroll = !isTable && ov !== "visible" && ov !== "clip";
   let minMain: number;
   let minCalc: CalcExpr;
+  let minDescriptionOverride: string | null = null;
   if (minV === "auto") {
     if (isScroll) {
       minMain = 0;
@@ -438,6 +458,7 @@ function buildFlexChildData(
       // effectively pins min = specified and the item won't shrink.
       minMain = basis;
       minCalc = ref(basisNode);
+      minDescriptionOverride = `Minimum ${axis}: orthogonal ${isFlexChild ? "flex" : "grid"} item \u2014 can't shrink below basis`;
     } else {
       // Aspect-ratio transfer for min-content only applies when there are no
       // element children. For containers, the measured min-content is used.
@@ -507,7 +528,7 @@ function buildFlexChildData(
   minMain = Math.max(minMain, pb);
   const minNode = parentNb.create(`min-content:${axis}`, child, (n) => {
     n.setMode(minV === "auto" ? "min-content-auto" : "min-content-explicit")
-      .describe(minV === "auto" ? `Minimum ${axis} from content` : `${minPropName} constraint`)
+      .describe(minDescriptionOverride ?? (minV === "auto" ? `Minimum ${axis} from content` : `${minPropName} constraint`))
       .calc(minCalc);
   });
 

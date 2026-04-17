@@ -41,6 +41,10 @@ const nodes = dag.nodes;
 const filter = process.argv[3] || "";
 for (const [id, n] of Object.entries(nodes)) {
   if (!filter || (n.kind?.includes(filter) || n.elementPath?.includes(filter))) {
-    console.log(id, "|", n.kind, "|", n.result, "|", n.axis, "|", JSON.stringify(n.expr || n.description).slice(0, 120));
+    console.log(id, "|", n.kind, "|", n.result, "|", n.description);
+    console.log("     expr:", JSON.stringify(n.expr || "").slice(0, 150));
+    if (n.inputs && Object.keys(n.inputs).length > 0) {
+      console.log("     inputs:", JSON.stringify(n.inputs));
+    }
   }
 }
