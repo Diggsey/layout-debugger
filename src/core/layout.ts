@@ -141,6 +141,26 @@ function determineMode(proxy: ElementProxy, axis: Axis): NodeMode {
   }
 
   if (position === "absolute" || position === "fixed") {
+    // An abs-pos child of a flex container with an explicit non-stretch
+    // align-self sizes its block axis to content, not to the top+bottom
+    // offsets — Chrome treats a non-stretch alignment as suppressing the
+    // offset-derived sizing. align-items on the container is not inherited
+    // for abs-pos children, so only an explicit align-self counts.
+    // `lp` above is null for positioned elements, so fetch layout parent
+    // directly.
+    const posParent = parent ? proxy.getLayoutParent() : null;
+    const posParentDisplay = posParent?.readProperty("display") ?? "";
+    if (posParentDisplay === "flex" || posParentDisplay === "inline-flex") {
+      const alignSelf = proxy.readProperty("align-self");
+      const nonStretch = alignSelf !== "auto" && alignSelf !== "normal" && alignSelf !== "stretch";
+      if (nonStretch) {
+        const wm = proxy.readProperty("writing-mode");
+        const isVertical = wm === "vertical-rl" || wm === "vertical-lr"
+          || wm === "sideways-rl" || wm === "sideways-lr";
+        const blockAxis: Axis = isVertical ? "width" : "height";
+        if (axis === blockAxis) return "positioned-shrink-to-fit";
+      }
+    }
     const startProp = axis === "width" ? "left" : "top";
     const endProp = axis === "width" ? "right" : "bottom";
     return !isAuto(proxy.readProperty(startProp)) && !isAuto(proxy.readProperty(endProp))

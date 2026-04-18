@@ -18,7 +18,26 @@ export function positioned(
 
   const pos = nb.css("position");
 
-  if (!isAuto(startVal) && !isAuto(endVal)) {
+  // An abs-pos child of a flex container with an explicit non-stretch
+  // align-self sizes its block axis to content rather than using the
+  // opposing offsets — Chrome treats a non-stretch alignment as suppressing
+  // the offset-derived sizing. Fall through to content-sizing below.
+  let suppressOffsetDerived = false;
+  const layoutParent = nb.proxy.getLayoutParent();
+  const parentDisplay = layoutParent.readProperty("display");
+  if (parentDisplay === "flex" || parentDisplay === "inline-flex") {
+    const alignSelf = nb.css("align-self");
+    const nonStretch = alignSelf !== "auto" && alignSelf !== "normal" && alignSelf !== "stretch";
+    if (nonStretch) {
+      const wm = nb.css("writing-mode");
+      const isVertical = wm === "vertical-rl" || wm === "vertical-lr"
+        || wm === "sideways-rl" || wm === "sideways-lr";
+      const blockAxis: Axis = isVertical ? "width" : "height";
+      if (axis === blockAxis) suppressOffsetDerived = true;
+    }
+  }
+
+  if (!suppressOffsetDerived && !isAuto(startVal) && !isAuto(endVal)) {
     // For fixed elements, getContainingBlock returns the viewport (documentElement)
     // UNLESS a transform/filter/contain ancestor creates an intermediate CB.
     const cb = nb.proxy.getContainingBlock();
