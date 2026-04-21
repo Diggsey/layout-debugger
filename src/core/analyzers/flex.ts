@@ -33,11 +33,17 @@ export function flexItemMain(
   const containerContent = nb.containerContentArea(container, axis, containerBorderBox);
 
   // Percentage min/max constraints only resolve against a definite
-  // container main size. If the container is content-sized on this axis,
-  // percentage mins/maxes collapse to 0/none.
-  const containerMainDefinite = containerBorderBox.mode !== "content-sum"
+  // container main size. The container's inline axis is always definite
+  // (auto resolves against available inline space); its block axis is
+  // definite only when explicitly sized. So percentage resolution depends
+  // on whether the main axis is inline (flex-direction: row) or block
+  // (flex-direction: column).
+  const direction = parent.readProperty("flex-direction");
+  const mainIsInline = !direction.startsWith("column");
+  const mainModeDefinite = containerBorderBox.mode !== "content-sum"
     && containerBorderBox.mode !== "content-max"
     && containerBorderBox.mode !== "content-driven";
+  const containerMainDefinite = mainIsInline || mainModeDefinite;
 
   const containerWm = parent.readProperty("writing-mode");
 
@@ -69,7 +75,6 @@ export function flexItemMain(
   }));
 
   // Main-axis gap: column-gap for row direction, row-gap for column direction
-  const direction = parent.readProperty("flex-direction");
   const gapPropName = direction.startsWith("column") ? "row-gap" as const : "column-gap" as const;
   const gap = parent.readPx(gapPropName);
 
