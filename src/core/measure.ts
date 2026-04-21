@@ -94,11 +94,15 @@ export function measureIntrinsicSize(el: Element, axis: "width" | "height", igno
  * Only the main-axis min/max are stripped; the main-axis size is set to
  * auto so content determines the extent.
  */
-export function measureFlexBasisContent(el: Element, axis: "width" | "height"): number {
+export function measureFlexBasisContent(
+  el: Element, axis: "width" | "height",
+  crossOverride?: "auto" | number,
+): number {
   const clone = el.cloneNode(true) as HTMLElement;
+  const crossAxis = axis === "width" ? "height" : "width";
   const mainMin = axis === "width" ? "min-width" : "min-height";
   const mainMax = axis === "width" ? "max-width" : "max-height";
-  const baseRules = [
+  const baseRules: string[] = [
     "position: absolute !important",
     "visibility: hidden !important",
     "pointer-events: none !important",
@@ -108,6 +112,15 @@ export function measureFlexBasisContent(el: Element, axis: "width" | "height"): 
     `${mainMin}: 0 !important`,
     `${mainMax}: none !important`,
   ];
+  // The authored cross size may be a percentage that resolves against the
+  // flex container's cross axis. In the position:absolute clone, percentages
+  // resolve against the viewport instead, giving an incorrect cross value.
+  // The caller passes an override — "auto" when the cross is indefinite
+  // in the real flex context, or a px value for a resolved definite cross.
+  if (crossOverride !== undefined) {
+    const v = crossOverride === "auto" ? "auto" : `${crossOverride}px`;
+    baseRules.push(`${crossAxis}: ${v} !important`);
+  }
   clone.style.cssText += "; " + baseRules.join("; ");
   const host = el.parentElement ?? document.body;
   host.appendChild(clone);

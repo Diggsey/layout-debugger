@@ -6,6 +6,30 @@ import type { NodeBuilder } from "./node-builder";
 import { ElementProxy } from "./element-proxy";
 import { prop, add, ref, sub } from "./calc";
 
+/**
+ * Whether a size node represents a *definite* size. Percentage modes are
+ * only definite if their own containing block chain terminates in a
+ * definite node; content-based modes (content-sum, content-driven, etc.)
+ * are always indefinite.
+ */
+export function isNodeDefinite(node: LayoutNode): boolean {
+  let terminus: LayoutNode = node;
+  const seen = new Set<LayoutNode>();
+  while (terminus.mode === "percentage" && !seen.has(terminus)) {
+    seen.add(terminus);
+    const next = terminus.inputs.containingBlock;
+    if (!next) break;
+    terminus = next;
+  }
+  return terminus.mode !== "content-sum"
+    && terminus.mode !== "content-max"
+    && terminus.mode !== "content-driven"
+    && terminus.mode !== "intrinsic-content"
+    && terminus.mode !== "flex-cross-content"
+    && terminus.mode !== "positioned-shrink-to-fit"
+    && terminus.mode !== "table-cell";
+}
+
 /** Build a CalcExpr for an element's border-box size from its CSS properties. */
 export function borderBoxCalc(proxy: ElementProxy, axis: Axis): CalcExpr {
   if (proxy.readProperty("box-sizing") === "border-box") {

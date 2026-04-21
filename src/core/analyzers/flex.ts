@@ -15,6 +15,7 @@ import { ElementProxy } from "../element-proxy";
 import { ref, constant, prop, propVal, measured, add, sub, mul, cmax, cmin } from "../calc";
 import { PX } from "../units";
 import { px, round, resolveCssLength } from "../utils";
+import { isNodeDefinite } from "../box-model";
 import { measureMinContentSize, measureIntrinsicSize, measureFlexBasisContent } from "../measure";
 
 // ---------------------------------------------------------------------------
@@ -40,11 +41,18 @@ export function flexItemMain(
 
   const containerWm = parent.readProperty("writing-mode");
 
+  // Cross-axis container size — needed to resolve percentage cross sizes
+  // on items when computing flex-basis (§9.2 step 3E).
+  const crossAxis: Axis = axis === "width" ? "height" : "width";
+  const containerCrossBorderBox = nb.computeSize(container, crossAxis);
+  const containerCrossDefinite = isNodeDefinite(containerCrossBorderBox);
+  const containerCrossContent = nb.containerContentArea(container, crossAxis, containerCrossBorderBox);
+
   // Build sibling data — each child's measurements are their own LayoutNodes.
   // For the target element, use nb.proxy so reads are recorded on this node.
   const flexChildren = parent.getFlexChildren();
   const siblings = flexChildren.map(childProxy =>
-    buildFlexChildData(nb, childProxy.element === el ? nb.proxy : childProxy, axis, containerContent.result, containerMainDefinite, containerWm),
+    buildFlexChildData(nb, childProxy.element === el ? nb.proxy : childProxy, axis, containerContent.result, containerMainDefinite, containerWm, containerCrossContent.result, containerCrossDefinite),
   );
   // Anonymous flex items come from text content inside display:contents
   // wrappers (or directly inside the flex container). They have default
@@ -53,10 +61,7 @@ export function flexItemMain(
   //
   // For column flex, the anon text wraps at the container's cross (width)
   // size, so we pass the cross content size as the wrap width.
-  const crossAxis: Axis = axis === "width" ? "height" : "width";
-  const crossForAnon = axis === "width"
-    ? 0
-    : nb.containerContentArea(container, crossAxis, nb.computeSize(container, crossAxis)).result;
+  const crossForAnon = axis === "width" ? 0 : containerCrossContent.result;
   const anonMeasured = parent.getAnonymousFlexItems(axis, crossForAnon);
   const anonItems: FlexItem[] = anonMeasured.map(({ basis, minContent }) => ({
     element: container, basis, hypothetical: Math.max(minContent, basis),
@@ -273,10 +278,12 @@ function buildFlexChildData(
   parentNb: NodeBuilder, childProxy: ElementProxy, axis: Axis,
   containerContentPx: number, containerMainDefinite: boolean,
   containerWm: string,
+  containerCrossContentPx: number, containerCrossDefinite: boolean,
 ): FlexChildData {
   const child = childProxy.element;
   const minPropName = axis === "width" ? "min-width" : "min-height";
   const maxPropName = axis === "width" ? "max-width" : "max-height";
+  const crossAxis: Axis = axis === "width" ? "height" : "width";
 
   // Read child properties via proxy (tracked)
   const pb = itemPaddingBorder(childProxy, axis);
@@ -359,7 +366,17 @@ function buildFlexChildData(
       // a grid item with an explicit min, use max(content, explicitMin)
       // as the basis — matches browser behavior where hypothetical ends
       // up equal to basis rather than being raised by a separate min.
-      const measuredBasis = round(measureFlexBasisContent(child, axis));
+      // If the item's authored cross size is a percentage against an
+      // indefinite container cross, the real flex algorithm treats cross
+      // as auto when computing basis (§9.2 step 3E). Override the clone's
+      // cross to "auto" so the absolute-positioned clone doesn't resolve
+      // the percentage against the viewport and yield a wrong basis.
+      const crossExplicit = childProxy.getExplicitSize(crossAxis);
+      const crossIsIndefinitePercentage =
+        crossExplicit?.kind === "percentage" && !containerCrossDefinite;
+      const crossOverride: "auto" | number | undefined =
+        crossIsIndefinitePercentage ? "auto" : undefined;
+      const measuredBasis = round(measureFlexBasisContent(child, axis, crossOverride));
       const intrinsic = parentNb.computeIntrinsicSize(child, axis);
       const useIntrinsicDag = Math.abs(intrinsic.result - measuredBasis) < 0.5;
       const contentResolved = useIntrinsicDag ? intrinsic.result : measuredBasis;
@@ -371,7 +388,6 @@ function buildFlexChildData(
         // content measurement differs from unconstrained max-content. Attach
         // the cross-axis size as an input and describe the dependency so the
         // DAG shows what the basis actually depends on.
-        const crossAxis: Axis = axis === "width" ? "height" : "width";
         const crossSizeNode = parentNb.computeSize(child, crossAxis);
         contentExpr = measured("content at used cross size", measuredBasis);
         basisInputs.crossSize = crossSizeNode;

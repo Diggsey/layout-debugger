@@ -12,7 +12,7 @@ import { PX } from "./units";
 import type { DagBuilder } from "./dag-builder";
 // Circular import — safe because these are only called at runtime, not during module init.
 import { computeSize, computeIntrinsicSize } from "./layout";
-import { containerContentArea, borderBoxCalc } from "./box-model";
+import { containerContentArea, borderBoxCalc, isNodeDefinite } from "./box-model";
 import { round, resolveCssLength } from "./utils";
 
 function pxParse(v: string): number { return parseFloat(v) || 0; }
@@ -230,26 +230,11 @@ export class NodeBuilder {
         if (cbDefinite) {
           const cb = this.proxy.getContainingBlock();
           const cbBorderBox = this.computeSize(cb.element, axis);
-          // A percentage size is only definite if its own CB is definite —
-          // walk the chain to the first non-percentage ancestor. If that
-          // terminus is a content-based mode (e.g. a flex/grid container
-          // with no explicit size, or a standalone table-cell whose
-          // percentage height doesn't resolve), the chain is indefinite.
-          let terminus: LayoutNode = cbBorderBox;
-          const seen = new Set<LayoutNode>();
-          while (terminus.mode === "percentage" && !seen.has(terminus)) {
-            seen.add(terminus);
-            const next = terminus.inputs.containingBlock;
-            if (!next) break;
-            terminus = next;
-          }
-          if (terminus.mode === "content-sum"
-            || terminus.mode === "content-max"
-            || terminus.mode === "content-driven"
-            || terminus.mode === "intrinsic-content"
-            || terminus.mode === "flex-cross-content"
-            || terminus.mode === "positioned-shrink-to-fit"
-            || terminus.mode === "table-cell") {
+          // A percentage size is only definite if its own CB is definite.
+          // Walk the chain to find a content-sized terminus (e.g. flex/grid
+          // container with no explicit size, standalone table-cell whose
+          // percentage height doesn't resolve).
+          if (!isNodeDefinite(cbBorderBox)) {
             cbDefinite = false;
           }
         }
