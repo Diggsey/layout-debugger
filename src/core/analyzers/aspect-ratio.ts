@@ -24,9 +24,24 @@ export function aspectRatio(
   }
 
   const otherAxis: Axis = axis === "width" ? "height" : "width";
-  if (nb.proxy.getExplicitSize(axis) || !nb.proxy.getExplicitSize(otherAxis)) {
+  if (nb.proxy.getExplicitSize(axis)) {
     nb.describe("Measured size").calc(nb.borderBoxCalc(nb.proxy, axis));
     return;
+  }
+  // Accept other axis being definite via explicit size OR via opposing
+  // offsets on an absolutely-positioned element.
+  if (!nb.proxy.getExplicitSize(otherAxis)) {
+    const position = nb.css("position");
+    const isAbsPos = position === "absolute" || position === "fixed";
+    const startProp = otherAxis === "width" ? "left" as const : "top" as const;
+    const endProp = otherAxis === "width" ? "right" as const : "bottom" as const;
+    const otherOffsetsDefinite = isAbsPos
+      && nb.css(startProp) !== "auto"
+      && nb.css(endProp) !== "auto";
+    if (!otherOffsetsDefinite) {
+      nb.describe("Measured size").calc(nb.borderBoxCalc(nb.proxy, axis));
+      return;
+    }
   }
 
   const otherNode = nb.computeSize(el, otherAxis, nb.depth);

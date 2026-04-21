@@ -119,7 +119,25 @@ function determineMode(proxy: ElementProxy, axis: Axis): NodeMode {
       const explicit = proxy.getExplicitSize(axis);
       const otherAxis: Axis = axis === "width" ? "height" : "width";
       const otherExplicit = proxy.getExplicitSize(otherAxis);
-      if (!explicit && otherExplicit) return "aspect-ratio";
+      // For absolutely positioned elements, opposing offsets establish an
+      // implicit definite size on the other axis, so AR can transfer from
+      // there even without an explicit size. When both axes rely on
+      // opposing offsets (neither is explicit), only transfer into width —
+      // height resolves from its offsets and width follows via AR. That
+      // breaks the otherwise circular recursion where each axis would try
+      // to derive from the other.
+      const isAbsPos = position === "absolute" || position === "fixed";
+      let otherOffsetsDefinite = false;
+      if (isAbsPos) {
+        const startProp = otherAxis === "width" ? "left" : "top";
+        const endProp = otherAxis === "width" ? "right" : "bottom";
+        otherOffsetsDefinite = !isAuto(proxy.readProperty(startProp))
+          && !isAuto(proxy.readProperty(endProp));
+      }
+      if (!explicit) {
+        if (otherExplicit) return "aspect-ratio";
+        if (otherOffsetsDefinite && axis === "width") return "aspect-ratio";
+      }
     }
   }
 
