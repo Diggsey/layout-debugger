@@ -385,21 +385,31 @@ export class ElementProxy {
    */
   getSpecifiedValue(axis: Axis): string | null {
     const el = this.element;
+    // Logical properties alias physical ones based on writing-mode.
+    const wm = this._style.writingMode;
+    const isVertical = wm === "vertical-rl" || wm === "vertical-lr" || wm === "sideways-rl" || wm === "sideways-lr";
+    const logicalProp = isVertical
+      ? (axis === "height" ? "inline-size" : "block-size")
+      : (axis === "width" ? "inline-size" : "block-size");
 
     if (el instanceof HTMLElement) {
-      const inlineVal = el.style.getPropertyValue(axis);
-      if (inlineVal && inlineVal !== "auto") {
-        this.record(axis, inlineVal);
-        return inlineVal;
+      for (const prop of [axis, logicalProp]) {
+        const inlineVal = el.style.getPropertyValue(prop);
+        if (inlineVal && inlineVal !== "auto") {
+          this.record(axis, inlineVal);
+          return inlineVal;
+        }
       }
     }
 
     const rules = getMatchedCSSRules(el);
     for (let i = rules.length - 1; i >= 0; i--) {
-      const val = rules[i].style.getPropertyValue(axis);
-      if (val && val !== "auto" && val !== "initial" && val !== "inherit" && val !== "unset" && val !== "revert") {
-        this.record(axis, val);
-        return val;
+      for (const prop of [axis, logicalProp]) {
+        const val = rules[i].style.getPropertyValue(prop);
+        if (val && val !== "auto" && val !== "initial" && val !== "inherit" && val !== "unset" && val !== "revert") {
+          this.record(axis, val);
+          return val;
+        }
       }
     }
 
