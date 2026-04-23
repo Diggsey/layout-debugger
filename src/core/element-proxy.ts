@@ -30,6 +30,7 @@ export type CssPropertyName =
   | "column-gap" | "row-gap"
   // Grid
   | "grid-column" | "grid-row"
+  | "grid-template-columns" | "grid-template-rows"
   // Positioning
   | "left" | "right" | "top" | "bottom"
   // Overflow
@@ -76,6 +77,8 @@ const REASON_TABLE: Record<CssPropertyName, string> = {
   "row-gap":            "Gap between rows",
   "grid-column":        "Grid column placement",
   "grid-row":           "Grid row placement",
+  "grid-template-columns": "Grid column track sizes",
+  "grid-template-rows":    "Grid row track sizes",
   "left":               "Left offset from containing block",
   "right":              "Right offset from containing block",
   "top":                "Top offset from containing block",
