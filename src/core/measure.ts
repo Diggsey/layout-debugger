@@ -54,7 +54,11 @@ export function measureMinContentSize(el: Element, axis: "width" | "height"): nu
  * constraints are reset on the clone because the clone is positioned absolute
  * and its CB for percentage resolution differs from the original's.
  */
-export function measureIntrinsicSize(el: Element, axis: "width" | "height", ignoreAspectRatio = false): number {
+export function measureIntrinsicSize(
+  el: Element, axis: "width" | "height",
+  ignoreAspectRatio = false,
+  otherAxisOverride?: number,
+): number {
   const clone = el.cloneNode(true) as HTMLElement;
   const baseRules = [
     "position: absolute !important",
@@ -69,6 +73,13 @@ export function measureIntrinsicSize(el: Element, axis: "width" | "height", igno
     "max-height: none !important",
   ];
   if (ignoreAspectRatio) baseRules.push("aspect-ratio: auto !important");
+  // When caller supplies a constrained other-axis size (e.g. a flex item's
+  // used main size), override the authored value so layout-dependent content
+  // (wrapping text, grid tracks, etc.) reflects the real constraint.
+  if (otherAxisOverride !== undefined) {
+    const otherAxis = axis === "width" ? "height" : "width";
+    baseRules.push(`${otherAxis}: ${otherAxisOverride}px !important`);
+  }
   clone.style.cssText += "; " + baseRules.join("; ");
 
   // The cross axis is left at whatever the original authored value is — this

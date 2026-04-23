@@ -239,11 +239,18 @@ export function flexItemCross(
   const isStretch = effectiveAlign === "stretch" || effectiveAlign === "normal";
 
   if (!isStretch) {
-    // flex-cross-content: size from content
-    const contentNode = nb.computeIntrinsicSize(el, axis);
-    nb.describe(`Flex item \u2014 cross ${axis} sized by content (align: ${effectiveAlign})`)
-      .calc(ref(contentNode))
-      .input("content", contentNode);
+    // flex-cross-content: size from content at the item's used main size.
+    // Wrapping text or a grid with auto-fill tracks computes a different
+    // cross size at different main sizes, so measuring with the authored
+    // main (plain computeIntrinsicSize) can be wrong. Measure at the used
+    // main produced by the flex main-size algorithm.
+    const mainAxis: Axis = axis === "width" ? "height" : "width";
+    const mainNode = nb.computeSize(el, mainAxis);
+    const size = round(measureIntrinsicSize(el, axis, false, mainNode.result));
+    nb.setMode("flex-cross-content");
+    nb.describe(`Flex item \u2014 cross ${axis} sized by content at used main (align: ${effectiveAlign})`)
+      .calc(measured(`content at ${mainAxis}=${mainNode.result}px`, size))
+      .input("usedMain", mainNode);
     return;
   }
 
