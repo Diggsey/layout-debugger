@@ -105,7 +105,12 @@ export function flexItemMain(
     || containerBorderBox.mode === "content-max"
     || containerBorderBox.mode === "content-driven";
   const hasAutoMinFloor = siblings.some(s => s.hypothetical > s.basis + 0.01);
-  const applyContentSizedGuard = containerIsContentSized && !hasAutoMinFloor;
+  // Only skip free-space distribution when the main axis is truly
+  // indefinite (column/block-axis with auto size). For an inline main
+  // (row direction), the container's main IS definite even when sized
+  // to content — percentage bases resolve against the container's
+  // determined main, and any shortfall shrinks items normally.
+  const applyContentSizedGuard = containerIsContentSized && !hasAutoMinFloor && !containerMainDefinite;
   const freeSpace = applyContentSizedGuard
     ? 0
     : containerContent.result - totalBases - totalGap;
