@@ -354,6 +354,14 @@ function buildFlexChildData(
   let basisCalc: CalcExpr;
   const basisInputs: Record<string, LayoutNode> = {};
   let basisDescription = "Starting size before flex grow/shrink";
+  // Whether the basis was determined by content (not an explicit main size).
+  // Content-derived bases are subject to AR-transferred max clamping: when
+  // aspect-ratio is in effect and the cross axis has a definite max that
+  // would force the AR-derived cross above its limit, the basis is clamped
+  // by the transferred max-cross via AR. Explicit bases (flex-basis:Npx,
+  // explicit width/height) are not clamped — Chrome lets AR break in that
+  // direction and the cross alone hits max.
+  let basisFromContent = false;
   if (fb === "0" || fb === "0px" || fb === "0%") {
     basis = pb;
     basisCalc = wrapWithPb(propVal("flex-basis", 0));
@@ -376,6 +384,7 @@ function buildFlexChildData(
       // Intrinsic keyword — measure min-content directly.
       basis = measureMinContentSize(child, axis);
       basisCalc = measured("min-content", basis);
+      basisFromContent = true;
     } else {
       // Per CSS Flexbox §9.2 step 3E, size the item with its main-axis
       // auto, honoring the cross-axis constraints (including max-width/
@@ -442,6 +451,7 @@ function buildFlexChildData(
         basis = contentResolved;
         basisCalc = contentExpr;
       }
+      basisFromContent = true;
     }
   } else if (fb.endsWith("px")) {
     const raw = parseFloat(fb);
@@ -454,6 +464,7 @@ function buildFlexChildData(
     // get the true content-based size rather than an aspect-ratio transfer.
     basis = round(measureIntrinsicSize(child, axis, true));
     basisCalc = measured("content", basis);
+    basisFromContent = true;
   } else {
     const resolved = resolveCssLength(fb, containerContentPx);
     if (resolved !== null) {
@@ -462,9 +473,64 @@ function buildFlexChildData(
     } else {
       basis = parentNb.computeIntrinsicSize(child, axis).result;
       basisCalc = ref(parentNb.computeIntrinsicSize(child, axis));
+      basisFromContent = true;
     }
   }
   basis = Math.max(basis, pb);
+
+  // AR-transferred max clamp on content-derived bases. When the basis
+  // comes from content/intrinsic measurement and aspect-ratio is in
+  // effect, a definite max on the cross axis transfers via AR to clamp
+  // the basis (since AR-derived cross from a content basis would otherwise
+  // exceed max-cross). Explicit bases don't trigger this — Chrome lets AR
+  // break for explicit sizes.
+  if (basisFromContent) {
+    const arForBasis = childProxy.readProperty("aspect-ratio");
+    if (arForBasis !== "auto" && childProxy.getExplicitSize(crossAxis) === null) {
+      const arMatch = arForBasis.match(/^([\d.]+)\s*(?:\/\s*([\d.]+))?$/);
+      if (arMatch) {
+        const ratioWH = parseFloat(arMatch[1]) / (arMatch[2] ? parseFloat(arMatch[2]) : 1);
+        if (ratioWH > 0) {
+          const crossMaxName = axis === "width" ? "max-height" as const : "max-width" as const;
+          const crossMaxV = childProxy.readProperty(crossMaxName);
+          let crossMaxResolved: number | null = null;
+          if (crossMaxV !== "none") {
+            if (crossMaxV.endsWith("px")) {
+              crossMaxResolved = px(crossMaxV);
+            } else if (crossMaxV.includes("%")) {
+              if (containerCrossDefinite) {
+                crossMaxResolved = resolveCssLength(crossMaxV, containerCrossContentPx);
+              }
+            } else {
+              crossMaxResolved = resolveCssLength(crossMaxV, containerCrossContentPx);
+            }
+          }
+          if (crossMaxResolved !== null) {
+            const factor = axis === "width" ? ratioWH : 1 / ratioWH;
+            const transferredBb = isBorderBox
+              ? crossMaxResolved * factor
+              : crossMaxResolved * factor + pb;
+            if (transferredBb < basis) {
+              basis = transferredBb;
+              const arProp = prop(childProxy, "aspect-ratio");
+              const crossMaxProp = prop(childProxy, crossMaxName);
+              const pbNamesForBasis = axis === "width"
+                ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
+                : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
+              let transferExpr: CalcExpr = axis === "width"
+                ? mul(crossMaxProp, arProp)
+                : div(crossMaxProp, arProp);
+              if (!isBorderBox) {
+                transferExpr = add(transferExpr, ...pbNamesForBasis.map(p => prop(childProxy, p)));
+              }
+              basisCalc = cmin(basisCalc, transferExpr);
+              basisDescription = `${basisDescription} (clamped by ${crossMaxName} via aspect-ratio)`;
+            }
+          }
+        }
+      }
+    }
+  }
 
   const basisNode = parentNb.create(`flex-basis:${axis}`, child, (n) => {
     n.setMode("flex-basis")
@@ -474,12 +540,8 @@ function buildFlexChildData(
   });
 
   // --- Max main ---
-  const pbNamesForBoxConv = axis === "width"
-    ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
-    : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
   const maxV = childProxy.readProperty(maxPropName);
   let maxMain: number;
-  let maxCalc: CalcExpr | null = null;
   if (maxV === "none") {
     maxMain = Infinity;
   } else if (maxV.includes("%") && !containerMainDefinite) {
@@ -491,56 +553,6 @@ function buildFlexChildData(
       maxMain = Infinity;
     } else {
       maxMain = isBorderBox ? resolved : resolved + pb;
-      maxCalc = isBorderBox
-        ? prop(childProxy, maxPropName)
-        : add(prop(childProxy, maxPropName), ...pbNamesForBoxConv.map(p => prop(childProxy, p)));
-    }
-  }
-
-  // Aspect-ratio transferred max: when AR is in effect and the cross axis
-  // has a definite max (and no explicit cross size overrides AR transfer),
-  // the cross max transfers to bound the main axis. Per CSS Sizing 4 §5.5
-  // (and CSS Box Sizing 4 aspect-ratio interaction): max-cross / cross-axis
-  // factor = transferred max-main, in the same box-sizing as the AR applies.
-  const arValForMax = childProxy.readProperty("aspect-ratio");
-  if (arValForMax !== "auto" && childProxy.getExplicitSize(crossAxis) === null) {
-    const arMatch = arValForMax.match(/^([\d.]+)\s*(?:\/\s*([\d.]+))?$/);
-    if (arMatch) {
-      const ratioWH = parseFloat(arMatch[1]) / (arMatch[2] ? parseFloat(arMatch[2]) : 1);
-      if (ratioWH > 0) {
-        const crossMaxName = axis === "width" ? "max-height" as const : "max-width" as const;
-        const crossMaxV = childProxy.readProperty(crossMaxName);
-        let crossMaxResolved: number | null = null;
-        if (crossMaxV !== "none") {
-          if (crossMaxV.endsWith("px")) {
-            crossMaxResolved = px(crossMaxV);
-          } else if (crossMaxV.includes("%")) {
-            if (containerCrossDefinite) {
-              crossMaxResolved = resolveCssLength(crossMaxV, containerCrossContentPx);
-            }
-          } else {
-            crossMaxResolved = resolveCssLength(crossMaxV, containerCrossContentPx);
-          }
-        }
-        if (crossMaxResolved !== null) {
-          const factor = axis === "width" ? ratioWH : 1 / ratioWH;
-          const transferredBb = isBorderBox
-            ? crossMaxResolved * factor
-            : crossMaxResolved * factor + pb;
-          if (transferredBb < maxMain) {
-            maxMain = transferredBb;
-            const arProp = prop(childProxy, "aspect-ratio");
-            const crossMaxProp = prop(childProxy, crossMaxName);
-            let transferExpr: CalcExpr = axis === "width"
-              ? mul(crossMaxProp, arProp)
-              : div(crossMaxProp, arProp);
-            if (!isBorderBox) {
-              transferExpr = add(transferExpr, ...pbNamesForBoxConv.map(p => prop(childProxy, p)));
-            }
-            maxCalc = maxCalc !== null ? cmin(maxCalc, transferExpr) : transferExpr;
-          }
-        }
-      }
     }
   }
 
@@ -652,13 +664,21 @@ function buildFlexChildData(
   // --- Hypothetical: max(min, min(max, basis)) ---
   const hypothetical = Math.max(minMain, Math.min(maxMain, basis));
   let hypoCalc: CalcExpr;
-  if (maxMain === Infinity || maxCalc === null) {
+  if (maxMain === Infinity) {
     hypoCalc = cmax(ref(minNode), ref(basisNode));
   } else {
-    const finalMaxCalc = maxCalc;
+    let maxCalc: CalcExpr;
+    if (isBorderBox) {
+      maxCalc = prop(childProxy, maxPropName);
+    } else {
+      const pbNames = axis === "width"
+        ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
+        : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
+      maxCalc = add(prop(childProxy, maxPropName), ...pbNames.map(p => prop(childProxy, p)));
+    }
     const maxNode = parentNb.create(`max-constraint:${axis}`, child, (n) => {
       n.setMode("clamped")
-        .describe(`${maxPropName} constraint`).calc(finalMaxCalc);
+        .describe(`${maxPropName} constraint`).calc(maxCalc);
     });
     hypoCalc = cmax(ref(minNode), cmin(ref(maxNode), ref(basisNode)));
   }
@@ -806,19 +826,23 @@ function resolveFlexLengths(
     const clamped: number[] = [];
     const violationKind: ("min" | "max" | null)[] = [];
     for (const i of unfrozen) {
-      let violation = 0;
+      // Per CSS Flexbox §9.7 step 4d, the clamped target = max(min, min(max,
+      // target)). When max < min (e.g. max-width:12% < min-width:49px), this
+      // resolves up to min — clamping has to apply both bounds, not just one.
+      const minM = items[i].minMain;
+      const maxM = items[i].maxMain;
+      const target0 = state[i].target;
+      const clampedVal = Math.max(minM, Math.min(maxM, target0));
+      const violation = clampedVal - target0;
       let kind: "min" | "max" | null = null;
-      if (state[i].target < items[i].minMain) {
-        violation = items[i].minMain - state[i].target;
-        state[i].target = items[i].minMain;
-        state[i].frozenReason = "min";
+      if (violation > 0) {
         kind = "min";
-      } else if (state[i].target > items[i].maxMain) {
-        violation = items[i].maxMain - state[i].target;
-        state[i].target = items[i].maxMain;
-        state[i].frozenReason = "max";
+        state[i].frozenReason = "min";
+      } else if (violation < 0) {
         kind = "max";
+        state[i].frozenReason = "max";
       }
+      state[i].target = clampedVal;
       violationKind[i] = kind;
       if (violation !== 0) clamped.push(i);
       totalViolation += violation;

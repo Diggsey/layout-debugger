@@ -157,6 +157,34 @@ export class NodeBuilder {
     const display = p.readProperty("display");
     if (display === "table" || display === "inline-table") return;
 
+    // Orphan table-cells (display:table-cell whose layout parent isn't a
+    // proper table-row context) get wrapped in anonymous tables. Percentage
+    // min/max-width on the cell don't resolve against the inline-block or
+    // block parent it visually appears in — Chrome treats them as auto
+    // because the anonymous table's size is layout-dependent. Drop %
+    // min/max-* on such orphan cells.
+    if (display === "table-cell") {
+      const lpForCell = this.proxy.getLayoutParent();
+      const lpDisp = lpForCell.readProperty("display");
+      const isProperTableContext =
+        lpDisp === "table-row" || lpDisp === "table-row-group" ||
+        lpDisp === "table-header-group" || lpDisp === "table-footer-group";
+      if (!isProperTableContext) {
+        const minIsPct = minVal.includes("%");
+        const maxIsPct = maxVal.includes("%");
+        if (minIsPct || maxIsPct) {
+          // If only one of min/max is %, we could still apply the other.
+          // But the simpler choice is to skip the clamp entirely for orphan
+          // table-cells — Chrome's reported computed value already reflects
+          // its actual layout decisions.
+          if (minIsPct && maxVal === "none") return;
+          if (maxIsPct && (minVal === "auto" || minVal === "0px" || minVal === "0")) return;
+          // Mixed: bail to be safe.
+          return;
+        }
+      }
+    }
+
     const boxSizing = p.readProperty("box-sizing");
     const totalPadBorder = axis === "width"
       ? p.readPx("padding-left") + p.readPx("padding-right") + p.readPx("border-left-width") + p.readPx("border-right-width")
