@@ -12,7 +12,7 @@
 import type { Axis, LayoutNode, CalcExpr } from "../types";
 import type { NodeBuilder } from "../node-builder";
 import { ElementProxy } from "../element-proxy";
-import { ref, constant, prop, propVal, measured, add, sub, mul, cmax, cmin } from "../calc";
+import { ref, constant, prop, propVal, measured, add, sub, mul, div, cmax, cmin } from "../calc";
 import { PX } from "../units";
 import { px, round, resolveCssLength } from "../utils";
 import { isNodeDefinite } from "../box-model";
@@ -359,7 +359,16 @@ function buildFlexChildData(
     basisCalc = wrapWithPb(propVal("flex-basis", 0));
   } else if (fb === "auto") {
     const specified = childProxy.getSpecifiedValue(axis);
-    const specifiedPx = specified ? resolveCssLength(specified, containerContentPx) : null;
+    // Per CSS Flexbox §9.2 step 3E: when computing flex basis from the
+    // specified main size, percentages resolve against the container's
+    // inner main size only if it's definite. When the container is
+    // content-sized on the main axis, the percentage falls back to auto
+    // (treated as content-based here, not the post-hoc container size).
+    const specifiedIsIndefinitePercentage =
+      specified !== null && specified.includes("%") && !containerMainDefinite;
+    const specifiedPx = (specified !== null && !specifiedIsIndefinitePercentage)
+      ? resolveCssLength(specified, containerContentPx)
+      : null;
     if (specifiedPx !== null) {
       basis = isBorderBox ? specifiedPx : specifiedPx + pb;
       basisCalc = wrapWithPb(propVal(axis, round(specifiedPx)));
@@ -393,7 +402,20 @@ function buildFlexChildData(
         crossExplicit?.kind === "percentage" && !containerCrossDefinite;
       const crossOverride: "auto" | number | undefined =
         crossIsIndefinitePercentage ? "auto" : undefined;
-      const measuredBasis = round(measureFlexBasisContent(child, axis, crossOverride));
+      // When overflow is visible and the item has an aspect-ratio, content
+      // that would otherwise be clamped by AR expands the box instead. The
+      // effective basis is max(AR-derived, content-max-content). If AR is
+      // larger, the item stays at AR (content fits). If content is larger,
+      // the item grows to fit content (AR is overridden).
+      const mainOverflowProp = axis === "width" ? "overflow-x" as const : "overflow-y" as const;
+      const overflowVal = childProxy.readProperty(mainOverflowProp);
+      const arVal = childProxy.readProperty("aspect-ratio");
+      const considerArContentMax = overflowVal === "visible" && arVal !== "auto";
+      let measuredBasis = round(measureFlexBasisContent(child, axis, crossOverride, false));
+      if (considerArContentMax) {
+        const basisNoAR = round(measureFlexBasisContent(child, axis, crossOverride, true));
+        measuredBasis = Math.max(measuredBasis, basisNoAR);
+      }
       const intrinsic = parentNb.computeIntrinsicSize(child, axis);
       const useIntrinsicDag = Math.abs(intrinsic.result - measuredBasis) < 0.5;
       const contentResolved = useIntrinsicDag ? intrinsic.result : measuredBasis;
@@ -452,8 +474,12 @@ function buildFlexChildData(
   });
 
   // --- Max main ---
+  const pbNamesForBoxConv = axis === "width"
+    ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
+    : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
   const maxV = childProxy.readProperty(maxPropName);
   let maxMain: number;
+  let maxCalc: CalcExpr | null = null;
   if (maxV === "none") {
     maxMain = Infinity;
   } else if (maxV.includes("%") && !containerMainDefinite) {
@@ -465,6 +491,56 @@ function buildFlexChildData(
       maxMain = Infinity;
     } else {
       maxMain = isBorderBox ? resolved : resolved + pb;
+      maxCalc = isBorderBox
+        ? prop(childProxy, maxPropName)
+        : add(prop(childProxy, maxPropName), ...pbNamesForBoxConv.map(p => prop(childProxy, p)));
+    }
+  }
+
+  // Aspect-ratio transferred max: when AR is in effect and the cross axis
+  // has a definite max (and no explicit cross size overrides AR transfer),
+  // the cross max transfers to bound the main axis. Per CSS Sizing 4 §5.5
+  // (and CSS Box Sizing 4 aspect-ratio interaction): max-cross / cross-axis
+  // factor = transferred max-main, in the same box-sizing as the AR applies.
+  const arValForMax = childProxy.readProperty("aspect-ratio");
+  if (arValForMax !== "auto" && childProxy.getExplicitSize(crossAxis) === null) {
+    const arMatch = arValForMax.match(/^([\d.]+)\s*(?:\/\s*([\d.]+))?$/);
+    if (arMatch) {
+      const ratioWH = parseFloat(arMatch[1]) / (arMatch[2] ? parseFloat(arMatch[2]) : 1);
+      if (ratioWH > 0) {
+        const crossMaxName = axis === "width" ? "max-height" as const : "max-width" as const;
+        const crossMaxV = childProxy.readProperty(crossMaxName);
+        let crossMaxResolved: number | null = null;
+        if (crossMaxV !== "none") {
+          if (crossMaxV.endsWith("px")) {
+            crossMaxResolved = px(crossMaxV);
+          } else if (crossMaxV.includes("%")) {
+            if (containerCrossDefinite) {
+              crossMaxResolved = resolveCssLength(crossMaxV, containerCrossContentPx);
+            }
+          } else {
+            crossMaxResolved = resolveCssLength(crossMaxV, containerCrossContentPx);
+          }
+        }
+        if (crossMaxResolved !== null) {
+          const factor = axis === "width" ? ratioWH : 1 / ratioWH;
+          const transferredBb = isBorderBox
+            ? crossMaxResolved * factor
+            : crossMaxResolved * factor + pb;
+          if (transferredBb < maxMain) {
+            maxMain = transferredBb;
+            const arProp = prop(childProxy, "aspect-ratio");
+            const crossMaxProp = prop(childProxy, crossMaxName);
+            let transferExpr: CalcExpr = axis === "width"
+              ? mul(crossMaxProp, arProp)
+              : div(crossMaxProp, arProp);
+            if (!isBorderBox) {
+              transferExpr = add(transferExpr, ...pbNamesForBoxConv.map(p => prop(childProxy, p)));
+            }
+            maxCalc = maxCalc !== null ? cmin(maxCalc, transferExpr) : transferExpr;
+          }
+        }
+      }
     }
   }
 
@@ -512,7 +588,15 @@ function buildFlexChildData(
           minCalc = measured("min-content", minMain);
         }
       } else {
-        minMain = measureMinContentSize(child, axis);
+        // When overflow is visible and the item has an aspect-ratio,
+        // content that would otherwise be clamped by AR expands the box
+        // instead. Take max of AR-derived min-content and content-based
+        // min-content: Chrome uses the larger.
+        minMain = measureMinContentSize(child, axis, false);
+        if (ov === "visible" && arVal !== "auto" && hasKids) {
+          const minNoAR = measureMinContentSize(child, axis, true);
+          if (minNoAR > minMain) minMain = minNoAR;
+        }
         minCalc = measured("min-content", minMain);
       }
       const specified = childProxy.getSpecifiedValue(axis);
@@ -568,21 +652,13 @@ function buildFlexChildData(
   // --- Hypothetical: max(min, min(max, basis)) ---
   const hypothetical = Math.max(minMain, Math.min(maxMain, basis));
   let hypoCalc: CalcExpr;
-  if (maxMain === Infinity) {
+  if (maxMain === Infinity || maxCalc === null) {
     hypoCalc = cmax(ref(minNode), ref(basisNode));
   } else {
-    let maxCalc: CalcExpr;
-    if (isBorderBox) {
-      maxCalc = prop(childProxy, maxPropName);
-    } else {
-      const pbNames = axis === "width"
-        ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
-        : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
-      maxCalc = add(prop(childProxy, maxPropName), ...pbNames.map(p => prop(childProxy, p)));
-    }
+    const finalMaxCalc = maxCalc;
     const maxNode = parentNb.create(`max-constraint:${axis}`, child, (n) => {
       n.setMode("clamped")
-        .describe(`${maxPropName} constraint`).calc(maxCalc);
+        .describe(`${maxPropName} constraint`).calc(finalMaxCalc);
     });
     hypoCalc = cmax(ref(minNode), cmin(ref(maxNode), ref(basisNode)));
   }

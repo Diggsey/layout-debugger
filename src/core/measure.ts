@@ -18,7 +18,10 @@ export function measureElementSize(el: Element, axis: "width" | "height"): numbe
  * The clone is inserted as a sibling of the original so it inherits the same
  * font-size, writing-mode, and other inherited properties.
  */
-export function measureMinContentSize(el: Element, axis: "width" | "height"): number {
+export function measureMinContentSize(
+  el: Element, axis: "width" | "height",
+  ignoreAspectRatio = false,
+): number {
   const clone = el.cloneNode(true) as HTMLElement;
   const crossAxis = axis === "width" ? "height" : "width";
   // For the inline axis (width in horizontal writing modes), min-content is
@@ -27,7 +30,7 @@ export function measureMinContentSize(el: Element, axis: "width" | "height"): nu
   // current cross size — otherwise text measured with auto width will flow
   // as a single line, giving an unrealistically small min-content height.
   const crossBorderBox = el.getBoundingClientRect()[crossAxis];
-  clone.style.cssText += "; " + [
+  const rules = [
     "position: absolute !important",
     "visibility: hidden !important",
     "pointer-events: none !important",
@@ -39,7 +42,9 @@ export function measureMinContentSize(el: Element, axis: "width" | "height"): nu
     "min-height: 0 !important",
     "max-width: none !important",
     "max-height: none !important",
-  ].join("; ");
+  ];
+  if (ignoreAspectRatio) rules.push("aspect-ratio: auto !important");
+  clone.style.cssText += "; " + rules.join("; ");
   const host = el.parentElement ?? document.body;
   host.appendChild(clone);
   const value = clone.getBoundingClientRect()[axis];
@@ -108,6 +113,7 @@ export function measureIntrinsicSize(
 export function measureFlexBasisContent(
   el: Element, axis: "width" | "height",
   crossOverride?: "auto" | number,
+  ignoreAspectRatio = false,
 ): number {
   const clone = el.cloneNode(true) as HTMLElement;
   const crossAxis = axis === "width" ? "height" : "width";
@@ -123,6 +129,10 @@ export function measureFlexBasisContent(
     `${mainMin}: 0 !important`,
     `${mainMax}: none !important`,
   ];
+  // When the element's overflow is visible, a flex item's content-based
+  // basis ignores aspect-ratio — content that would otherwise overflow
+  // expands the box instead. The caller decides whether to strip AR.
+  if (ignoreAspectRatio) baseRules.push("aspect-ratio: auto !important");
   // The authored cross size may be a percentage that resolves against the
   // flex container's cross axis. In the position:absolute clone, percentages
   // resolve against the viewport instead, giving an incorrect cross value.
