@@ -506,13 +506,19 @@ function buildFlexChildData(
     basisCalc = measured("content", basis);
     basisFromContent = true;
   } else {
-    const resolved = resolveCssLength(fb, containerContentPx);
+    // Percentage flex-basis against an indefinite container main resolves
+    // to auto (content-based), not the post-hoc container size. Per CSS
+    // Flexbox §9.2 step 3D and CSS Sizing 4 §6.
+    const fbIsIndefinitePercentage = fb.includes("%") && !containerMainDefinite;
+    const resolved = fbIsIndefinitePercentage ? null : resolveCssLength(fb, containerContentPx);
     if (resolved !== null) {
       basis = isBorderBox ? resolved : resolved + pb;
       basisCalc = wrapWithPb(propVal("flex-basis", round(resolved)));
     } else {
-      basis = parentNb.computeIntrinsicSize(child, axis).result;
-      basisCalc = ref(parentNb.computeIntrinsicSize(child, axis));
+      // Content fallback: measure with main:auto, honoring the cross-axis
+      // size, the same way fb:auto with content fallthrough does.
+      basis = round(measureFlexBasisContent(child, axis));
+      basisCalc = measured("content", basis);
       basisFromContent = true;
     }
   }

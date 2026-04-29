@@ -29,14 +29,19 @@ export function measureMinContentSize(
   // (height), min-content should reflect the element's natural size at its
   // current cross size — otherwise text measured with auto width will flow
   // as a single line, giving an unrealistically small min-content height.
-  const crossBorderBox = el.getBoundingClientRect()[crossAxis];
+  //
+  // Don't force box-sizing:border-box on the clone: aspect-ratio applies
+  // to whichever box-sizing the element uses, so for content-box elements
+  // we need the cross value in content-box too. Using getComputedStyle's
+  // cross value (which already matches the original box-sizing) keeps the
+  // AR transfer consistent.
+  const crossUsed = getComputedStyle(el)[crossAxis];
   const rules = [
     "position: absolute !important",
     "visibility: hidden !important",
     "pointer-events: none !important",
     `${axis}: min-content !important`,
-    "box-sizing: border-box !important",
-    `${crossAxis}: ${crossBorderBox}px !important`,
+    `${crossAxis}: ${crossUsed} !important`,
     "flex: none !important",
     "min-width: 0 !important",
     "min-height: 0 !important",
