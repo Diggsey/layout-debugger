@@ -210,7 +210,9 @@ export class ElementProxy {
    */
   isNewBlockFormattingContext(): boolean {
     const s = getComputedStyle(this.element);
-    if (s.overflow !== "visible") return true;
+    // Per CSS Overflow 3, overflow:clip clips content but doesn't create a
+    // scroll container or new BFC — only hidden/scroll/auto do.
+    if (s.overflow !== "visible" && s.overflow !== "clip") return true;
     if (s.display === "flex" || s.display === "inline-flex") return true;
     if (s.display === "grid" || s.display === "inline-grid") return true;
     if (s.display === "flow-root" || s.display === "inline-block") return true;

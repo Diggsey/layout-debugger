@@ -1,0 +1,759 @@
+{
+  "seed": 1777469873390,
+  "spec": {
+    "style": {
+      "overflow": "hidden",
+      "height": "108px",
+      "max-height": "196px"
+    },
+    "children": [
+      {
+        "style": {
+          "width": "98px",
+          "height": "89px",
+          "padding-top": "8px",
+          "padding-bottom": "5px",
+          "border-top": "4px solid black",
+          "border-bottom": "3px solid black",
+          "border-left": "1px solid black",
+          "box-sizing": "content-box",
+          "min-height": "97px",
+          "float": "left"
+        },
+        "text": "Content Test Layout Hello Flex"
+      },
+      {
+        "style": {
+          "width": "133px",
+          "height": "100px",
+          "border": "3px solid black",
+          "box-sizing": "border-box",
+          "max-width": "390px"
+        }
+      },
+      {
+        "style": {
+          "width": "39px",
+          "height": "21px",
+          "padding-top": "9px",
+          "padding-right": "3px",
+          "padding-bottom": "7px",
+          "padding-left": "6px",
+          "display": "contents",
+          "min-height": "86px",
+          "max-height": "345px",
+          "white-space": "pre"
+        }
+      },
+      {
+        "style": {
+          "overflow": "clip",
+          "padding": "15px"
+        },
+        "children": [
+          {
+            "style": {
+              "width": "25%",
+              "height": "81px",
+              "border": "1px solid black",
+              "min-height": "10px",
+              "max-height": "124px"
+            },
+            "target": true
+          },
+          {
+            "style": {
+              "width": "30px",
+              "height": "61px",
+              "padding-bottom": "3px",
+              "padding-left": "8px",
+              "box-sizing": "border-box"
+            }
+          },
+          {
+            "style": {
+              "display": "grid",
+              "grid-template-columns": "3fr",
+              "width": "278px",
+              "overflow-x": "hidden",
+              "overflow-y": "clip",
+              "border": "1px solid black",
+              "box-sizing": "border-box",
+              "justify-items": "stretch"
+            },
+            "children": [
+              {
+                "style": {
+                  "width": "55px",
+                  "height": "31px",
+                  "box-sizing": "content-box",
+                  "min-height": "27px",
+                  "max-width": "398px"
+                }
+              }
+            ]
+          },
+          {
+            "style": {
+              "width": "93px",
+              "height": "99px",
+              "margin": "9px"
+            },
+            "text": "Flex"
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [
+    {
+      "nodeId": "w1",
+      "kind": "block-fill",
+      "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(4)",
+      "axis": "width",
+      "dagResult": 1181,
+      "actual": 1280,
+      "delta": 99
+    }
+  ],
+  "dag": {
+    "target": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(4) > div:nth-child(1)",
+      "desc": "<div>"
+    },
+    "rootWidth": "w0",
+    "rootHeight": "h8",
+    "nodes": {
+      "w7": {
+        "id": "w7",
+        "kind": "size:width",
+        "mode": "viewport",
+        "elementPath": "html",
+        "elementDesc": "<html>",
+        "axis": "width",
+        "result": 1280,
+        "inputs": {},
+        "description": "Size of the browser viewport",
+        "calc": {
+          "op": "measured",
+          "label": "viewport",
+          "value": 1280,
+          "unit": "px"
+        },
+        "expr": "1280px (viewport)",
+        "cssProperties": {
+          "min-width": "0px",
+          "max-width": "none",
+          "display": "block",
+          "box-sizing": "content-box",
+          "padding-left": "0px",
+          "padding-right": "0px",
+          "border-left-width": "0px",
+          "border-right-width": "0px",
+          "position": "static",
+          "parent.display": "block"
+        }
+      },
+      "w6": {
+        "id": "w6",
+        "kind": "content-area:width",
+        "mode": "content-area",
+        "elementPath": "html",
+        "elementDesc": "<html>",
+        "axis": "width",
+        "result": 1280,
+        "inputs": {
+          "borderBox": "w7"
+        },
+        "description": "Usable space inside element after subtracting padding and border",
+        "calc": {
+          "op": "sub",
+          "left": {
+            "op": "ref",
+            "nodeId": "w7"
+          },
+          "right": {
+            "op": "add",
+            "args": [
+              {
+                "op": "property",
+                "name": "padding-left",
+                "value": 0,
+                "unit": "px"
+              },
+              {
+                "op": "property",
+                "name": "padding-right",
+                "value": 0,
+                "unit": "px"
+              },
+              {
+                "op": "property",
+                "name": "border-left-width",
+                "value": 0,
+                "unit": "px"
+              },
+              {
+                "op": "property",
+                "name": "border-right-width",
+                "value": 0,
+                "unit": "px"
+              }
+            ]
+          }
+        },
+        "expr": "1280px − 0px (padding-left) + 0px (padding-right) + 0px (border-left-width) + 0px (border-right-width)",
+        "cssProperties": {
+          "padding-left": "0px",
+          "padding-right": "0px",
+          "border-left-width": "0px",
+          "border-right-width": "0px"
+        }
+      },
+      "w5": {
+        "id": "w5",
+        "kind": "size:width",
+        "mode": "block-fill",
+        "elementPath": "body",
+        "elementDesc": "<body>",
+        "axis": "width",
+        "result": 1280,
+        "inputs": {
+          "containingBlockContent": "w6"
+        },
+        "description": "Block element — width fills the available space in its parent",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "add",
+              "args": [
+                {
+                  "op": "property",
+                  "name": "padding-left",
+                  "value": 0,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "padding-right",
+                  "value": 0,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "border-left-width",
+                  "value": 0,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "border-right-width",
+                  "value": 0,
+                  "unit": "px"
+                }
+              ]
+            },
+            {
+              "op": "sub",
+              "left": {
+                "op": "ref",
+                "nodeId": "w6"
+              },
+              "right": {
+                "op": "add",
+                "args": [
+                  {
+                    "op": "property",
+                    "name": "margin-left",
+                    "value": 0,
+                    "unit": "px"
+                  },
+                  {
+                    "op": "property",
+                    "name": "margin-right",
+                    "value": 0,
+                    "unit": "px"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "expr": "max(0px (padding-left) + 0px (padding-right) + 0px (border-left-width) + 0px (border-right-width), 1280px − 0px (margin-left) + 0px (margin-right))",
+        "cssProperties": {
+          "display": "block",
+          "position": "static",
+          "parent.display": "block",
+          "aspect-ratio": "auto",
+          "float": "none",
+          "writing-mode": "horizontal-tb",
+          "parent.writing-mode": "horizontal-tb",
+          "margin-left": "0px",
+          "margin-right": "0px",
+          "padding-left": "0px",
+          "padding-right": "0px",
+          "border-left-width": "0px",
+          "border-right-width": "0px",
+          "min-width": "0px",
+          "max-width": "none",
+          "box-sizing": "content-box"
+        }
+      },
+      "w4": {
+        "id": "w4",
+        "kind": "content-area:width",
+        "mode": "content-area",
+        "elementPath": "body",
+        "elementDesc": "<body>",
+        "axis": "width",
+        "result": 1280,
+        "inputs": {
+          "borderBox": "w5"
+        },
+        "description": "Usable space inside element after subtracting padding and border",
+        "calc": {
+          "op": "sub",
+          "left": {
+            "op": "ref",
+            "nodeId": "w5"
+          },
+          "right": {
+            "op": "add",
+            "args": [
+              {
+                "op": "property",
+                "name": "padding-left",
+                "value": 0,
+                "unit": "px"
+              },
+              {
+                "op": "property",
+                "name": "padding-right",
+                "value": 0,
+                "unit": "px"
+              },
+              {
+                "op": "property",
+                "name": "border-left-width",
+                "value": 0,
+                "unit": "px"
+              },
+              {
+                "op": "property",
+                "name": "border-right-width",
+                "value": 0,
+                "unit": "px"
+              }
+            ]
+          }
+        },
+        "expr": "1280px − 0px (padding-left) + 0px (padding-right) + 0px (border-left-width) + 0px (border-right-width)",
+        "cssProperties": {
+          "padding-left": "0px",
+          "padding-right": "0px",
+          "border-left-width": "0px",
+          "border-right-width": "0px"
+        }
+      },
+      "w3": {
+        "id": "w3",
+        "kind": "size:width",
+        "mode": "block-fill",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 1280,
+        "inputs": {
+          "containingBlockContent": "w4"
+        },
+        "description": "Block element — width fills the available space in its parent",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "add",
+              "args": [
+                {
+                  "op": "property",
+                  "name": "padding-left",
+                  "value": 0,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "padding-right",
+                  "value": 0,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "border-left-width",
+                  "value": 0,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "border-right-width",
+                  "value": 0,
+                  "unit": "px"
+                }
+              ]
+            },
+            {
+              "op": "sub",
+              "left": {
+                "op": "ref",
+                "nodeId": "w4"
+              },
+              "right": {
+                "op": "add",
+                "args": [
+                  {
+                    "op": "property",
+                    "name": "margin-left",
+                    "value": 0,
+                    "unit": "px"
+                  },
+                  {
+                    "op": "property",
+                    "name": "margin-right",
+                    "value": 0,
+                    "unit": "px"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "expr": "max(0px (padding-left) + 0px (padding-right) + 0px (border-left-width) + 0px (border-right-width), 1280px − 0px (margin-left) + 0px (margin-right))",
+        "cssProperties": {
+          "display": "block",
+          "position": "static",
+          "parent.display": "block",
+          "aspect-ratio": "auto",
+          "float": "none",
+          "writing-mode": "horizontal-tb",
+          "parent.writing-mode": "horizontal-tb",
+          "margin-left": "0px",
+          "margin-right": "0px",
+          "padding-left": "0px",
+          "padding-right": "0px",
+          "border-left-width": "0px",
+          "border-right-width": "0px",
+          "min-width": "0px",
+          "max-width": "none",
+          "box-sizing": "content-box"
+        }
+      },
+      "w2": {
+        "id": "w2",
+        "kind": "content-area:width",
+        "mode": "content-area",
+        "elementPath": "body:nth-child(2) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 1280,
+        "inputs": {
+          "borderBox": "w3"
+        },
+        "description": "Usable space inside element after subtracting padding and border",
+        "calc": {
+          "op": "sub",
+          "left": {
+            "op": "ref",
+            "nodeId": "w3"
+          },
+          "right": {
+            "op": "add",
+            "args": [
+              {
+                "op": "property",
+                "name": "padding-left",
+                "value": 0,
+                "unit": "px"
+              },
+              {
+                "op": "property",
+                "name": "padding-right",
+                "value": 0,
+                "unit": "px"
+              },
+              {
+                "op": "property",
+                "name": "border-left-width",
+                "value": 0,
+                "unit": "px"
+              },
+              {
+                "op": "property",
+                "name": "border-right-width",
+                "value": 0,
+                "unit": "px"
+              }
+            ]
+          }
+        },
+        "expr": "1280px − 0px (padding-left) + 0px (padding-right) + 0px (border-left-width) + 0px (border-right-width)",
+        "cssProperties": {
+          "padding-left": "0px",
+          "padding-right": "0px",
+          "border-left-width": "0px",
+          "border-right-width": "0px"
+        }
+      },
+      "w1": {
+        "id": "w1",
+        "kind": "size:width",
+        "mode": "block-fill",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(4)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 1181,
+        "inputs": {
+          "containingBlockContent": "w2"
+        },
+        "description": "Block element — width fills the available space in its parent (reduced by preceding floats)",
+        "calc": {
+          "op": "max",
+          "args": [
+            {
+              "op": "add",
+              "args": [
+                {
+                  "op": "property",
+                  "name": "padding-left",
+                  "value": 15,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "padding-right",
+                  "value": 15,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "border-left-width",
+                  "value": 0,
+                  "unit": "px"
+                },
+                {
+                  "op": "property",
+                  "name": "border-right-width",
+                  "value": 0,
+                  "unit": "px"
+                }
+              ]
+            },
+            {
+              "op": "sub",
+              "left": {
+                "op": "ref",
+                "nodeId": "w2"
+              },
+              "right": {
+                "op": "add",
+                "args": [
+                  {
+                    "op": "property",
+                    "name": "margin-left",
+                    "value": 0,
+                    "unit": "px"
+                  },
+                  {
+                    "op": "property",
+                    "name": "margin-right",
+                    "value": 0,
+                    "unit": "px"
+                  },
+                  {
+                    "op": "property",
+                    "name": "width",
+                    "value": 99,
+                    "unit": "px"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "expr": "max(15px (padding-left) + 15px (padding-right) + 0px (border-left-width) + 0px (border-right-width), 1280px − 0px (margin-left) + 0px (margin-right) + 99px (width))",
+        "cssProperties": {
+          "display": "block",
+          "position": "static",
+          "parent.display": "block",
+          "aspect-ratio": "auto",
+          "float": "none",
+          "writing-mode": "horizontal-tb",
+          "parent.writing-mode": "horizontal-tb",
+          "margin-left": "0px",
+          "margin-right": "0px",
+          "padding-left": "15px",
+          "padding-right": "15px",
+          "border-left-width": "0px",
+          "border-right-width": "0px",
+          "min-width": "0px",
+          "max-width": "none",
+          "box-sizing": "content-box"
+        }
+      },
+      "w0": {
+        "id": "w0",
+        "kind": "size:width",
+        "mode": "percentage",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(4) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "width",
+        "result": 314.5,
+        "inputs": {
+          "containingBlock": "w1"
+        },
+        "description": "width is a percentage of the containing block",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "width",
+              "value": 312.5,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-left",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-right",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-left-width",
+              "value": 1,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-right-width",
+              "value": 1,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "312.5px (width) + 0px (padding-left) + 0px (padding-right) + 1px (border-left-width) + 1px (border-right-width)",
+        "cssProperties": {
+          "display": "block",
+          "position": "static",
+          "parent.display": "block",
+          "aspect-ratio": "auto",
+          "width": "312.5px",
+          "box-sizing": "content-box",
+          "padding-left": "0px",
+          "padding-right": "0px",
+          "border-left-width": "1px",
+          "border-right-width": "1px",
+          "min-width": "0px",
+          "max-width": "none"
+        }
+      },
+      "h8": {
+        "id": "h8",
+        "kind": "size:height",
+        "mode": "explicit",
+        "elementPath": "body:nth-child(2) > div:nth-child(1) > div:nth-child(4) > div:nth-child(1)",
+        "elementDesc": "<div>",
+        "axis": "height",
+        "result": 83,
+        "inputs": {},
+        "description": "height is set explicitly in CSS",
+        "calc": {
+          "op": "add",
+          "args": [
+            {
+              "op": "property",
+              "name": "height",
+              "value": 81,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-top",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "padding-bottom",
+              "value": 0,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-top-width",
+              "value": 1,
+              "unit": "px"
+            },
+            {
+              "op": "property",
+              "name": "border-bottom-width",
+              "value": 1,
+              "unit": "px"
+            }
+          ]
+        },
+        "expr": "81px (height) + 0px (padding-top) + 0px (padding-bottom) + 1px (border-top-width) + 1px (border-bottom-width)",
+        "cssProperties": {
+          "display": "block",
+          "position": "static",
+          "parent.display": "block",
+          "aspect-ratio": "auto",
+          "box-sizing": "content-box",
+          "height": "81px",
+          "padding-top": "0px",
+          "padding-bottom": "0px",
+          "border-top-width": "1px",
+          "border-bottom-width": "1px",
+          "min-height": "10px",
+          "max-height": "124px"
+        }
+      }
+    }
+  },
+  "measurements": {
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(4) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(4) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 314.5,
+      "height": 83
+    },
+    "body:nth-child(2) > div:nth-child(1) > div:nth-child(4)": {
+      "path": "body:nth-child(2) > div:nth-child(1) > div:nth-child(4)",
+      "desc": "<div>",
+      "width": 1280,
+      "height": 324
+    },
+    "body:nth-child(2) > div:nth-child(1)": {
+      "path": "body:nth-child(2) > div:nth-child(1)",
+      "desc": "<div>",
+      "width": 1280,
+      "height": 108
+    },
+    "body": {
+      "path": "body",
+      "desc": "<body>",
+      "width": 1280,
+      "height": 108
+    },
+    "html": {
+      "path": "html",
+      "desc": "<html>",
+      "width": 1280,
+      "height": 108
+    }
+  }
+}

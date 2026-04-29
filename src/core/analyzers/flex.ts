@@ -40,9 +40,14 @@ export function flexItemMain(
   // (flex-direction: column).
   const direction = parent.readProperty("flex-direction");
   const mainIsInline = !direction.startsWith("column");
+  // Intrinsic-keyword mains (height: max-content / min-content / fit-content)
+  // resolve to a content-derived size, but per CSS percentages on flex-item
+  // mains/min/max should treat the container as indefinite — same as a
+  // truly content-sized container.
   const mainModeDefinite = containerBorderBox.mode !== "content-sum"
     && containerBorderBox.mode !== "content-max"
-    && containerBorderBox.mode !== "content-driven";
+    && containerBorderBox.mode !== "content-driven"
+    && containerBorderBox.mode !== "intrinsic-keyword";
   const containerMainDefinite = mainIsInline || mainModeDefinite;
 
   const containerWm = parent.readProperty("writing-mode");
@@ -103,7 +108,8 @@ export function flexItemMain(
   // to the normal flex algorithm using the measured container size.
   const containerIsContentSized = containerBorderBox.mode === "content-sum"
     || containerBorderBox.mode === "content-max"
-    || containerBorderBox.mode === "content-driven";
+    || containerBorderBox.mode === "content-driven"
+    || containerBorderBox.mode === "intrinsic-keyword";
   const hasAutoMinFloor = siblings.some(s => s.hypothetical > s.basis + 0.01);
   // Only skip free-space distribution when the main axis is truly
   // indefinite (column/block-axis with auto size). For an inline main
@@ -385,6 +391,40 @@ function buildFlexChildData(
       basis = measureMinContentSize(child, axis);
       basisCalc = measured("min-content", basis);
       basisFromContent = true;
+    } else if (
+      // Per CSS Flexbox §9.2 step 3C: when the flex item has a definite
+      // preferred aspect-ratio and a definite cross size, the flex base
+      // size is calculated from its inner cross size and the AR. This
+      // takes precedence over content fallthrough — abs-pos clones in
+      // measureFlexBasisContent don't honor explicit cross sizes when AR
+      // is active, so we derive directly here.
+      childProxy.readProperty("aspect-ratio") !== "auto"
+        && childProxy.getExplicitSize(crossAxis) !== null
+        && (() => {
+          const ce = childProxy.getExplicitSize(crossAxis);
+          return ce !== null && (ce.kind === "fixed" || (ce.kind === "percentage" && containerCrossDefinite));
+        })()
+    ) {
+      const arVal = childProxy.readProperty("aspect-ratio");
+      const arMatch = arVal.match(/^([\d.]+)\s*(?:\/\s*([\d.]+))?$/);
+      const ratioWH = arMatch ? parseFloat(arMatch[1]) / (arMatch[2] ? parseFloat(arMatch[2]) : 1) : 0;
+      const crossPx = childProxy.getExplicitSize(crossAxis)!.resolvedPx;
+      const factor = axis === "width" ? ratioWH : 1 / ratioWH;
+      basis = isBorderBox ? crossPx * factor : crossPx * factor + pb;
+      const crossSizeNode = parentNb.computeSize(child, crossAxis);
+      const arProp = prop(childProxy, "aspect-ratio");
+      let arExpr: CalcExpr = axis === "width"
+        ? mul(ref(crossSizeNode), arProp)
+        : div(ref(crossSizeNode), arProp);
+      if (!isBorderBox) {
+        const pbNamesArBasis = axis === "width"
+          ? ["padding-left", "padding-right", "border-left-width", "border-right-width"] as const
+          : ["padding-top", "padding-bottom", "border-top-width", "border-bottom-width"] as const;
+        arExpr = add(arExpr, ...pbNamesArBasis.map(p => prop(childProxy, p)));
+      }
+      basisCalc = arExpr;
+      basisInputs.crossSize = crossSizeNode;
+      basisDescription = `${axis} derived from ${crossAxis} via aspect-ratio (§9.2 step 3C)`;
     } else {
       // Per CSS Flexbox §9.2 step 3E, size the item with its main-axis
       // auto, honoring the cross-axis constraints (including max-width/
